@@ -7,7 +7,7 @@ export interface CreateMessageOptions extends Partial<Message> {
     channelId: string
 }
 
-@Entity()
+@Entity({ tableName: 'messages' })
 export class Message extends Base {
     @Property()
     embeds: unknown[] = []

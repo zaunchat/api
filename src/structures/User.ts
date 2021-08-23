@@ -2,6 +2,20 @@ import { Base } from './Base'
 import { Entity, Property, wrap } from 'mikro-orm'
 import { Session } from './Session'
 
+export enum RelationshipStatus {
+    USER,
+    FRIEND,
+    OUTGOING,
+    IM_COMING,
+    BLOCKED,
+    BLOCKED_OTHER,
+}
+
+export interface Relationship {
+    id: string
+    status: RelationshipStatus
+}
+
 export enum UserBadges {
     DEVELOPER,
     TRANSLATOR,
@@ -15,7 +29,7 @@ export interface CreateUserOptions extends Partial<User> {
     email: string
 }
 
-@Entity()
+@Entity({ tableName: 'users' })
 export class User extends Base {
     @Property({ unique: true })
     username!: string
@@ -30,7 +44,7 @@ export class User extends Base {
     badges = 0
 
     @Property()
-    friends: User[] = []
+    relations: Relationship[] = []
 
     @Property()
     servers: unknown[] = []
