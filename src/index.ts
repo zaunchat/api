@@ -4,10 +4,6 @@ import * as database from './database'
 
 const port = config('PORT')
 
-declare global {
-	const db: database.DBConnection
-}
-
 async function main(): Promise<void> {
 	try {
 		console.log('Connecting to database...')
