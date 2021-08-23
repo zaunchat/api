@@ -1,9 +1,8 @@
-import { DBConnection } from '../database'
 import { User } from '../structures'
-
+import { EntityManager } from 'mikro-orm'
 
 export declare global {
-    const db: DBConnection
+    const db: EntityManager
 }
 
 declare module '@tinyhttp/app' {

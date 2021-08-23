@@ -6,7 +6,7 @@ import { Channel } from '../structures'
 export default class ChannelController {
     @web.get('/:channelId')
     async getChannel(req: Request, res: Response): Promise<void> {
-        const channel = await db.em.findOne(Channel, {
+        const channel = await db.findOne(Channel, {
             _id: req.body.channelId
         }, ['_id', 'type', 'userId', 'recipients', 'serverId'])
 

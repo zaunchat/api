@@ -36,7 +36,7 @@ export default class AuthController {
 		}
 
 
-        const user = await db.em.findOne(User, {
+        const user = await db.findOne(User, {
             email: req.body.email as string
         })
 
@@ -56,7 +56,7 @@ export default class AuthController {
 
         user.sessions.push(session)
 
-        await db.em.persistAndFlush(user)
+        await db.persistAndFlush(user)
 
         res.send(session)
     }
@@ -71,7 +71,7 @@ export default class AuthController {
 
         const { userId, token } = req.body
 
-        const user = await db.em.findOne(User, {
+        const user = await db.findOne(User, {
             _id: userId,
             sessions: { token }
         })
@@ -82,7 +82,7 @@ export default class AuthController {
 
         user.sessions = user.sessions.filter((s) => s.token !== token)
 
-        await db.em.persistAndFlush(user)
+        await db.persistAndFlush(user)
 
         res.send({ success: true })
     }
@@ -97,7 +97,7 @@ export default class AuthController {
 
         const { username, email, password } = req.body
 
-        const exists = await db.em.count(User, {
+        const exists = await db.count(User, {
             $or: [{ username }, { email }]
         })
 
@@ -117,7 +117,7 @@ export default class AuthController {
 
         user.sessions.push(session)
 
-        await db.em.persistAndFlush(user)
+        await db.persistAndFlush(user)
 
         res.send(session)
 

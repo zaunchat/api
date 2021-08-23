@@ -9,7 +9,7 @@ async function main(): Promise<void> {
 		console.log('Connecting to database...')
 
 		Object.defineProperty(globalThis, 'db', {
-			value: await database.connect(config('DATABASE_URI'))
+			value: (await database.connect(config('DATABASE_URI'))).em
 		})
 
 		console.log('Connected to Database')

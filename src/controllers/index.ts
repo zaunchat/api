@@ -24,7 +24,7 @@ app.use(async (req, res, next) => {
 	}
 
 	const token = req.headers.authorization
-	const user = token ? await db.em.findOne(User, {
+	const user = token ? await db.findOne(User, {
 		sessions: { token }
 	}) : null
 
