@@ -1,4 +1,4 @@
-import app from './routes'
+import app from './controllers'
 import config from '../config'
 import * as database from './database'
 

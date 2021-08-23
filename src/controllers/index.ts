@@ -1,9 +1,11 @@
 import { App } from '@tinyhttp/app'
-import Validator from 'fastest-validator'
 import config from '../../config'
 import { User } from '../structures'
 import { Captcha } from '../utils/Captcha'
-import * as AuthRoutes from './auth'
+import { register } from 'express-decorators'
+import AuthController from './AuthController'
+import ChannelController from './ChannelController'
+import UserController from './UserController'
 
 export const app = new App()
 
@@ -37,15 +39,8 @@ app.use(async (req, res, next) => {
 	next()
 })
 
-export const validator = new Validator()
-export type RouteLike = (api: App, validator: Validator) => void
-
-const register = (routes: Record<string, RouteLike> | RouteLike[]): void => {
-	if (!Array.isArray(routes)) routes = Object.values(routes)
-	for (const route of routes) route(app, validator)
-}
-
-register(AuthRoutes)
-
+register(app, new AuthController())
+register(app, new UserController())
+register(app, new ChannelController())
 
 export default app
