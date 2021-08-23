@@ -18,8 +18,6 @@ export default class ChannelController {
             return void res.status(403).send('Missing access')
         }
 
-        res.json({
-            id: channel._id
-        })
+        res.json(channel)
     }
 }
