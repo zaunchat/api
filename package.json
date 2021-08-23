@@ -1,0 +1,29 @@
+{
+  "name": "itchat-server",
+  "version": "0.0.1-alpha",
+  "scripts": {
+    "start-debug": "ts-node -T src/index.ts",
+    "test": "ts-node -T test.ts"
+  },
+  "dependencies": {
+    "@mikro-orm/core": "^4.5.7",
+    "@mikro-orm/mongodb": "^4.5.7",
+    "@tinyhttp/app": "^1.3.15",
+    "bcrypt": "^5.0.1",
+    "dotenv": "^10.0.0",
+    "fastest-validator": "^1.11.1",
+    "mikro-orm": "^4.5.7",
+    "nanoid": "^3.1.25",
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
+    "@types/node": "^16.7.1",
+    "@types/node-fetch": "^2.5.12",
+    "@typescript-eslint/eslint-plugin": "^4.29.2",
+    "@typescript-eslint/parser": "^4.29.2",
+    "eslint": "^7.32.0",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.3.5"
+  }
+}
