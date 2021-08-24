@@ -55,6 +55,9 @@ export class User extends Base {
     @Property()
     sessions: Session[] = []
 
+    @Property()
+    verified = false
+
     static from(options: CreateUserOptions): User {
         return wrap(new User()).assign(options)
     }

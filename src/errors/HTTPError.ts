@@ -3,6 +3,10 @@ export enum APIErrors {
     MISSING_PERMISSIONS,
     FIELD_CAPTCHA,
     UNAUTHORIZED,
+    USERNAME_TAKEN,
+    EMAIL_ALREADY_IN_USE,
+    USER_NOT_VERIFIED,
+    INVALID_PASSWORD,
 
     // Unknown
     UNKNOWN_ACCOUNT,
@@ -19,7 +23,6 @@ export enum APIErrors {
     MAXIMUM_ROLES,
     MAXIMUM_CHANNELS,
     MAXIMUM_MESSAGE_LENGTH,
-
 
     // Misc
     BOT_ONLY,
