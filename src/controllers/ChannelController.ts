@@ -8,7 +8,7 @@ export default class ChannelController {
     async getChannel(req: Request, res: Response): Promise<void> {
         const channel = await db.findOne(Channel, {
             _id: req.body.channelId
-        }, ['_id', 'type', 'userId', 'recipients', 'serverId'])
+        })
 
         if (!channel) {
             return void res.sendStatus(404)
@@ -18,6 +18,6 @@ export default class ChannelController {
             return void res.status(403).send('Missing access')
         }
 
-        res.json(channel)
+        res.json(Channel.toObject(channel))
     }
 }

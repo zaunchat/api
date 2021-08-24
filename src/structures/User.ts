@@ -58,4 +58,13 @@ export class User extends Base {
     static from(options: CreateUserOptions): User {
         return wrap(new User()).assign(options)
     }
+
+    static toObject(user: User): unknown {
+        return {
+            id: user._id,
+            username: user.username,
+            badges: user.badges,
+            avatar: user.avatar
+        }
+    }
 }
