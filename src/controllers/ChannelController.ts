@@ -1,6 +1,7 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { Channel } from '../structures'
+import { HTTPError } from '../errors'
 
 @web.basePath('/channels')
 export default class ChannelController {
@@ -11,11 +12,11 @@ export default class ChannelController {
         })
 
         if (!channel) {
-            return void res.sendStatus(404)
+            return void res.status(404).send(new HTTPError('UNKNOWN_CHANNEL'))
         }
 
         if (!Channel.hasAccess(req.user._id, channel)) {
-            return void res.status(403).send('Missing access')
+            return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
         }
 
         res.json(Channel.toObject(channel))

@@ -1,5 +1,6 @@
 import { Response, Request } from '@tinyhttp/app'
 import * as web from 'express-decorators'
+import { HTTPError } from '../errors'
 import { ChannelTypes, DMChannel, User } from '../structures'
 
 @web.basePath('/users')
@@ -13,7 +14,7 @@ export default class UserController {
         })
 
         if (!user) {
-            return void res.sendStatus(404)
+            return void res.status(404).send(new HTTPError('UNKNOWN_USER'))
         }
 
         res.json(User.toObject(user))
@@ -28,7 +29,7 @@ export default class UserController {
         }
 
         if (!await db.count(User, { _id: userId })) {
-            return void res.status(403).send('User not found')
+            return void res.status(403).send(new HTTPError('UNKNOWN_USER'))
         }
 
         const exists = await db.findOne(DMChannel, {
