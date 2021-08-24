@@ -1,9 +1,7 @@
-import { Connection, IDatabaseDriver, MikroORM as Database, MikroORM } from 'mikro-orm'
+import { MikroORM as Database } from 'mikro-orm'
 import { Message, User } from '../structures'
 
-export type DBConnection = MikroORM<IDatabaseDriver<Connection>>
-
-export const connect = (clientUrl: string): Promise<DBConnection> => {
+export const connect = (clientUrl: string): Promise<Database> => {
 	return Database.init({
 		clientUrl,
 		type: 'mongo',
