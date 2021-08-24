@@ -9,6 +9,12 @@ export interface CreateMessageOptions extends Partial<Message> {
 
 @Entity({ tableName: 'messages' })
 export class Message extends Base {
+    @Property({ onCreate: () => Date.now() })
+    createdTimestamp!: number
+
+    @Property({ nullable: true, onUpdate: () => Date.now() })
+    editedTimestamp?: number
+
     @Property()
     embeds: unknown[] = []
 
