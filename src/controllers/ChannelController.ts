@@ -2,13 +2,14 @@ import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { Channel } from '../structures'
 import { HTTPError } from '../errors'
+import db from '../database'
 
 @web.basePath('/channels')
-export default class ChannelController {
+export class ChannelController {
     @web.get('/:channelId')
-    async getChannel(req: Request, res: Response): Promise<void> {
-        const channel = await db.findOne(Channel, {
-            _id: req.body.channelId
+    async fetchChannel(req: Request, res: Response): Promise<void> {
+        const channel = await db.get(Channel).findOne({
+            _id: req.body.channelId  
         })
 
         if (!channel) {

@@ -7,22 +7,18 @@ import { HTTPError } from '../errors'
 import { createTransport } from 'nodemailer'
 import config from '../../config'
 import { nanoid } from 'nanoid'
+import db from '../database'
 
 const mail = createTransport(config('SMTP_URI'))
-
-
 const validator = new Validator()
 const waitingForVerify = new Map<string, string>()
-
-const EMAIL_TEMPLATE = `
-Hello @%%USERNAME%%,
+const EMAIL_MESSAGE_TEMPLATE = `Hello @%%USERNAME%%,
 
 You're almost there! If you did not perform this action you can safely ignore this email.
-Please verify your account here: %%LINK%%
-`
+Please verify your account here: %%LINK%%`
 
 @web.basePath('/auth')
-export default class AuthController {
+export class AuthController {
     checks = {
         login: validator.compile({
             email: { type: 'email' },
@@ -49,15 +45,15 @@ export default class AuthController {
             return void res.status(400).send(valid)
         }
 
-        const user = await db.findOne(User, {
-            email: req.body.email as string
-        })
+        const { email, password } = req.body
+
+        const user = await db.get(User).findOne({ email })
 
         if (!user) {
             return void res.status(404).send(new HTTPError('UNKNOWN_USER'))
         }
 
-        if (!await bcrypt.compare(req.body.password, user.password)) {
+        if (!await bcrypt.compare(password, user.password)) {
             return void res.status(403).send(new HTTPError('INVALID_PASSWORD'))
         }
 
@@ -71,7 +67,7 @@ export default class AuthController {
 
         user.sessions.push(session)
 
-        await db.persistAndFlush(user)
+        await db.get(User).persistAndFlush(user)
 
         res.send(session)
     }
@@ -86,7 +82,7 @@ export default class AuthController {
 
         const { userId, token } = req.body
 
-        const user = await db.findOne(User, {
+        const user = await db.get(User).findOne({
             _id: userId,
             sessions: { token }
         })
@@ -103,7 +99,7 @@ export default class AuthController {
             return void res.status(404).send(new HTTPError('UNKNOWN_SESSION'))
         }
 
-        await db.persistAndFlush(user)
+        await db.get(User).persistAndFlush(user)
 
         res.sendStatus(202)
     }
@@ -118,7 +114,7 @@ export default class AuthController {
 
         const { username, email, password } = req.body
 
-        const exists = await db.findOne(User, {
+        const exists = await db.get(User).findOne({
             $or: [{ username }, { email }]
         })
 
@@ -130,19 +126,14 @@ export default class AuthController {
             }
         }
 
-        await db.persistAndFlush(User.from({
+        await db.get(User).persistAndFlush(User.from({
             username,
             email,
             password: await bcrypt.hash(password, 12)
         }))
 
 
-        const user = await db.findOneOrFail(User, {
-            username,
-            email
-        })
-
-
+        const user = await db.get(User).findOneOrFail({ username, email })
         const token = nanoid(50)
         const link = `https://${req.headers.host}/auth/verify/${user._id}/${token}`
 
@@ -152,7 +143,7 @@ export default class AuthController {
                 subject: 'Verify your Itchat account.‏‏',
                 from: 'noreply@itchat.com',
                 to: user.email,
-                text: EMAIL_TEMPLATE
+                text: EMAIL_MESSAGE_TEMPLATE
                     .replace('%%USERNAME%%', user.username)
                     .replace('%%LINK%%', link)
             })
@@ -162,7 +153,7 @@ export default class AuthController {
             res.json({ link })
         } catch (err) {
             console.error(err)
-            await db.removeAndFlush(user)
+            await db.get(User).removeAndFlush(user)
             res.sendStatus(500)
         }
     }
@@ -175,9 +166,8 @@ export default class AuthController {
             return void res.status(404).send(new HTTPError('UNKNOWN_TOKEN'))
         }
 
-        const user = await db.findOne(User, {
-            _id: userId,
-            verified: false
+        const user = await db.get(User).findOne({
+            _id: userId
         })
 
         if (!user) {
@@ -186,7 +176,7 @@ export default class AuthController {
 
         user.verified = true
 
-        await db.persistAndFlush(user)
+        await db.get(User).persistAndFlush(user)
 
         waitingForVerify.delete(userId)
 

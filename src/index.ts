@@ -1,6 +1,6 @@
-import app from './controllers'
 import config from '../config'
-import * as database from './database'
+import server from './server'
+import db from './database'
 
 const port = config('PORT')
 
@@ -8,13 +8,11 @@ async function main(): Promise<void> {
 	try {
 		console.log('Connecting to database...')
 
-		Object.defineProperty(globalThis, 'db', {
-			value: (await database.connect(config('DATABASE_URI'))).em
-		})
+		await db.connect(config('DATABASE_URI'))
 
 		console.log('Connected to Database')
 
-		app.listen(port, () => console.log(`App running on port: ${port}`))
+		server.listen(port, () => console.log(`App running on port: ${port}`))
 	} catch (err) {
 		console.error(err)
 		process.exit(-1)
