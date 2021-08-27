@@ -13,13 +13,15 @@ export class UserController {
         const user = await db.get(User).findOne({
             _id: userId === '@me' ? req.user._id : userId,
             deleted: false
+        }, {
+            fields: ['_id', 'avatar', 'username', 'badges']
         })
 
         if (!user) {
             return void res.status(404).send(new HTTPError('UNKNOWN_USER'))
         }
 
-        res.json(User.toObject(user))
+        res.json(user)
     }
 
     @web.get('/:userId/dm')
