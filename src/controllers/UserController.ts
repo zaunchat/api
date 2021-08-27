@@ -43,8 +43,7 @@ export class UserController {
         }
 
         const dm = DMChannel.from({
-            userId: req.user._id,
-            recipients: userId
+            recipients: [userId, req.user._id]
         })
 
         await db.get(DMChannel).persistAndFlush(dm)
