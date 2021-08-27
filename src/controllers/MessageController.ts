@@ -23,7 +23,8 @@ export class MessageController {
     @web.use()
     async fetchChannelBeforeProcess(req: Request, res: Response, next: NextFunction): Promise<void> {
         const channel = await db.get(Channel).findOne({
-            _id: req.params.channelId
+            _id: req.params.channelId,
+            deleted: false
         })
 
         if (!channel) {
@@ -76,7 +77,10 @@ export class MessageController {
 
     @web.get('/')
     async fetchMessages(req: Request, res: Response): Promise<void> {
-        const messages = await db.get(Message).find({ channelId: req.params.channelId }, { limit: 100 })
+        const messages = await db.get(Message).find({ 
+            channelId: req.params.channelId,
+            deleted: false
+         }, { limit: 100 })
         res.json(messages)
     }
 
@@ -105,7 +109,8 @@ export class MessageController {
 
         const message = await db.get(Message).findOne({
             _id: req.params.messageId,
-            channelId: req.params.channelId
+            channelId: req.params.channelId,
+            deleted: false
         })
 
         if (!message) {

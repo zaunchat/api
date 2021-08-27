@@ -10,7 +10,8 @@ export class ChannelController {
     @web.get('/:channelId')
     async fetchChannel(req: Request, res: Response): Promise<void> {
         const channel = await db.get(Channel).findOne({
-            _id: req.params.channelId
+            _id: req.params.channelId,
+            deleted: false
         })
 
         if (!channel) {
@@ -29,7 +30,8 @@ export class ChannelController {
     @web.route('delete', '/:channelId')
     async deleteChannel(req: Request, res: Response): Promise<void> {
         const channel = await db.get(Channel).findOne({
-            _id: req.params.channelId
+            _id: req.params.channelId,
+            deleted: false
         })
 
         if (!channel) {

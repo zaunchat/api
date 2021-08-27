@@ -11,7 +11,8 @@ export class UserController {
         const { userId } = req.params
 
         const user = await db.get(User).findOne({
-            _id: userId === '@me' ? req.user._id : userId
+            _id: userId === '@me' ? req.user._id : userId,
+            deleted: false
         })
 
         if (!user) {
