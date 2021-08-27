@@ -8,7 +8,8 @@ import db from './database'
 import {
     AuthController,
     ChannelController,
-    UserController
+    UserController,
+    MessageController
 } from './controllers'
 
 const server = new App()
@@ -45,5 +46,6 @@ server.use(async (req, res, next) => {
 register(server, new AuthController())
 register(server, new UserController())
 register(server, new ChannelController())
+register(server, new MessageController())
 
 export default server
