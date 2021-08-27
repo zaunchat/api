@@ -11,7 +11,8 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
 
     const user = await db.get(User).findOne({
         _id: auth.user_id,
-        sessions: { token: auth.token }
+        sessions: { token: auth.token },
+        deleted: false
     })
 
     if (!user) {
