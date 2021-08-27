@@ -14,13 +14,10 @@ export const json = () => async (req: Request, _res: Response, next: NextFunctio
     next()
 }
 
-export const ws = (
-    options?: WebSocket.ServerOptions, 
-    wss: WebSocket.Server = new WebSocket.Server({ ...options, noServer: true })
-) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
-    const isWS = req.headers.upgrade?.split(',').some((s) => s.trim() === 'websocket')
+export const ws = (wss: WebSocket.Server) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+    const isSocket = req.headers.upgrade?.split(',').some((s) => s.trim() === 'websocket')
 
-    if (isWS) {
+    if (isSocket) {
         Object.defineProperty(req, 'ws', {
             value: new Promise((resolve) => wss.handleUpgrade(req, req.socket, Buffer.alloc(0), (ws) => {
                 wss.emit('connection', ws, req)

@@ -1,6 +1,9 @@
 import config from '../config'
 import server from './server'
 import db from './database'
+import { Getaway } from './getaway'
+
+new Getaway(server)
 
 const port = config('PORT')
 
