@@ -26,7 +26,7 @@ export class ChannelController {
         res.json(channel)
     }
 
-    @web.del('/:channelId')
+    @web.route('delete', '/:channelId')
     async deleteChannel(req: Request, res: Response): Promise<void> {
         const channel = await db.get(Channel).findOne({
             _id: req.params.channelId

@@ -22,8 +22,7 @@ export class AuthController {
     checks = {
         login: validator.compile({
             email: { type: 'email' },
-            password: { type: 'string' },
-            captcha_key: { type: 'string' }
+            password: { type: 'string' }
         }),
         logout: validator.compile({
             token: { type: 'string' },
@@ -32,8 +31,7 @@ export class AuthController {
         register: validator.compile({
             username: { type: 'string' },
             email: { type: 'email' },
-            password: { type: 'string' },
-            captcha_key: { type: 'string' }
+            password: { type: 'string' }
         })
     }
 
