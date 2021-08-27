@@ -24,7 +24,7 @@ server
             if (config('CAPTCHA').ENABLED) {
                 const captchaChecked = req.body.captcha_key && await Captcha.check(req.body.captcha_key)
                 if (!captchaChecked) {
-                    return res.status(403).send(new HTTPError('FIELD_CAPTCHA'))
+                    return res.status(403).send(new HTTPError('FAILED_CAPTCHA'))
                 }
             }
             return next()
