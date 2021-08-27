@@ -7,6 +7,7 @@ export const APIErrors = {
     EMAIL_ALREADY_IN_USE: 409,
     USER_NOT_VERIFIED: 403,
     INVALID_PASSWORD: 403,
+    EMPTY_MESSAGE: 400,
 
     // Unknown - 404
     UNKNOWN_ACCOUNT: 404,

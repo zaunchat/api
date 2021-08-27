@@ -6,6 +6,7 @@ import db from '../database'
 import { Channel, Message } from '../structures'
 import Validator from 'fastest-validator'
 import { wrap } from 'mikro-orm'
+import { getaway } from '../server'
 
 const validator = new Validator()
 
@@ -64,6 +65,10 @@ export class MessageController {
             return void res.status(400).send(valid)
         }
 
+        if (!req.body.content?.length && !req.body.attachments?.length) {
+            return void res.status(400).send(new HTTPError('EMPTY_MESSAGE'))
+        }
+
         const message = Message.from({
             authorId: req.user._id,
             channelId: req.params.channelId,
@@ -72,15 +77,20 @@ export class MessageController {
 
         await db.get(Message).persistAndFlush(message)
 
+        // FIXME: message has undefined id.
+        // We should fetch the message from database
+        // Or find another solution.
+        getaway.emit('MESSAGE_CREATE', message)
+
         res.sendStatus(202)
     }
 
     @web.get('/')
     async fetchMessages(req: Request, res: Response): Promise<void> {
-        const messages = await db.get(Message).find({ 
+        const messages = await db.get(Message).find({
             channelId: req.params.channelId,
             deleted: false
-         }, { limit: 100 })
+        }, { limit: 100 })
         res.json(messages)
     }
 
@@ -122,6 +132,30 @@ export class MessageController {
         }
 
         await db.get(Message).persistAndFlush(wrap(message).assign(req.body))
+
+        res.sendStatus(202)
+    }
+
+    @web.route('delete', '/:messageId')
+    async deleteMessage(req: Request, res: Response): Promise<void> {
+        const message = await db.get(Message).findOne({
+            _id: req.params.messageId,
+            channelId: req.params.channelId,
+            deleted: false
+        })
+
+        if (!message) {
+            return void res.status(404).send(new HTTPError('UNKNOWN_MESSAGE'))
+        }
+
+        message.deleted = true
+
+        await db.get(Message).persistAndFlush(message)
+
+        getaway.emit('MESSAGE_DELETE', {
+            _id: message._id,
+            channelId: message.channelId
+        })
 
         res.sendStatus(202)
     }

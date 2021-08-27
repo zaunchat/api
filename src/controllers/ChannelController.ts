@@ -4,6 +4,7 @@ import { Channel } from '../structures'
 import { HTTPError } from '../errors'
 import { Permissions } from '../utils'
 import db from '../database'
+import { getaway } from '../server'
 
 @web.basePath('/channels')
 export class ChannelController {
@@ -47,6 +48,8 @@ export class ChannelController {
         channel.deleted = true
 
         await db.get(Channel).persistAndFlush(channel)
+
+        getaway.emit('CHANNEL_DELETE', { _id: channel._id })
 
         res.sendStatus(202)
     }

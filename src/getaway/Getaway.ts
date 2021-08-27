@@ -3,6 +3,7 @@ import { App } from '@tinyhttp/app'
 import { middlewares } from '../utils'
 import { Socket } from './Socket'
 import events from './events'
+import { WSEvents } from '../@types'
 
 export class Getaway {
     ws: WebSocket.Server
@@ -11,6 +12,14 @@ export class Getaway {
         server.use('/ws', middlewares.ws(this.ws = new WebSocket.Server(options)))
         this.ws.on('connection', this.onConnection.bind(this))
         this.ws.on('error', this.onError.bind(this))
+    }
+
+    emit<T extends keyof WSEvents = keyof WSEvents>(event: T, data?: WSEvents[T]): void {
+        console.debug(`
+            Event: ${event},
+            Data: ${JSON.stringify(data, null, 2)}
+        `)
+        // TODO: Emit event to connections/listeners
     }
 
     private async onConnection(_server: WebSocket.Server, _socket: WebSocket): Promise<void> {
