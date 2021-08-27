@@ -7,6 +7,7 @@ import { Channel, Message } from '../structures'
 import Validator from 'fastest-validator'
 import { wrap } from 'mikro-orm'
 import { getaway } from '../server'
+import config from '../../config'
 
 const validator = new Validator()
 
@@ -65,15 +66,32 @@ export class MessageController {
             return void res.status(400).send(valid)
         }
 
-        if (!req.body.content?.length && !req.body.attachments?.length) {
-            return void res.status(400).send(new HTTPError('EMPTY_MESSAGE'))
-        }
-
         const message = Message.from({
             authorId: req.user._id,
             channelId: req.params.channelId,
             ...req.body
         })
+
+        if (!message.content?.length && !message.attachments.length) {
+            return void res.status(400).send(new HTTPError('EMPTY_MESSAGE'))
+        }
+
+        if (message.attachments.length && !permissions.has('UPLOAD_FILES')) {
+            return void res.status(400).send(new HTTPError('MISSING_PERMISSIONS'))
+        }
+
+        if ((message.content?.length ?? 0) > config('MAX').MESSAGE_LENGTH) {
+            return void res.status(400).send(new HTTPError('MAXIMUM_MESSAGE_LENGTH'))
+        }
+
+        if (message.replies.length > 5) {
+            return void res.status(400).send(new HTTPError('TOO_MANY_REPLIES'))
+        }
+
+        if (message.attachments.length > 5) {
+            return void res.status(400).send(new HTTPError('TOO_MANY_ATTACHMENTS'))
+        }
+
 
         await db.get(Message).persistAndFlush(message)
 
@@ -138,6 +156,12 @@ export class MessageController {
 
     @web.route('delete', '/:messageId')
     async deleteMessage(req: Request, res: Response): Promise<void> {
+        const channel = (req as unknown as { channel: Channel }).channel
+
+        const permissions = new Permissions('CHANNEL')
+            .for(channel)
+            .with(req.user)
+
         const message = await db.get(Message).findOne({
             _id: req.params.messageId,
             channelId: req.params.channelId,
@@ -146,6 +170,10 @@ export class MessageController {
 
         if (!message) {
             return void res.status(404).send(new HTTPError('UNKNOWN_MESSAGE'))
+        }
+
+        if (!permissions.has('MANAGE_MESSAGES') && message.authorId !== req.user._id) {
+            return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
         }
 
         message.deleted = true

@@ -8,6 +8,8 @@ export const APIErrors = {
     USER_NOT_VERIFIED: 403,
     INVALID_PASSWORD: 403,
     EMPTY_MESSAGE: 400,
+    TOO_MANY_ATTACHMENTS: 400,
+    TOO_MANY_REPLIES: 400,
 
     // Unknown - 404
     UNKNOWN_ACCOUNT: 404,

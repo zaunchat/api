@@ -6,7 +6,8 @@ export const FLAGS = {
     READ_MESSAGES: 1 << 2,
     UPLOAD_FILES: 1 << 3,
     EMBED_LINKS: 1 << 4,
-    MANAGE_CHANNEL: 1 << 5
+    MANAGE_CHANNEL: 1 << 5,
+    MANAGE_MESSAGES: 1 << 6
 } as const
 
 export const DEFAULT_PERMISSION_DM =
