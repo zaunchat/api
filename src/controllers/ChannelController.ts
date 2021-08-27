@@ -23,7 +23,7 @@ export class ChannelController {
             return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
         }
 
-        res.json(Channel.toObject(channel))
+        res.json(channel)
     }
 
     @web.del('/:channelId')

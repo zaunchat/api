@@ -39,7 +39,7 @@ export class UserController {
         })
 
         if (exists) {
-            return void res.json(DMChannel.toObject(exists))
+            return void res.json(exists)
         }
 
         const dm = DMChannel.from({
@@ -48,6 +48,6 @@ export class UserController {
 
         await db.get(DMChannel).persistAndFlush(dm)
 
-        res.json(DMChannel.toObject(dm))
+        res.json(dm)
     }
 }
