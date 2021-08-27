@@ -84,11 +84,11 @@ export class MessageController {
             return void res.status(400).send(new HTTPError('MAXIMUM_MESSAGE_LENGTH'))
         }
 
-        if (message.replies.length > 5) {
+        if (message.replies.length > config('MAX').MESSAGE_REPLIES) {
             return void res.status(400).send(new HTTPError('TOO_MANY_REPLIES'))
         }
 
-        if (message.attachments.length > 5) {
+        if (message.attachments.length > config('MAX').MESSAGE_ATTACHMENTS) {
             return void res.status(400).send(new HTTPError('TOO_MANY_ATTACHMENTS'))
         }
 
