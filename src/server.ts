@@ -1,7 +1,7 @@
 import { App } from '@tinyhttp/app'
 import config from '../config'
 import { User } from './structures'
-import { Captcha } from './utils/Captcha'
+import { Captcha, middlewares } from './utils'
 import { register } from 'express-decorators'
 import { HTTPError } from './errors'
 import db from './database'
@@ -16,19 +16,9 @@ const server = new App()
 const NON_AUTH_ROUTES = ['login', 'register', 'verify'].map((r) => '/auth/' + r)
 
 
+
 server
-    .use(async (req, _res, next) => {
-        if (req.method && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
-            try {
-                let body = ''
-                for await (const chunk of req) body += chunk
-                req.body = JSON.parse(body.toString())
-            } catch (e) {
-               return next(e)
-            }
-        }
-        next()
-    })
+    .use(middlewares.json())
     .use(async (req, res, next) => {
         if (NON_AUTH_ROUTES.some((p) => req.path.includes(p))) {
             if (config('CAPTCHA').ENABLED) {
