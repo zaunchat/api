@@ -22,7 +22,7 @@ export class Getaway {
                 .on('message', (buffer) => this.onMessage(socket, buffer))
 
             await socket.send({
-                code: OPCODES.HELLO,
+                code: WSCodes.HELLO,
                 data: {
                     heartbeat_interval: 1000 * 30
                 }
@@ -33,7 +33,7 @@ export class Getaway {
         }
     }
 
-    private onMessage(socket: Socket, buffer: WebSocket.Data): void {
+    private async onMessage(socket: Socket, buffer: WebSocket.Data): Promise<void> {
         let payload: Payload
 
         try {
@@ -48,7 +48,12 @@ export class Getaway {
             return socket.close(WSCloseCodes.UNKNOWN_OPCODE)
         }
 
-        event(socket, payload)
+        try {
+            await event(socket, payload)
+        } catch (err) {
+            socket.close(WSCloseCodes.UNKNOWN_ERROR)
+            console.error(err)
+        }
     }
 
     private onClose(socket: WebSocket): void {
@@ -61,17 +66,17 @@ export class Getaway {
 }
 
 export interface Payload {
-    code: OPCODES
-    event?: string
+    code: WSCodes
     data?: unknown
 }
 
-export enum OPCODES {
+export enum WSCodes {
     HELLO,
     PING,
     PONG,
     AUTHENTICATE,
     AUTHENTICATED,
+    READY
 }
 
 
