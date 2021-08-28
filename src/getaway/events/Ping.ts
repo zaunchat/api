@@ -1,4 +1,4 @@
-import { WSCodes } from '../Getaway'
+import { WSCodes } from '../Constants'
 import { Socket } from '../Socket'
 
 export const Ping = async (socket: Socket): Promise<void> => {

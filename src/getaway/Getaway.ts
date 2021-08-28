@@ -1,18 +1,15 @@
 import WebSocket from 'ws'
-import { App } from '@tinyhttp/app'
-import { middlewares } from '../utils'
-import { Socket } from './Socket'
 import events from './events'
+import { Socket } from './Socket'
 import { WSEvents } from '../@types'
 import { WSCodes, WSCloseCodes, Payload } from './Constants'
 
 export class Getaway {
-    ws: WebSocket.Server
-    
-    constructor(server: App, options: WebSocket.ServerOptions = { noServer: true, maxPayload: 4096 }) {
-        server.use('/ws', middlewares.ws(this.ws = new WebSocket.Server(options)))
-        this.ws.on('connection', this.onConnection.bind(this))
-        this.ws.on('error', this.onError.bind(this))
+    server: WebSocket.Server
+    constructor(options: WebSocket.ServerOptions = { noServer: true, maxPayload: 4096 }) {
+        this.server = new WebSocket.Server(options)
+        this.server.on('connection', this.onConnection.bind(this))
+        this.server.on('error', this.onError.bind(this))
     }
 
     emit<T extends keyof WSEvents = keyof WSEvents>(event: T, data?: WSEvents[T]): void {

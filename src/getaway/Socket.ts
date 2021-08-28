@@ -1,5 +1,5 @@
 import WebSocket from 'ws'
-import { Payload, WSCloseCodes } from './Getaway'
+import { Payload, WSCloseCodes } from './Constants'
 
 export const DEFAULT_HEARTBEAT_TIME = 1000 * 42
 
