@@ -1,7 +1,7 @@
-import { OPCODES } from '../Getaway'
+import { WSCodes } from '../Getaway'
 import { Authenticate } from './Authenticate'
 import { Ping } from './Ping'
 export default {
-    [OPCODES.AUTHENTICATE]: Authenticate,
-    [OPCODES.PING]: Ping
+    [WSCodes.AUTHENTICATE]: Authenticate,
+    [WSCodes.PING]: Ping
 }
