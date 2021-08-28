@@ -1,9 +1,8 @@
-import { PrimaryKey, Property, Unique } from 'mikro-orm'
+import { PrimaryKey, Property } from 'mikro-orm'
 import { UUID } from '../utils'
 
 export abstract class Base {
-  @PrimaryKey()
-  @Unique()
+  @PrimaryKey({ unique: true })
   _id!: string
 
   setID(): this {

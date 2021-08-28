@@ -1,6 +1,6 @@
 import { Response, Request } from '@tinyhttp/app'
 import * as web from 'express-decorators'
-import { Member, Role, Server, TextChannel } from '../structures'
+import { Category, Member, Role, Server, TextChannel } from '../structures'
 import db from '../database'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
@@ -30,7 +30,7 @@ export class ServerController {
         }
 
         const isExistsInServer = await db.get(Member).findOne({
-            serverId: server._id, 
+            serverId: server._id,
             _id: req.user._id
         })
 
@@ -62,6 +62,17 @@ export class ServerController {
 
         server.roles.push(defaultRole)
 
+        const generalChat = TextChannel.from({
+            name: 'general',
+            serverId: server._id
+        })
+
+        const category = Category.from({
+            name: 'General',
+            serverId: server._id,
+            channels: [generalChat._id]
+        })
+
         await Promise.all([
             db.get(Server).persistAndFlush(server),
             db.get(Member).persistAndFlush(Member.from({
@@ -69,10 +80,8 @@ export class ServerController {
                 serverId: server._id,
                 roles: [server._id]
             })),
-            db.get(TextChannel).persistAndFlush(TextChannel.from({
-                name: 'general',
-                serverId: server._id
-            }))
+            db.get(TextChannel).persistAndFlush(generalChat),
+            db.get(Category).persistAndFlush(category)
         ])
 
         getaway.emit('SERVER_CREATE', server)

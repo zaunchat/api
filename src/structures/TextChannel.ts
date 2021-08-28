@@ -6,6 +6,7 @@ export interface CreateTextChannelOptions extends Omit<Partial<TextChannel>, 'ty
 }
 
 export class TextChannel extends Channel {
+    @Property()
     readonly type = ChannelTypes.TEXT
 
     @Property()
