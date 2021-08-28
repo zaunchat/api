@@ -1,6 +1,6 @@
 import { WSCodes } from '../Getaway'
 import { Socket } from '../Socket'
 
-export const Ping = (socket: Socket): void => {
-    socket.setHeartbeat().send({ code: WSCodes.PONG })
+export const Ping = async (socket: Socket): Promise<void> => {
+    await socket.setHeartbeat().send({ code: WSCodes.PONG })
 }

@@ -1,4 +1,4 @@
-import type { Message, Channel, User } from '../structures'
+import type { Message, Channel, User, Server, DMChannel } from '../structures'
 import ws from 'ws'
 
 declare module '@tinyhttp/app' {
@@ -8,16 +8,20 @@ declare module '@tinyhttp/app' {
     }
 }
 
+type If<T extends boolean, A, B = null> = T extends true ? A : T extends false ? B : A | B;
 
-export interface WSEvents {
+interface WSEvents {
     READY: {
+        user: User
         channels: Channel[]
-        servers: []
+        servers: Server[]
         users: User[]
         members: []
     }
     MESSAGE_CREATE: Message
     MESSAGE_DELETE: Pick<Message, '_id' | 'channelId'>
     CHANNEL_CREATE: Channel
-    CHANNEL_DELETE: Pick<Channel, '_id'>
+    CHANNEL_DELETE: Pick<TextChannel, '_id', 'serverId'> | Pick<DMChannel, '_id'>
+    SERVER_CREATE: Server
+    SERVER_DELETE: Pick<Server, '_id'>
 }

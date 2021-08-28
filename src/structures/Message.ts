@@ -37,6 +37,6 @@ export class Message extends Base {
     authorId!: string
 
     static from(options: CreateMessageOptions): Message {
-        return wrap(new Message()).assign(options)
+        return wrap(new Message().setID()).assign(options)
     }
 }

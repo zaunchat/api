@@ -47,7 +47,7 @@ export class User extends Base {
     relations: Relationship[] = []
 
     @Property()
-    servers: unknown[] = []
+    servers: string[] = []
 
     @Property({ nullable: true })
     avatar?: string
@@ -59,6 +59,6 @@ export class User extends Base {
     verified = false
 
     static from(options: CreateUserOptions): User {
-        return wrap(new User()).assign(options)
+        return wrap(new User().setID()).assign(options)
     }
 }

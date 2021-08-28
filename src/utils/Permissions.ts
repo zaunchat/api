@@ -1,4 +1,4 @@
-import { DMChannel, User } from '../structures'
+import { ChannelTypes, DMChannel, TextChannel, User } from '../structures'
 
 export const FLAGS = {
     VIEW_CHANNEL: 1 << 0,
@@ -18,6 +18,13 @@ export const DEFAULT_PERMISSION_DM =
     FLAGS.MANAGE_CHANNEL +
     FLAGS.EMBED_LINKS
 
+export const DEFAULT_PERMISSION_SERVER =
+    FLAGS.VIEW_CHANNEL +
+    FLAGS.READ_MESSAGES +
+    FLAGS.SEND_MESSAGES +
+    FLAGS.UPLOAD_FILES +
+    FLAGS.EMBED_LINKS
+
 
 export type PermissionsResolvable = number | keyof typeof FLAGS | PermissionsResolvable[]
 export type PermissionsType = 'CHANNEL' | 'USER' | 'SERVER'
@@ -30,14 +37,26 @@ export class Permissions {
 
     for(obj: unknown): this {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        let channel: DMChannel, user: User, server: unknown
+        let channel: DMChannel | TextChannel, user: User, server: unknown
 
         switch (this.type) {
-            case 'CHANNEL': {
-                channel = obj as DMChannel
-                if (channel.recipients.includes(this.perspective._id)) {
-                    this.bitfield = DEFAULT_PERMISSION_DM
+            case 'CHANNEL': { // TODO: Check TextChannel
+                channel = obj as typeof channel
+
+                ChannelTypeSwitch:
+                switch (channel.type) {
+                    case ChannelTypes.DM: {
+                        if (channel.recipients.includes(this.perspective._id)) {
+                            this.bitfield = DEFAULT_PERMISSION_DM
+                        }
+                        break ChannelTypeSwitch
+                    }
+                    case ChannelTypes.TEXT: {
+
+                        break ChannelTypeSwitch
+                    }
                 }
+
                 break
             }
 

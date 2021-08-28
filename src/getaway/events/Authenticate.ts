@@ -1,7 +1,8 @@
 import { Payload, WSCloseCodes, WSCodes } from '../Getaway'
 import { Socket } from '../Socket'
 import db from '../../database'
-import { DMChannel, User } from '../../structures'
+import { DMChannel, User, Server } from '../../structures'
+import { WSEvents } from '../../@types'
 
 export const Authenticate = async (socket: Socket, data: Payload): Promise<void> => {
     const auth = data.data as {
@@ -14,7 +15,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         sessions: { token: auth.token },
         deleted: false
     }, {
-        fields: ['_id', 'avatar', 'username', 'badges', 'email', 'relations']
+        fields: ['_id', 'avatar', 'username', 'badges', 'email', 'relations', 'servers']
     })
 
     if (!user) {
@@ -37,13 +38,23 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         fields: ['_id', 'avatar', 'username', 'badges']
     })
 
+    const servers = await db.get(Server).find({
+        _id: {
+            $in: user.servers
+        },
+        deleted: false
+    })
+
+    const readyData: WSEvents['READY'] = {
+        user,
+        channels,
+        users,
+        servers,
+        members: []
+    }
 
     await socket.send({
         code: WSCodes.READY,
-        data: {
-            user,
-            channels,
-            users
-        }
+        data: readyData
     })
 }

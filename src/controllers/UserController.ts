@@ -52,8 +52,6 @@ export class UserController {
 
         await db.get(DMChannel).persistAndFlush(dm)
 
-        // FIXME: dm#_id is undefined.
-        // (/auth/channels/:channelId/messages - POST) Have the same problem
         getaway.emit('CHANNEL_CREATE', dm)
 
         res.json(dm)

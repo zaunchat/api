@@ -13,6 +13,6 @@ export class DMChannel extends Channel {
     recipients!: [string, string]
 
     static from(options: CreateDMChannelOptions): DMChannel {
-        return wrap(new DMChannel()).assign(options)
+        return wrap(new DMChannel().setID()).assign(options)
     }
 }

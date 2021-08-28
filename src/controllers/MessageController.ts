@@ -95,9 +95,6 @@ export class MessageController {
 
         await db.get(Message).persistAndFlush(message)
 
-        // FIXME: message has undefined id.
-        // We should fetch the message from database
-        // Or find another solution.
         getaway.emit('MESSAGE_CREATE', message)
 
         res.sendStatus(202)

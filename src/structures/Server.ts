@@ -1,4 +1,4 @@
-import { Base } from './Base'
+import { Base, Role } from '.'
 import { Property, Entity, wrap } from 'mikro-orm'
 
 export interface CreateServerOptions extends Partial<Server> {
@@ -27,9 +27,9 @@ export class Server extends Base {
     channels: string[] = []
     
     @Property()
-    roles: unknown[] = []
+    roles: Role[] = []
 
     static from(options: CreateServerOptions): Server {
-        return wrap(new Server()).assign(options)
+        return wrap(new Server().setID()).assign(options)
     }
 }

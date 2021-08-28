@@ -18,6 +18,7 @@ export const APIErrors = {
     UNKNOWN_MESSAGE: 404,
     UNKNOWN_TOKEN: 404,
     UNKNOWN_SESSION: 404,
+    UNKNOWN_SERVER: 404,
 
     // Maximum
     MAXIMUM_FRIENDS: 400,
