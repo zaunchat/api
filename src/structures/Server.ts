@@ -11,13 +11,13 @@ export class Server extends Base {
     @Property()
     name!: string
 
-    @Property()
+    @Property({ nullable: true })
     description?: string
 
-    @Property()
+    @Property({ nullable: true })
     icon?: string
 
-    @Property()
+    @Property({ nullable: true })
     banner?: string
 
     @Property()

@@ -14,7 +14,7 @@ export class TextChannel extends Channel {
     @Property()
     serverId!: string
 
-    @Property()
+    @Property({ nullable: true })
     topic?: string
 
     static from(options: CreateTextChannelOptions): TextChannel {

@@ -67,7 +67,10 @@ export class AuthController {
 
         await db.get(User).persistAndFlush(user)
 
-        res.send(session)
+        res.json({
+            token: session.token,
+            id: user._id
+        })
     }
 
     @web.post('/logout')
@@ -82,7 +85,7 @@ export class AuthController {
 
         const user = await db.get(User).findOne({
             _id: userId,
-            sessions: { token }
+            deleted: false
         })
 
         if (!user) {
@@ -124,14 +127,20 @@ export class AuthController {
             }
         }
 
-        await db.get(User).persistAndFlush(User.from({
+        const user = User.from({
             username,
             email,
             password: await bcrypt.hash(password, 12)
-        }))
+        })
 
+        await db.get(User).persistAndFlush(user)
 
-        const user = await db.get(User).findOneOrFail({ username, email })
+        if (!config('EMAIL_VERIFICATION')) {
+            user.verified = true
+            await db.get(User).persistAndFlush(user)
+            return void res.redirect(`https://${req.headers.host}/auth/login`)
+        }
+
         const token = nanoid(50)
         const link = `https://${req.headers.host}/auth/verify/${user._id}/${token}`
 

@@ -8,7 +8,7 @@ export interface CreateMemberOptions extends Partial<Member> {
 
 @Entity({ tableName: 'members' })
 export class Member extends Base {
-    @Property()
+    @Property({ nullable: true })
     nickname?: string
 
     @Property({ onCreate: () => Date.now() })

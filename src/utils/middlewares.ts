@@ -13,7 +13,7 @@ export const json = () => async (req: Request, _res: Response, next: NextFunctio
             for await (const chunk of req) body += chunk
             req.body = JSON.parse(body.toString())
         } catch (e) {
-           return next(e)
+            return next(e)
         }
     }
     next()
@@ -45,17 +45,19 @@ export const auth = () => async (req: Request, res: Response, next: NextFunction
                 return void res.status(403).send(new HTTPError('FAILED_CAPTCHA'))
             }
         }
-        
         return next()
     }
 
-    const token = req.headers.authorization
+    const token = req.headers['x-session-token']
+    const userId = req.headers['x-session-id']
 
-    const user = token ? await db.get(User).findOne({
-        sessions: { token }
-    }) : null
+    const user = token && userId && await db.get(User).findOne({
+        _id: userId,
+        deleted: false,
+        verified: true
+    })
 
-    if (!user) {
+    if (!user || !user.sessions.some((session) => session.token === token)) {
         return void res.status(401).send(new HTTPError('UNAUTHORIZED'))
     }
 

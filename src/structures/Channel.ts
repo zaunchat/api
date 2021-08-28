@@ -1,4 +1,4 @@
-import { Entity, Property } from 'mikro-orm'
+import { Entity, Enum } from 'mikro-orm'
 import { Base } from './Base'
 
 export enum ChannelTypes {
@@ -11,6 +11,6 @@ export enum ChannelTypes {
 
 @Entity({ tableName: 'channels' })
 export class Channel extends Base {
-    @Property()
+    @Enum(() => ChannelTypes)
     type = ChannelTypes.UNKNOWN
 }

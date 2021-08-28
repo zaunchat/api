@@ -4,6 +4,7 @@ import { middlewares } from '../utils'
 import { Socket } from './Socket'
 import events from './events'
 import { WSEvents } from '../@types'
+import { WSCodes, WSCloseCodes, Payload } from './Constants'
 
 export class Getaway {
     ws: WebSocket.Server
@@ -72,31 +73,4 @@ export class Getaway {
     private onError(error: unknown): void {
         console.error(error)
     }
-}
-
-export interface Payload {
-    code: WSCodes
-    data?: unknown
-}
-
-export enum WSCodes {
-    HELLO,
-    PING,
-    PONG,
-    AUTHENTICATE,
-    AUTHENTICATED,
-    READY
-}
-
-
-export enum WSCloseCodes {
-    UNKNOWN_ERROR = 4000,
-    UNKNOWN_OPCODE,
-    DECODE_ERROR,
-    NOT_AUTHENTICATED,
-    AUTHENTICATED_FAILED,
-    ALREADY_AUTHENTICATED,
-    INVALID_SESSION,
-    RATE_LIMITED,
-    SESSION_TIMEOUT
 }

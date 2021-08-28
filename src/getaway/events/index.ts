@@ -1,4 +1,4 @@
-import { WSCodes } from '../Getaway'
+import { WSCodes } from '../Constants'
 import { Authenticate } from './Authenticate'
 import { Ping } from './Ping'
 export default {

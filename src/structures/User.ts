@@ -1,5 +1,5 @@
-import { Base } from './Base'
 import { Entity, Property, wrap } from 'mikro-orm'
+import { Base } from './Base'
 import { Session } from './Session'
 
 export enum RelationshipStatus {

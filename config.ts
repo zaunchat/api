@@ -4,6 +4,7 @@ const config = {
 	DATABASE_URI: process.env.DATABASE_URI as string,
 	PORT: Number(process.env.PORT) || 8080,
 	SMTP_URI: process.env.SMTP_URI as string,
+	EMAIL_VERIFICATION: false,
 	CAPTCHA: {
 		ENABLED: false,
 		KEY: process.env.CAPTCHA_KEY as string,
