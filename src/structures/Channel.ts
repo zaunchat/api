@@ -6,6 +6,7 @@ export enum ChannelTypes {
     TEXT,
     VOICE,
     CATEGORY,
+    GROUP,
     UNKNOWN
 }
 
