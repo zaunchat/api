@@ -1,5 +1,5 @@
 import { AnyEntity, EntityName, EntityRepository, GetRepository, MikroORM } from 'mikro-orm'
-import { Channel, Message, User, Server, Member } from '../structures'
+import { Message, User, Server, Member, DMChannel, TextChannel } from '../structures'
 
 class Database {
 	private db!: MikroORM
@@ -13,7 +13,7 @@ class Database {
 		this.db = await MikroORM.init({
 			clientUrl,
 			type: 'mongo',
-			entities: [User, Message, Channel, Server, Member],
+			entities: [User, Message, Server, Member, DMChannel, TextChannel],
 			dbName: 'b9s8hx7mvxwjetc',
 			debug: false
 		})

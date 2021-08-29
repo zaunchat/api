@@ -1,6 +1,6 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { Channel } from '../structures'
+import { DMChannel } from '../structures'
 import { HTTPError } from '../errors'
 import { Permissions } from '../utils'
 import db from '../database'
@@ -10,7 +10,7 @@ import { getaway } from '../server'
 export class ChannelController {
     @web.get('/:channelId')
     async fetchChannel(req: Request, res: Response): Promise<void> {
-        const channel = await db.get(Channel).findOne({
+        const channel = await db.get(DMChannel).findOne({
             _id: req.params.channelId,
             deleted: false
         })
@@ -30,7 +30,7 @@ export class ChannelController {
 
     @web.route('delete', '/:channelId')
     async deleteChannel(req: Request, res: Response): Promise<void> {
-        const channel = await db.get(Channel).findOne({
+        const channel = await db.get(DMChannel).findOne({
             _id: req.params.channelId,
             deleted: false
         })
@@ -47,7 +47,7 @@ export class ChannelController {
 
         channel.deleted = true
 
-        await db.get(Channel).persistAndFlush(channel)
+        await db.get(DMChannel).persistAndFlush(channel)
 
         getaway.emit('CHANNEL_DELETE', { _id: channel._id })
 

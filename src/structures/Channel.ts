@@ -10,8 +10,8 @@ export enum ChannelTypes {
 }
 
 
-@Entity({ tableName: 'channels' })
-export class Channel extends Base {
+@Entity({ tableName: 'channels', abstract: true })
+export abstract class Channel extends Base {
     @Enum(() => ChannelTypes)
     type = ChannelTypes.UNKNOWN
 }

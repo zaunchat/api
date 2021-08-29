@@ -1,4 +1,4 @@
-import type { Message, Channel, User, Server, DMChannel, TextChannel } from '../structures'
+import type { Message, Channel, User, Server, DMChannel, TextChannel, Member } from '../structures'
 import ws from 'ws'
 
 declare module '@tinyhttp/app' {
@@ -16,7 +16,7 @@ interface WSEvents {
         channels: Channel[]
         servers: Server[]
         users: User[]
-        members: []
+        members: Member[]
     }
     MESSAGE_CREATE: Message
     MESSAGE_DELETE: Pick<Message, '_id' | 'channelId'>
