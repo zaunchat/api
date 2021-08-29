@@ -1,4 +1,4 @@
-import { ChannelTypes, DMChannel, TextChannel, User } from '../structures'
+import { ChannelTypes, DMChannel, Group, Server, TextChannel, User } from '../structures'
 
 export const FLAGS = {
     VIEW_CHANNEL: 1 << 0,
@@ -37,7 +37,7 @@ export class Permissions {
 
     for(obj: unknown): this {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        let channel: DMChannel | TextChannel, user: User, server: unknown
+        let channel: DMChannel | TextChannel | Group, user: User, server: Server
 
         switch (this.type) {
             case 'CHANNEL': { // TODO: Check TextChannel
@@ -45,7 +45,8 @@ export class Permissions {
 
                 ChannelTypeSwitch:
                 switch (channel.type) {
-                    case ChannelTypes.DM: {
+                    case ChannelTypes.DM: 
+                    case ChannelTypes.GROUP: {
                         if (channel.recipients.includes(this.perspective._id)) {
                             this.bitfield = DEFAULT_PERMISSION_DM
                         }
