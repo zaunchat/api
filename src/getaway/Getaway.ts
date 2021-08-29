@@ -6,6 +6,7 @@ import { WSCodes, WSCloseCodes, Payload } from './Constants'
 
 export class Getaway {
     server: WebSocket.Server
+    connections = new Map<string, Socket>()
     constructor(options: WebSocket.ServerOptions = { noServer: true, maxPayload: 4096 }) {
         this.server = new WebSocket.Server(options)
         this.server.on('connection', this.onConnection.bind(this))
@@ -21,7 +22,7 @@ export class Getaway {
     }
 
     private async onConnection(_server: WebSocket.Server, _socket: WebSocket): Promise<void> {
-        const socket = new Socket(_socket)
+        const socket = new Socket(_socket, this)
 
         try {
             socket.ws

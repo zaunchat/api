@@ -19,9 +19,14 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         fields: ['_id', 'avatar', 'username', 'badges', 'email', 'relations', 'servers', 'sessions']
     }) : null
 
+
     if (!user || !user.sessions.some(session => session.token === auth.token)) {
         return socket.close(WSCloseCodes.AUTHENTICATED_FAILED)
     }
+
+    socket.user_id = user._id
+
+    socket.getaway.connections.set(user._id, socket)
 
     await socket.send({ code: WSCodes.AUTHENTICATED })
 
