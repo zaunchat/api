@@ -155,10 +155,6 @@ export class MessageController {
     async deleteMessage(req: Request, res: Response): Promise<void> {
         const channel = (req as unknown as { channel: Channel }).channel
 
-        const permissions = new Permissions('CHANNEL')
-            .for(channel)
-            .with(req.user)
-
         const message = await db.get(Message).findOne({
             _id: req.params.messageId,
             channelId: req.params.channelId,
@@ -168,6 +164,10 @@ export class MessageController {
         if (!message) {
             return void res.status(404).send(new HTTPError('UNKNOWN_MESSAGE'))
         }
+
+        const permissions = new Permissions('CHANNEL')
+            .for(channel)
+            .with(req.user)
 
         if (!permissions.has('MANAGE_MESSAGES') && message.authorId !== req.user._id) {
             return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
