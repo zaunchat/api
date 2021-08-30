@@ -1,9 +1,9 @@
-import { Response, Request } from '@tinyhttp/app'
 import * as web from 'express-decorators'
-import db from '../database'
+import { Response, Request } from '@tinyhttp/app'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
-import { ChannelTypes, DMChannel, User } from '../structures'
+import { ChannelTypes, DMChannel, RelationshipStatus, User } from '../structures'
+import db from '../database'
 
 @web.basePath('/users')
 export class UserController {
@@ -25,6 +25,42 @@ export class UserController {
         res.json(user)
     }
 
+    @web.get('/:userId/friends')
+    async fetchFriends(req: Request, res: Response): Promise<void> {
+        if (req.params.userId !== '@me') {
+            return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
+        }
+
+        const friends = await db.get(User).find({
+            _id: {
+                $in: req.user.relations.filter((r) => r.status === RelationshipStatus.FRIEND).map((r) => r.id)
+            },
+            deleted: false
+        }, {
+            fields: ['_id', 'avatar', 'username', 'badges']
+        })
+
+        res.json(friends)
+    }
+
+    @web.get('/:userId/blocked')
+    async fetchBlocked(req: Request, res: Response): Promise<void> {
+        if (req.params.userId !== '@me') {
+            return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
+        }
+
+        const friends = await db.get(User).find({
+            _id: {
+                $in: req.user.relations.filter((r) => r.status === RelationshipStatus.BLOCKED).map((r) => r.id)
+            },
+            deleted: false
+        }, {
+            fields: ['_id', 'avatar', 'username', 'badges']
+        })
+
+        res.json(friends)
+    }
+
     @web.get('/:userId/dm')
     async openDM(req: Request, res: Response): Promise<void> {
         const { userId } = req.params
@@ -39,7 +75,7 @@ export class UserController {
 
         const exists = await db.get(DMChannel).findOne({
             type: ChannelTypes.DM,
-            $or: [{ userId }, { recipients: userId }]
+            recipients: userId
         })
 
         if (exists) {
