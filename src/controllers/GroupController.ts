@@ -3,10 +3,9 @@ import { Response, Request } from '@tinyhttp/app'
 import { Group } from '../structures'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
-import db from '../database'
-import Validator from 'fastest-validator'
+import { validator } from '../utils'
+import config from '../../config'
 
-const validator = new Validator()
 
 @web.basePath('/groups')
 export class GroupController {
@@ -15,7 +14,16 @@ export class GroupController {
             name: { type: 'string' }
         })
     }
-    
+
+    @web.get('/')
+    async fetchGroups(req: Request, res: Response): Promise<void> {
+        const groups = await Group.find({
+            deleted: false,
+            recipients: req.user._id
+        })
+        res.json(groups)
+    }
+
     @web.post('/')
     async createGroup(req: Request, res: Response): Promise<void> {
         const valid = this.checks.createGroup(req.body)
@@ -24,13 +32,22 @@ export class GroupController {
             return void res.status(400).send(valid)
         }
 
+        const groupCount = await Group.count({
+            deleted: false,
+            recipients: req.user._id
+        })
+
+        if (groupCount >= config.max.user.groups) {
+            return void res.status(403).send(new HTTPError('MAXIMUM_GROUPS'))
+        }
+
         const group = Group.from({
             name: req.body.name,
             ownerId: req.user._id,
             recipients: [req.user._id]
         })
 
-        await db.get(Group).persistAndFlush(group)
+        await group.save()
 
         getaway.emit('CHANNEL_CREATE', group)
 
@@ -39,9 +56,9 @@ export class GroupController {
 
     @web.get('/:groupId')
     async fetchGroup(req: Request, res: Response): Promise<void> {
-        const group = await db.get(Group).findOne({
-            deleted: false,
-            _id: req.params.groupId
+        const group = await Group.findOne({
+            _id: req.params.groupId,
+            deleted: false
         })
 
         if (!group) {
@@ -58,7 +75,7 @@ export class GroupController {
 
     @web.route('delete', '/:groupId')
     async deleteGroup(req: Request, res: Response): Promise<void> {
-        const group = await db.get(Group).findOne({
+        const group = await Group.findOne({
             deleted: false,
             _id: req.params.groupId
         })
@@ -71,9 +88,7 @@ export class GroupController {
             return void res.status(400).send(new HTTPError('MISSING_ACCESS'))
         }
 
-        group.deleted = true
-
-        await db.get(Group).persistAndFlush(group)
+        await group.save({ deleted: true })
 
         getaway.emit('CHANNEL_DELETE', { _id: group._id })
 

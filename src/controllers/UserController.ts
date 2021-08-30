@@ -2,8 +2,7 @@ import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
-import { ChannelTypes, DMChannel, RelationshipStatus, User } from '../structures'
-import db from '../database'
+import { DMChannel, User, RelationshipStatus } from '../structures'
 
 @web.basePath('/users')
 export class UserController {
@@ -11,7 +10,7 @@ export class UserController {
     async fetchUser(req: Request, res: Response): Promise<void> {
         const { userId } = req.params
 
-        const user = await db.get(User).findOne({
+        const user = await User.findOne({
             _id: userId === '@me' ? req.user._id : userId,
             deleted: false
         }, {
@@ -31,7 +30,7 @@ export class UserController {
             return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
         }
 
-        const friends = await db.get(User).find({
+        const friends = await User.find({
             _id: {
                 $in: req.user.relations.filter((r) => r.status === RelationshipStatus.FRIEND).map((r) => r.id)
             },
@@ -49,7 +48,7 @@ export class UserController {
             return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
         }
 
-        const friends = await db.get(User).find({
+        const friends = await User.find({
             _id: {
                 $in: req.user.relations.filter((r) => r.status === RelationshipStatus.BLOCKED).map((r) => r.id)
             },
@@ -69,12 +68,11 @@ export class UserController {
             return void res.status(403).json('You can\'t DM yourself')
         }
 
-        if (!await db.get(User).count({ _id: userId })) {
+        if (!await User.count({ _id: userId })) {
             return void res.status(403).send(new HTTPError('UNKNOWN_USER'))
         }
 
-        const exists = await db.get(DMChannel).findOne({
-            type: ChannelTypes.DM,
+        const exists = await DMChannel.findOne({
             recipients: userId
         })
 
@@ -86,7 +84,7 @@ export class UserController {
             recipients: [userId, req.user._id]
         })
 
-        await db.get(DMChannel).persistAndFlush(dm)
+        await dm.save()
 
         getaway.emit('CHANNEL_CREATE', dm)
 

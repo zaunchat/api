@@ -2,17 +2,15 @@ import config from '../config'
 import server from './server'
 import db from './database'
 
-const port = config('PORT')
-
 async function main(): Promise<void> {
 	try {
 		console.log('Connecting to database...')
 
-		await db.connect(config('DATABASE_URI'))
+		await db.connect(config.database_uri)
 
 		console.log('Connected to Database')
 
-		server.listen(port, () => console.log(`App running on port: ${port}`))
+		server.listen(config.port, () => console.log(`App running on port: ${config.port}`))
 	} catch (err) {
 		console.error(err)
 		process.exit(-1)

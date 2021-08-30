@@ -1,16 +1,14 @@
-import { Response, Request } from '@tinyhttp/app'
 import * as web from 'express-decorators'
+import { Response, Request } from '@tinyhttp/app'
 import { User, Session } from '../structures'
-import bcrypt from 'bcrypt'
-import Validator from 'fastest-validator'
 import { HTTPError } from '../errors'
 import { createTransport } from 'nodemailer'
-import config from '../../config'
 import { nanoid } from 'nanoid'
-import db from '../database'
+import { validator } from '../utils'
+import bcrypt from 'bcrypt'
+import config from '../../config'
 
-const mail = createTransport(config('SMTP_URI'))
-const validator = new Validator()
+const mail = config.smtp.enabled && config.smtp.uri ? createTransport(config.smtp.uri) : null
 const waitingForVerify = new Map<string, string>()
 const EMAIL_MESSAGE_TEMPLATE = `Hello @%%USERNAME%%,
 
@@ -40,7 +38,7 @@ export class AuthController {
         const token = req.headers['x-session-token']
         const userId = req.headers['x-session-id']
 
-        const user = token && userId && await db.get(User).findOne({
+        const user = token && userId && await User.findOne({
             _id: userId,
             deleted: false,
             verified: true
@@ -64,7 +62,7 @@ export class AuthController {
 
         const { email, password } = req.body
 
-        const user = await db.get(User).findOne({ email })
+        const user = await User.findOne({ email })
 
         if (!user) {
             return void res.status(404).send(new HTTPError('UNKNOWN_USER'))
@@ -82,9 +80,7 @@ export class AuthController {
             name: req.hostname
         })
 
-        user.sessions.push(session)
-
-        await db.get(User).persistAndFlush(user)
+        await user.save({ sessions: [...user.sessions, session] })
 
         res.json({
             token: session.token,
@@ -102,7 +98,7 @@ export class AuthController {
 
         const { userId, token } = req.body
 
-        const user = await db.get(User).findOne({
+        const user = await User.findOne({
             _id: userId,
             deleted: false
         })
@@ -119,7 +115,7 @@ export class AuthController {
             return void res.status(404).send(new HTTPError('UNKNOWN_SESSION'))
         }
 
-        await db.get(User).persistAndFlush(user)
+        await user.save()
 
         res.sendStatus(202)
     }
@@ -134,7 +130,7 @@ export class AuthController {
 
         const { username, email, password } = req.body
 
-        const exists = await db.get(User).findOne({
+        const exists = await User.findOne({
             $or: [{ username }, { email }]
         })
 
@@ -152,11 +148,10 @@ export class AuthController {
             password: await bcrypt.hash(password, 12)
         })
 
-        await db.get(User).persistAndFlush(user)
+        await user.save()
 
-        if (!config('EMAIL_VERIFICATION')) {
-            user.verified = true
-            await db.get(User).persistAndFlush(user)
+        if (!mail) {
+            await user.save({ verified: true })
             return void res.redirect(`https://${req.headers.host}/auth/login`)
         }
 
@@ -179,7 +174,7 @@ export class AuthController {
             res.json({ link })
         } catch (err) {
             console.error(err)
-            await db.get(User).removeAndFlush(user)
+            await User.remove(user)
             res.sendStatus(500)
         }
     }
@@ -192,7 +187,7 @@ export class AuthController {
             return void res.status(404).send(new HTTPError('UNKNOWN_TOKEN'))
         }
 
-        const user = await db.get(User).findOne({
+        const user = await User.findOne({
             _id: userId
         })
 
@@ -200,9 +195,7 @@ export class AuthController {
             return void res.status(404).send(new HTTPError('UNKNOWN_USER'))
         }
 
-        user.verified = true
-
-        await db.get(User).persistAndFlush(user)
+        await user.save({ verified: true })
 
         waitingForVerify.delete(userId)
 

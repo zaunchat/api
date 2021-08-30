@@ -1,28 +1,36 @@
 import 'dotenv/config'
 
 const config = {
-	DATABASE_URI: process.env.DATABASE_URI as string,
-	PORT: Number(process.env.PORT) || 8080,
-	SMTP_URI: process.env.SMTP_URI as string,
-	EMAIL_VERIFICATION: false,
-	CAPTCHA: {
-		ENABLED: false,
-		KEY: process.env.CAPTCHA_KEY as string,
-		TOKEN: process.env.CAPTCHA_TOKEN as string
+	database_uri: process.env.DATABASE_URI as string,
+	port: Number(process.env.PORT) || 8080,
+	smtp: {
+		enabled: false,
+		uri: process.env.SMTP_URI as string,
 	},
-	MAX: {
-		SERVERS: 100,
-		GROUPS: 50,
-		SERVER_CHANNELS: 200,
-		SERVER_ROLES: 200,
-		FRIENDS: 1000,
-		MESSAGE_LENGTH: 2000,
-		MESSAGE_ATTACHMENTS: 5,
-		MESSAGE_REPLIES: 5
+	captcha: {
+		enabled: false,
+		key: process.env.CAPTCHA_KEY as string,
+		token: process.env.CAPTCHA_TOKEN as string
+	},
+	max: {
+		user: {
+			servers: 100,
+			groups: 50,
+			friends: 1000,
+			blocked: 1000
+		},
+		server: {
+			roles: 200,
+			channels: 200,
+			emojis: 50
+		},
+		message: {
+			length: 2000,
+			attachments: 5,
+			replies: 5,
+			embeds: 1
+		}
 	}
 } as const
 
-
-export default <T extends keyof typeof config = keyof typeof config>(key: T): typeof config[T] => {
-	return config[key]
-}
+export default config

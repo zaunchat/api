@@ -34,6 +34,9 @@ export class Socket {
         this.ws.close(code)
     }
 
+    subscribe(id: string) {}
+    unsubscribe(id: string) {}
+
     listen(topic: unknown): void {
         console.log(topic)
         // TODO: Set listener

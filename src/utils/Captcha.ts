@@ -4,9 +4,9 @@ import config from '../../config'
 export class Captcha extends null {
     static async check(response: string): Promise<boolean> {
         const payload = {
-            secret: config('CAPTCHA').TOKEN,
+            secret: config.captcha.token,
             response,
-            sitekey: config('CAPTCHA').KEY
+            sitekey: config.captcha.key
         }
 
         const res = await fetch('https://hcaptcha.com/siteverify', {

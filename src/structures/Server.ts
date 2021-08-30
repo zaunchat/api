@@ -1,5 +1,6 @@
 import { Base, Role } from '.'
-import { Property, Entity, wrap } from 'mikro-orm'
+import { Property, Entity, wrap, FindOptions, FilterQuery } from 'mikro-orm'
+import db from '../database'
 
 export interface CreateServerOptions extends Partial<Server> {
     name: string
@@ -25,11 +26,23 @@ export class Server extends Base {
 
     @Property()
     channels: string[] = []
-    
+
     @Property()
     roles: Role[] = []
 
     static from(options: CreateServerOptions): Server {
         return wrap(new Server().setID()).assign(options)
+    }
+
+    static find(query: FilterQuery<Server>, options?: FindOptions<Server>): Promise<Server[]> {
+        return db.get(Server).find(query, options)
+    }
+
+    static findOne(query: FilterQuery<Server>): Promise<Server | null> {
+        return db.get(Server).findOne(query)
+    }
+
+    async save(options?: Partial<Server>): Promise<void> {
+        await db.get(Server).persistAndFlush(options ? wrap(this).assign(options) : this)
     }
 }

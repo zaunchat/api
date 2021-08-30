@@ -1,15 +1,11 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { HTTPError } from '../errors'
-import { Permissions } from '../utils'
-import db from '../database'
-import { Channel, Message } from '../structures'
-import Validator from 'fastest-validator'
-import { wrap } from 'mikro-orm'
+import { Permissions, validator } from '../utils'
+import { Channel, DMChannel, Message } from '../structures'
 import { getaway } from '../server'
 import config from '../../config'
 
-const validator = new Validator()
 
 @web.basePath('/channels/:channelId/messages')
 export class MessageController {
@@ -24,7 +20,7 @@ export class MessageController {
 
     @web.use()
     async fetchChannelBeforeProcess(req: Request, res: Response, next: NextFunction): Promise<void> {
-        const channel = await db.get(Channel).findOne({
+        const channel = await Channel.findOne({
             _id: req.params.channelId,
             deleted: false
         })
@@ -33,13 +29,9 @@ export class MessageController {
             return void res.status(404).send(new HTTPError('UNKNOWN_CHANNEL'))
         }
 
-        const permissions = new Permissions('CHANNEL')
-            .for(channel)
-            .with(req.user)
-
-        if (!permissions.has(['READ_MESSAGES', 'VIEW_CHANNEL'])) {
-            return void res.status(403).send(new HTTPError('MISSING_PERMISSIONS'))
-        }
+        // if (!channel.recipients.some((id) => id === req.user._id)) {
+        //     return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
+        // }
 
         Object.defineProperty(req, 'channel', {
             value: channel
@@ -50,16 +42,6 @@ export class MessageController {
 
     @web.post('/')
     async sendMessage(req: Request, res: Response): Promise<void> {
-        const channel = (req as unknown as { channel: Channel }).channel
-
-        const permissions = new Permissions('CHANNEL')
-            .for(channel)
-            .with(req.user)
-
-        if (!permissions.has('SEND_MESSAGES')) {
-            return void res.status(403).send(new HTTPError('MISSING_PERMISSIONS'))
-        }
-
         const valid = this.checks.editMessage(req.body)
 
         if (valid !== true) {
@@ -76,24 +58,19 @@ export class MessageController {
             return void res.status(400).send(new HTTPError('EMPTY_MESSAGE'))
         }
 
-        if (message.attachments.length && !permissions.has('UPLOAD_FILES')) {
-            return void res.status(400).send(new HTTPError('MISSING_PERMISSIONS'))
-        }
-
-        if ((message.content?.length ?? 0) > config('MAX').MESSAGE_LENGTH) {
+        if ((message.content?.length ?? 0) > config.max.message.length) {
             return void res.status(400).send(new HTTPError('MAXIMUM_MESSAGE_LENGTH'))
         }
 
-        if (message.replies.length > config('MAX').MESSAGE_REPLIES) {
+        if (message.replies.length > config.max.message.replies) {
             return void res.status(400).send(new HTTPError('TOO_MANY_REPLIES'))
         }
 
-        if (message.attachments.length > config('MAX').MESSAGE_ATTACHMENTS) {
+        if (message.attachments.length > config.max.message.attachments) {
             return void res.status(400).send(new HTTPError('TOO_MANY_ATTACHMENTS'))
         }
 
-
-        await db.get(Message).persistAndFlush(message)
+        await message.save()
 
         getaway.emit('MESSAGE_CREATE', message)
 
@@ -102,19 +79,18 @@ export class MessageController {
 
     @web.get('/')
     async fetchMessages(req: Request, res: Response): Promise<void> {
-        const messages = await db.get(Message).find({
-            channelId: req.params.channelId,
-            deleted: false
-        }, { limit: 100 })
+        const limit = 50 // TODO: Add limit option
+        const messages = await Message.find({ channelId: req.params.channelId, deleted: false }, { limit })
         res.json(messages)
     }
 
 
     @web.get('/:messageId')
     async fetchMessage(req: Request, res: Response): Promise<void> {
-        const message = await db.get(Message).findOne({
+        const message = await Message.findOne({
             _id: req.params.messageId,
-            channelId: req.params.channelId
+            channelId: req.params.channelId,
+            deleted: false
         })
 
         if (!message) {
@@ -132,7 +108,7 @@ export class MessageController {
             return void res.status(400).send(valid)
         }
 
-        const message = await db.get(Message).findOne({
+        const message = await Message.findOne({
             _id: req.params.messageId,
             channelId: req.params.channelId,
             deleted: false
@@ -146,7 +122,7 @@ export class MessageController {
             return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
         }
 
-        await db.get(Message).persistAndFlush(wrap(message).assign(req.body))
+        await message.save(req.body)
 
         res.sendStatus(202)
     }
@@ -155,7 +131,7 @@ export class MessageController {
     async deleteMessage(req: Request, res: Response): Promise<void> {
         const channel = (req as unknown as { channel: Channel }).channel
 
-        const message = await db.get(Message).findOne({
+        const message = await Message.findOne({
             _id: req.params.messageId,
             channelId: req.params.channelId,
             deleted: false
@@ -173,9 +149,7 @@ export class MessageController {
             return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
         }
 
-        message.deleted = true
-
-        await db.get(Message).persistAndFlush(message)
+        await message.save({ deleted: true })
 
         getaway.emit('MESSAGE_DELETE', {
             _id: message._id,

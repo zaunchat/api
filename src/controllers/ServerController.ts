@@ -1,13 +1,10 @@
-import { Response, Request } from '@tinyhttp/app'
 import * as web from 'express-decorators'
+import { Response, Request } from '@tinyhttp/app'
 import { Category, Member, Role, Server, TextChannel } from '../structures'
-import db from '../database'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
-import { DEFAULT_PERMISSION_SERVER } from '../utils'
-import Validator from 'fastest-validator'
-
-const validator = new Validator()
+import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
+import config from '../../config'
 
 
 @web.basePath('/servers')
@@ -20,7 +17,7 @@ export class ServerController {
 
     @web.post('/:serverId')
     async fetchServer(req: Request, res: Response): Promise<void> {
-        const server = await db.get(Server).findOne({
+        const server = await Server.findOne({
             _id: req.params.serverId,
             deleted: false
         })
@@ -29,7 +26,7 @@ export class ServerController {
             return void res.status(404).send(new HTTPError('UNKNOWN_SERVER'))
         }
 
-        const isExistsInServer = await db.get(Member).findOne({
+        const isExistsInServer = await Member.findOne({
             serverId: server._id,
             _id: req.user._id
         })
@@ -49,18 +46,20 @@ export class ServerController {
             return void res.status(400).send(valid)
         }
 
+        if (req.user.servers.length >= config.max.user.servers) {
+            return void res.status(403).send(new HTTPError('MAXIMUM_SERVERS'))
+        }
+
         const server = Server.from({
             ...req.body,
             ownerId: req.user._id
         })
 
-        const defaultRole = Role.from({
+        server.roles.push(Role.from({
             _id: server._id,
             name: 'everyone',
-            permissions: DEFAULT_PERMISSION_SERVER
-        })
-
-        server.roles.push(defaultRole)
+            permissions: DEFAULT_PERMISSION_EVERYONE
+        }))
 
         const generalChat = TextChannel.from({
             name: 'general',
@@ -73,15 +72,16 @@ export class ServerController {
             channels: [generalChat._id]
         })
 
+
         await Promise.all([
-            db.get(Server).persistAndFlush(server),
-            db.get(Member).persistAndFlush(Member.from({
+            await server.save(),
+            Member.from({
                 _id: req.user._id,
                 serverId: server._id,
                 roles: [server._id]
-            })),
-            db.get(TextChannel).persistAndFlush(generalChat),
-            db.get(Category).persistAndFlush(category)
+            }).save(),
+            generalChat.save(),
+            category.save()
         ])
 
         getaway.emit('SERVER_CREATE', server)

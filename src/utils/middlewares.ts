@@ -1,10 +1,9 @@
-import { NextFunction, Request, Response } from '@tinyhttp/app'
-import config from '../../config'
 import WebSocket from 'ws'
+import { NextFunction, Request, Response } from '@tinyhttp/app'
 import { Captcha } from './Captcha'
-import db from '../database'
 import { HTTPError } from '../errors'
 import { User } from '../structures'
+import config from '../../config'
 
 export const json = () => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     if (req.method && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
@@ -39,7 +38,7 @@ const NON_AUTH_ROUTES = ['login', 'register', 'verify'].map((r) => '/auth/' + r)
 
 export const auth = () => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     if (NON_AUTH_ROUTES.some((p) => req.path.includes(p))) {
-        if (config('CAPTCHA').ENABLED) {
+        if (config.captcha.enabled) {
             const captchaChecked = req.body.captcha_key && await Captcha.check(req.body.captcha_key)
             if (!captchaChecked) {
                 return void res.status(403).send(new HTTPError('FAILED_CAPTCHA'))
@@ -51,7 +50,7 @@ export const auth = () => async (req: Request, res: Response, next: NextFunction
     const token = req.headers['x-session-token']
     const userId = req.headers['x-session-id']
 
-    const user = token && userId && await db.get(User).findOne({
+    const user = token && userId && await User.findOne({
         _id: userId,
         deleted: false,
         verified: true
