@@ -35,6 +35,25 @@ export class AuthController {
         })
     }
 
+    @web.get('/check')
+    async check(req: Request, res: Response): Promise<void> {
+        const token = req.headers['x-session-token']
+        const userId = req.headers['x-session-id']
+
+        const user = token && userId && await db.get(User).findOne({
+            _id: userId,
+            deleted: false,
+            verified: true
+        }, {
+            fields: ['sessions']
+        })
+
+        const valid = Boolean(user && user.sessions.some((session) => session.token === token))
+
+        res.json({ valid })
+    }
+
+
     @web.post('/login')
     async login(req: Request, res: Response): Promise<void> {
         const valid = this.checks.login(req.body)
