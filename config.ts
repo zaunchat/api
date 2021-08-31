@@ -3,6 +3,10 @@ import 'dotenv/config'
 const config = {
 	database_uri: process.env.DATABASE_URI as string,
 	port: Number(process.env.PORT) || 8080,
+	redis: {
+		uri: 'redis://username:password@127.0.0.1:6380/4?allowUsernameInURI=true',
+		local: true
+	},
 	smtp: {
 		enabled: false,
 		uri: process.env.SMTP_URI as string,

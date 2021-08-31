@@ -72,7 +72,7 @@ export class MessageController {
 
         await message.save()
 
-        getaway.emit('MESSAGE_CREATE', message)
+        getaway.emit(message.channelId, 'MESSAGE_CREATE', message)
 
         res.sendStatus(202)
     }
@@ -150,8 +150,8 @@ export class MessageController {
         }
 
         await message.save({ deleted: true })
-
-        getaway.emit('MESSAGE_DELETE', {
+        
+        getaway.emit(message.channelId, 'MESSAGE_DELETE', {
             _id: message._id,
             channelId: message.channelId
         })

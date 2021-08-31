@@ -52,7 +52,11 @@ export class ChannelController {
             recipients: [req.user._id]
         }).save()
 
-        getaway.emit('CHANNEL_CREATE', group)
+        await Promise.all(group.recipients.map((userId) => {
+            return getaway.subscribe(userId, group._id)
+        }))
+
+        getaway.emit(group._id, 'CHANNEL_CREATE', group)
 
         res.json(group)
     }
@@ -105,7 +109,7 @@ export class ChannelController {
 
         await channel.save({ deleted: true })
 
-        getaway.emit('CHANNEL_DELETE', { _id: channel._id })
+        getaway.emit(channel._id, 'CHANNEL_DELETE', { _id: channel._id })
 
         res.sendStatus(202)
     }

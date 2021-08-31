@@ -95,7 +95,7 @@ export class ServerChannelController {
 
         await channel.save({ deleted: true })
 
-        getaway.emit('CHANNEL_DELETE', {
+        getaway.emit(channel._id, 'CHANNEL_DELETE', {
             _id: channel._id,
             serverId: channel.serverId
         })

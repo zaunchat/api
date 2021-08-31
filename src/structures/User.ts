@@ -1,7 +1,6 @@
 import { Entity, Property, wrap, FindOptions, FilterQuery, FindOneOptions } from 'mikro-orm'
+import { Base, Presence, Session } from '.'
 import db from '../database'
-import { Base } from './Base'
-import { Session } from './Session'
 
 export enum RelationshipStatus {
     FRIEND,
@@ -34,6 +33,9 @@ export class User extends Base {
 
     @Property({ unique: true })
     email!: string
+
+    @Property()
+    presence = Presence.from({})
 
     @Property()
     badges = 0

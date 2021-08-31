@@ -1,5 +1,8 @@
+import { WSEvents } from "../@types"
+
 export interface Payload {
     code: WSCodes
+    event?: keyof WSEvents
     data?: unknown
 }
 

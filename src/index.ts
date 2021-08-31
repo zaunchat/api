@@ -6,7 +6,7 @@ async function main(): Promise<void> {
 	try {
 		console.log('Connecting to database...')
 
-		await db.connect(config.database_uri)
+		await db.connect()
 
 		console.log('Connected to Database')
 

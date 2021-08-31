@@ -1,5 +1,6 @@
 import { AnyEntity, EntityName, EntityRepository, GetRepository, MikroORM } from 'mikro-orm'
 import { Message, User, Server, Member, Channel, DMChannel } from '../structures'
+import config from '../../config'
 
 class Database {
 	private db!: MikroORM
@@ -8,10 +9,10 @@ class Database {
 		return this.db.em.getRepository(entityName)
 	}
 
-	async connect(clientUrl: string): Promise<this> {
+	async connect(): Promise<this> {
 
 		this.db = await MikroORM.init({
-			clientUrl,
+			clientUrl: config.database_uri,
 			type: 'mongo',
 			entities: [User, Message, Server, Member, DMChannel, Channel],
 			dbName: 'b9s8hx7mvxwjetc',

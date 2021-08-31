@@ -1,10 +1,14 @@
 import { Payload, WSCloseCodes, WSCodes } from '../Constants'
 import { Socket } from '../Socket'
-import { DMChannel, User, Server, TextChannel } from '../../structures'
+import { DMChannel, User, Server, TextChannel, PresenceStatus, Group, ChannelTypes } from '../../structures'
 import { WSEvents } from '../../@types'
 
 
 export const Authenticate = async (socket: Socket, data: Payload): Promise<void> => {
+    if (socket.user_id && socket.getaway.connections.has(socket.user_id)) {
+        return socket.close(WSCloseCodes.ALREADY_AUTHENTICATED)
+    }
+
     const auth = (data.data ?? {}) as {
         user_id: string,
         token: string
@@ -19,10 +23,11 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
     }) : null
 
 
-    if (!user || !user.sessions.some(session => session.token === auth.token)) {
+    if (!user?.sessions.some(session => session.token === auth.token)) {
         return socket.close(WSCloseCodes.AUTHENTICATED_FAILED)
     }
 
+    user.presence.status = PresenceStatus.ONLINE
     socket.user_id = user._id
 
     socket.getaway.connections.set(user._id, socket)
@@ -30,7 +35,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
     await socket.send({ code: WSCodes.AUTHENTICATED })
 
 
-    const [users, servers, dms, channels] = await Promise.all([
+    const [users, servers, dms, groups, channels] = await Promise.all([
         User.find({
             _id: {
                 $in: Array.from(user.relations.keys())
@@ -46,6 +51,12 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
             deleted: false
         }),
         DMChannel.find({
+            type: ChannelTypes.DM,
+            recipients: user._id,
+            deleted: false
+        }),
+        Group.find({
+            type: ChannelTypes.GROUP,
             recipients: user._id,
             deleted: false
         }),
@@ -62,7 +73,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         user,
         users,
         servers,
-        channels: [...dms, ...channels],
+        channels: [...dms, ...groups, ...channels],
         members: [] // TODO: Fetch members?
     }
 
@@ -70,4 +81,12 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         code: WSCodes.READY,
         data: readyData
     })
+
+
+    await socket.subscribe([
+        user._id,
+        user.servers,
+        Array.from(user.relations.keys()),
+        readyData.channels.map(c => c._id)
+    ])
 }

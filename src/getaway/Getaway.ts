@@ -3,9 +3,12 @@ import events from './events'
 import { Socket } from './Socket'
 import { WSEvents } from '../@types'
 import { WSCodes, WSCloseCodes, Payload } from './Constants'
+import Redis from 'ioredis'
+import config from '../../config'
 
 export class Getaway {
     server: WebSocket.Server
+    redis = new Redis(config.redis.uri && !config.redis.local ? config.redis.uri : void 0)
     connections = new Map<string, Socket>()
     constructor(options: WebSocket.ServerOptions = { noServer: true, maxPayload: 4096 }) {
         this.server = new WebSocket.Server(options)
@@ -13,12 +16,12 @@ export class Getaway {
         this.server.on('error', this.onError.bind(this))
     }
 
-    emit<T extends keyof WSEvents = keyof WSEvents>(event: T, data?: WSEvents[T]): void {
-        console.debug(`
-            Event: ${event},
-            Data: ${JSON.stringify(data, null, 2)}
-        `)
-        // TODO: Emit event to connections/listeners
+    async emit<T extends keyof WSEvents = keyof WSEvents>(channel: string, event: T, data?: WSEvents[T]): Promise<void> {
+        await this.redis.publish(channel, JSON.stringify({ event, data }))
+    }
+
+    async subscribe(targetId: string, ...topic: string[]): Promise<void> {
+        await this.connections.get(targetId)?.subscribe(topic)
     }
 
     private async onConnection(_server: WebSocket.Server, _socket: WebSocket): Promise<void> {
@@ -26,7 +29,7 @@ export class Getaway {
 
         try {
             socket.ws
-                .on('close', this.onClose.bind(this))
+                .once('close', this.onClose.bind(this, socket))
                 .on('message', (buffer) => this.onMessage(socket, buffer))
 
             await socket.send({
@@ -64,8 +67,11 @@ export class Getaway {
         }
     }
 
-    private onClose(socket: WebSocket): void {
-        socket.removeEventListener('message')
+    private onClose(socket: Socket): void {
+        if (socket.user_id) {
+            this.connections.delete(socket.user_id)
+        }
+        socket.subscriptions.disconnect()
     }
 
     private onError(error: unknown): void {

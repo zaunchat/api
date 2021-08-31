@@ -62,7 +62,11 @@ export class UserController {
             recipients: [userId, req.user._id]
         }).save()
 
-        getaway.emit('CHANNEL_CREATE', dm)
+        await Promise.all(dm.recipients.map((userId) => {
+            return getaway.subscribe(userId, dm._id)
+        }))
+
+        getaway.emit(dm._id, 'CHANNEL_CREATE', dm)
 
         res.json(dm)
     }

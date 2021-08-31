@@ -74,7 +74,8 @@ export class ServerController {
             }).save(),
         ])
 
-        getaway.emit('SERVER_CREATE', server)
+        await getaway.subscribe(req.user._id, server._id)
+        await getaway.emit(server._id, 'SERVER_CREATE', server)
 
         res.json(server)
     }
