@@ -2,7 +2,6 @@ import { Payload, WSCloseCodes, WSCodes } from '../Constants'
 import { Socket } from '../Socket'
 import { DMChannel, User, Server, TextChannel } from '../../structures'
 import { WSEvents } from '../../@types'
-import db from '../../database'
 
 
 export const Authenticate = async (socket: Socket, data: Payload): Promise<void> => {
@@ -32,7 +31,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
 
 
     const [users, servers, dms, channels] = await Promise.all([
-        db.get(User).find({
+        User.find({
             _id: {
                 $in: Array.from(user.relations.keys())
             },
@@ -40,17 +39,17 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         }, {
             fields: ['_id', 'avatar', 'username', 'badges']
         }),
-        db.get(Server).find({
+        Server.find({
             _id: {
                 $in: user.servers
             },
             deleted: false
         }),
-        db.get(DMChannel).find({
+        DMChannel.find({
             recipients: user._id,
             deleted: false
         }),
-        db.get(TextChannel).find({
+        TextChannel.find({
             serverId: {
                 $in: user.servers
             },
