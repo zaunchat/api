@@ -1,5 +1,6 @@
 import { Base, Role } from '.'
 import { Property, Entity, wrap, FindOptions, FilterQuery } from 'mikro-orm'
+import { DEFAULT_PERMISSION_EVERYONE } from '../utils'
 import db from '../database'
 
 export interface CreateServerOptions extends Partial<Server> {
@@ -29,6 +30,9 @@ export class Server extends Base {
 
     @Property()
     roles: Role[] = []
+
+    @Property()
+    permissions = DEFAULT_PERMISSION_EVERYONE
 
     static from(options: CreateServerOptions): Server {
         return wrap(new Server().setID()).assign(options)

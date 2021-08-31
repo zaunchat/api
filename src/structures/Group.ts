@@ -1,5 +1,6 @@
 import { Entity, Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
 import { ChannelTypes, Channel } from './Channel'
+import { DEFAULT_PERMISSION_DM } from '../utils'
 import db from '../database'
 
 export interface CreateGroupOptions extends Omit<Partial<Group>, 'type'> {
@@ -27,6 +28,9 @@ export class Group extends Channel {
 
     @Property()
     recipients: string[] = []
+
+    @Property()
+    permissions = DEFAULT_PERMISSION_DM
 
     static from(options: CreateGroupOptions): Group {
         return wrap(new Group().setID()).assign(options)

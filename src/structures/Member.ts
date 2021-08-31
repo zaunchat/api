@@ -21,9 +21,6 @@ export class Member extends Base {
     @Property()
     serverId!: string
 
-    @Property()
-    userId!: string
-
     static from(options: CreateMemberOptions): Member {
         return wrap(new Member()).assign(options)
     }

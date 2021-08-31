@@ -55,12 +55,6 @@ export class ServerController {
             ownerId: req.user._id
         })
 
-        server.roles.push(Role.from({
-            _id: server._id,
-            name: 'everyone',
-            permissions: DEFAULT_PERMISSION_EVERYONE
-        }))
-
         const generalChat = TextChannel.from({
             name: 'general',
             serverId: server._id
@@ -74,12 +68,8 @@ export class ServerController {
 
 
         await Promise.all([
-            await server.save(),
-            Member.from({
-                _id: req.user._id,
-                serverId: server._id,
-                roles: [server._id]
-            }).save(),
+            server.save(),
+            Member.from({ _id: req.user._id, serverId: server._id }).save(),
             generalChat.save(),
             category.save()
         ])

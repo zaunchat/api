@@ -11,19 +11,19 @@ export const FLAGS = {
 } as const
 
 export const DEFAULT_PERMISSION_DM =
-    FLAGS.VIEW_CHANNEL +
-    FLAGS.READ_MESSAGES +
-    FLAGS.SEND_MESSAGES +
-    FLAGS.UPLOAD_FILES +
-    FLAGS.MANAGE_CHANNELS +
-    FLAGS.EMBED_LINKS
+    FLAGS.READ_MESSAGES |
+    FLAGS.SEND_MESSAGES |
+    FLAGS.MANAGE_CHANNELS |
+    FLAGS.EMBED_LINKS |
+    FLAGS.VIEW_CHANNEL |
+    FLAGS.UPLOAD_FILES
 
 export const DEFAULT_PERMISSION_EVERYONE =
-    FLAGS.VIEW_CHANNEL +
-    FLAGS.READ_MESSAGES +
-    FLAGS.SEND_MESSAGES +
-    FLAGS.UPLOAD_FILES +
-    FLAGS.EMBED_LINKS
+    FLAGS.READ_MESSAGES |
+    FLAGS.SEND_MESSAGES |
+    FLAGS.EMBED_LINKS |
+    FLAGS.VIEW_CHANNEL |
+    FLAGS.UPLOAD_FILES
 
 
 export type PermissionsResolvable = number | keyof typeof FLAGS | PermissionsResolvable[]
@@ -33,7 +33,7 @@ export class Permissions {
     bitfield = 0
     perspective!: User
 
-    constructor(public type: PermissionsType) { }
+    constructor(public type: PermissionsType) {}
 
     for(obj: unknown): this {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -45,7 +45,7 @@ export class Permissions {
 
                 ChannelTypeSwitch:
                 switch (channel.type) {
-                    case ChannelTypes.DM: 
+                    case ChannelTypes.DM:
                     case ChannelTypes.GROUP: {
                         if (channel.recipients.includes(this.perspective._id)) {
                             this.bitfield = DEFAULT_PERMISSION_DM
