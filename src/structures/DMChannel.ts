@@ -7,8 +7,6 @@ export interface CreateDMChannelOptions extends Omit<Partial<DMChannel>, 'type'>
 }
 
 
-
-
 @Entity({ tableName: 'channels' })
 export class DMChannel extends Channel {
     @Property()

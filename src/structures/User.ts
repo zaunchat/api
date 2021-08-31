@@ -4,17 +4,11 @@ import { Base } from './Base'
 import { Session } from './Session'
 
 export enum RelationshipStatus {
-    USER,
     FRIEND,
     OUTGOING,
-    IM_COMING,
+    IN_COMING,
     BLOCKED,
-    BLOCKED_OTHER,
-}
-
-export interface Relationship {
-    id: string
-    status: RelationshipStatus
+    BLOCKED_OTHER
 }
 
 export enum UserBadges {
@@ -45,7 +39,7 @@ export class User extends Base {
     badges = 0
 
     @Property()
-    relations: Relationship[] = []
+    relations = new Map<string, RelationshipStatus>()
 
     @Property()
     servers: string[] = []
@@ -79,8 +73,12 @@ export class User extends Base {
         return db.get(User).removeAndFlush(user)
     }
 
+    static async save(...users: User[]): Promise<void> {
+        await db.get(User).persistAndFlush(users)
+    }
+
     async save(options?: Partial<User>): Promise<this> {
-        await db.get(User).persistAndFlush(options ? wrap(this).assign(options) : this)
+        await User.save(options ? wrap(this).assign(options) : this)
         return this
     }
 }

@@ -46,13 +46,11 @@ export class ChannelController {
             return void res.status(403).send(new HTTPError('MAXIMUM_GROUPS'))
         }
 
-        const group = Group.from({
+        const group = await Group.from({
             name: req.body.name,
             ownerId: req.user._id,
             recipients: [req.user._id]
-        })
-
-        await group.save()
+        }).save()
 
         getaway.emit('CHANNEL_CREATE', group)
 

@@ -48,8 +48,12 @@ export class Message extends Base {
         return db.get(Message).findOne(query)
     }
 
+    static async save(...messages: Message[]): Promise<void> {
+        await db.get(Message).persistAndFlush(messages)
+    }
+
     async save(options?: Partial<Message>): Promise<this> {
-        await db.get(Message).persistAndFlush(options ? wrap(this).assign(options) : this)
+        await Message.save(options ? wrap(this).assign(options) : this)
         return this
     }
 }

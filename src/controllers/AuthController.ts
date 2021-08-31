@@ -38,17 +38,17 @@ export class AuthController {
         const token = req.headers['x-session-token']
         const userId = req.headers['x-session-id']
 
-        const user = token && userId && await User.findOne({
+        const user = token && userId ? await User.findOne({
             _id: userId,
             deleted: false,
             verified: true
         }, {
             fields: ['sessions']
+        }) : null
+
+        res.json({
+            valid: !!user?.sessions.some((session) => session.token === token)
         })
-
-        const valid = Boolean(user && user.sessions.some((session) => session.token === token))
-
-        res.json({ valid })
     }
 
 
@@ -142,16 +142,13 @@ export class AuthController {
             }
         }
 
-        const user = User.from({
+        const user = await User.from({
             username,
             email,
             password: await bcrypt.hash(password, 12)
-        })
-
-        await user.save()
+        }).save({ verified: !mail })
 
         if (!mail) {
-            await user.save({ verified: true })
             return void res.redirect(`https://${req.headers.host}/auth/login`)
         }
 

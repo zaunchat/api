@@ -33,8 +33,12 @@ export class Member extends Base {
         return db.get(Member).findOne(query)
     }
 
+    static async save(...members: Member[]): Promise<void> {
+        await db.get(Member).persistAndFlush(members)
+    }
+
     async save(options?: Partial<Member>): Promise<this> {
-        await db.get(Member).persistAndFlush(options ? wrap(this).assign(options) : this)
+        await Member.save(options ? wrap(this).assign(options) : this)
         return this
     }
 }

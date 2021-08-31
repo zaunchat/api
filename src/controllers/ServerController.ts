@@ -1,9 +1,9 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { Category, Member, Role, Server, TextChannel } from '../structures'
+import { Server, Member, Category, TextChannel } from '../structures'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
-import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
+import { validator } from '../utils'
 import config from '../../config'
 
 
@@ -55,23 +55,23 @@ export class ServerController {
             ownerId: req.user._id
         })
 
-        const generalChat = TextChannel.from({
+        const chat = TextChannel.from({
             name: 'general',
             serverId: server._id
         })
 
-        const category = Category.from({
-            name: 'General',
-            serverId: server._id,
-            channels: [generalChat._id]
-        })
-
-
         await Promise.all([
             server.save(),
-            Member.from({ _id: req.user._id, serverId: server._id }).save(),
-            generalChat.save(),
-            category.save()
+            chat.save(),
+            Category.from({
+                name: 'General',
+                serverId: server._id,
+                channels: [chat._id]
+            }).save(),
+            Member.from({
+                _id: req.user._id,
+                serverId: server._id
+            }).save(),
         ])
 
         getaway.emit('SERVER_CREATE', server)

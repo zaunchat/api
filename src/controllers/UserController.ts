@@ -2,7 +2,7 @@ import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
-import { DMChannel, User, RelationshipStatus } from '../structures'
+import { DMChannel, RelationshipStatus, User } from '../structures'
 
 @web.basePath('/users')
 export class UserController {
@@ -24,47 +24,25 @@ export class UserController {
         res.json(user)
     }
 
-    @web.get('/:userId/friends')
-    async fetchFriends(req: Request, res: Response): Promise<void> {
-        if (req.params.userId !== '@me') {
-            return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
-        }
-
-        const friends = await User.find({
+    @web.get('/@me/relationships')
+    async fetchRelationships(req: Request, res: Response): Promise<void> {
+        const relationships = await User.find({
             _id: {
-                $in: req.user.relations.filter((r) => r.status === RelationshipStatus.FRIEND).map((r) => r.id)
+                $in: Array.from(req.user.relations.keys())
             },
             deleted: false
         }, {
             fields: ['_id', 'avatar', 'username', 'badges']
         })
 
-        res.json(friends)
-    }
-
-    @web.get('/:userId/blocked')
-    async fetchBlocked(req: Request, res: Response): Promise<void> {
-        if (req.params.userId !== '@me') {
-            return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
-        }
-
-        const friends = await User.find({
-            _id: {
-                $in: req.user.relations.filter((r) => r.status === RelationshipStatus.BLOCKED).map((r) => r.id)
-            },
-            deleted: false
-        }, {
-            fields: ['_id', 'avatar', 'username', 'badges']
-        })
-
-        res.json(friends)
+        res.json(relationships)
     }
 
     @web.get('/:userId/dm')
     async openDM(req: Request, res: Response): Promise<void> {
         const { userId } = req.params
 
-        if (userId === req.user._id) {
+        if (userId === req.user._id || userId === '@me') {
             return void res.status(403).json('You can\'t DM yourself')
         }
 
@@ -80,14 +58,142 @@ export class UserController {
             return void res.json(exists)
         }
 
-        const dm = DMChannel.from({
+        const dm = await DMChannel.from({
             recipients: [userId, req.user._id]
-        })
-
-        await dm.save()
+        }).save()
 
         getaway.emit('CHANNEL_CREATE', dm)
 
         res.json(dm)
+    }
+
+
+    @web.post('/:userId/friend')
+    async friend(req: Request, res: Response): Promise<void> {
+        const { userId } = req.params
+
+        if (userId === req.user._id || userId === '@me') {
+            return void res.status(403).json('You can\'t friend yourself')
+        }
+
+        const target = await User.findOne({
+            _id: userId,
+            deleted: false
+        })
+
+        if (!target) {
+            return void res.status(403).send(new HTTPError('UNKNOWN_USER'))
+        }
+
+        const panding = target.relations.get(req.user._id) === RelationshipStatus.IN_COMING && req.user.relations.get(target._id) === RelationshipStatus.OUTGOING
+        let status: RelationshipStatus
+
+        if (panding) {
+            status = RelationshipStatus.FRIEND
+            target.relations.set(req.user._id, RelationshipStatus.FRIEND)
+            req.user.relations.set(target._id, RelationshipStatus.FRIEND)
+        } else {
+            status = RelationshipStatus.IN_COMING
+            target.relations.set(req.user._id, RelationshipStatus.OUTGOING)
+            req.user.relations.set(target._id, RelationshipStatus.IN_COMING)
+        }
+
+        await Promise.all([
+            target.save(),
+            req.user.save()
+        ])
+
+        res.send({ status })
+    }
+
+    @web.route('delete', '/:userId/friend')
+    async unfriend(req: Request, res: Response): Promise<void> {
+        const { userId } = req.params
+
+        if (userId === req.user._id || userId === '@me') {
+            return void res.status(403).json('You can\'t un-friend yourself')
+        }
+
+        const target = await User.findOne({
+            _id: userId,
+            deleted: false
+        })
+
+        if (!target) {
+            return void res.status(403).send(new HTTPError('UNKNOWN_USER'))
+        }
+
+        if (!req.user.relations.has(target._id)) {
+            return void res.json({ status: null })
+        }
+
+        req.user.relations.delete(target._id)
+        target.relations.delete(req.user._id)
+
+        await Promise.all([
+            target.save(),
+            req.user.save()
+        ])
+
+        return void res.json({ status: null })
+    }
+
+    @web.post('/:userId/block')
+    async block(req: Request, res: Response): Promise<void> {
+        const { userId } = req.params
+
+        if (userId === req.user._id || userId === '@me') {
+            return void res.status(403).json('You can\'t block yourself')
+        }
+
+        const target = await User.findOne({
+            _id: userId,
+            deleted: false
+        })
+
+        if (!target) {
+            return void res.status(403).send(new HTTPError('UNKNOWN_USER'))
+        }
+
+        const alreadyBlocked = req.user.relations.get(target._id) === RelationshipStatus.BLOCKED
+
+        if (alreadyBlocked) {
+            return void res.json({ status: RelationshipStatus.BLOCKED })
+        }
+
+        await Promise.all([
+            req.user.save({
+                relations: req.user.relations.set(target._id, RelationshipStatus.BLOCKED)
+            }),
+            target.save({
+                relations: target.relations.set(req.user._id, RelationshipStatus.BLOCKED_OTHER)
+            })
+        ])
+
+        res.json({ status: RelationshipStatus.BLOCKED })
+    }
+
+    @web.route('delete', '/:userId')
+    async unblock(req: Request, res: Response): Promise<void> {
+        const { userId } = req.params
+
+        if (userId === req.user._id || userId === '@me') {
+            return void res.status(403).json('You can\'t unblock yourself')
+        }
+
+        const target = await User.findOne({
+            _id: userId,
+            deleted: false
+        })
+
+        if (!target) {
+            return void res.status(403).send(new HTTPError('UNKNOWN_USER'))
+        }
+
+        req.user.relations.delete(target._id)
+
+        await req.user.save()
+
+        res.json({ status: null })
     }
 }

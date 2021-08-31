@@ -33,8 +33,12 @@ export class Category extends Channel {
         return db.get(Category).findOne(query)
     }
 
+    static async save(...categorys: Category[]): Promise<void> {
+        await db.get(Category).persistAndFlush(categorys)
+    }
+
     async save(options?: Partial<Category>): Promise<this> {
-        await db.get(Category).persistAndFlush(options ? wrap(this).assign(options) : this)
+        await Category.save(options ? wrap(this).assign(options) : this)
         return this
     }
 }

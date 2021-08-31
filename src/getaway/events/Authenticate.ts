@@ -11,7 +11,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         token: string
     }
 
-    const user = auth.user_id && auth.token ? await db.get(User).findOne({
+    const user = auth.user_id && auth.token ? await User.findOne({
         _id: auth.user_id,
         deleted: false,
         verified: true
@@ -30,11 +30,11 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
 
     await socket.send({ code: WSCodes.AUTHENTICATED })
 
-    
+
     const [users, servers, dms, channels] = await Promise.all([
         db.get(User).find({
             _id: {
-                $in: user.relations.map(({ id }) => id)
+                $in: Array.from(user.relations.keys())
             },
             deleted: false
         }, {
@@ -51,10 +51,10 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
             deleted: false
         }),
         db.get(TextChannel).find({
-            deleted: false,
             serverId: {
                 $in: user.servers
-            }
+            },
+            deleted: false
         })
     ])
 
