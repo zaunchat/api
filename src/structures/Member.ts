@@ -36,7 +36,8 @@ export class Member extends Base {
         return db.get(Member).findOne(query)
     }
 
-    async save(options?: Partial<Member> ): Promise<void> {
+    async save(options?: Partial<Member>): Promise<this> {
         await db.get(Member).persistAndFlush(options ? wrap(this).assign(options) : this)
+        return this
     }
 }

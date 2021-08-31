@@ -33,7 +33,8 @@ export class TextChannel extends Channel {
         return db.get(TextChannel).findOne(query)
     }
 
-    async save(options?: Partial<TextChannel>): Promise<void> {
+    async save(options?: Partial<TextChannel>): Promise<this> {
         await db.get(TextChannel).persistAndFlush(options ? wrap(this).assign(options) : this)
+        return this
     }
 }

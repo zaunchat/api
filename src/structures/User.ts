@@ -79,7 +79,8 @@ export class User extends Base {
         return db.get(User).removeAndFlush(user)
     }
 
-    async save(options?: Partial<User>): Promise<void> {
+    async save(options?: Partial<User>): Promise<this> {
         await db.get(User).persistAndFlush(options ? wrap(this).assign(options) : this)
+        return this
     }
 }

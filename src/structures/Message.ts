@@ -48,7 +48,8 @@ export class Message extends Base {
         return db.get(Message).findOne(query)
     }
 
-    async save(options?: Partial<Message>): Promise<void> {
+    async save(options?: Partial<Message>): Promise<this> {
         await db.get(Message).persistAndFlush(options ? wrap(this).assign(options) : this)
+        return this
     }
 }

@@ -40,6 +40,7 @@ export class ServerChannelController {
     async fetchChannel(req: Request, res: Response): Promise<void> {
         const channel = await TextChannel.findOne({
             _id: req.params.channelId,
+            serverId: req.params.serverId,
             deleted: false
         })
 

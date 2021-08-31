@@ -44,7 +44,8 @@ export class Group extends Channel {
         return db.get(Group).count(query)
     }
 
-    async save(options?: Partial<Group>): Promise<void> {
+    async save(options?: Partial<Group>): Promise<this> {
         await db.get(Group).persistAndFlush(options ? wrap(this).assign(options) : this)
+        return this
     }
 }

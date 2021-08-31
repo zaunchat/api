@@ -29,7 +29,8 @@ export class DMChannel extends Channel {
         return db.get(DMChannel).findOne(query)
     }
 
-    async save(options?: Partial<DMChannel>): Promise<void> {
+    async save(options?: Partial<DMChannel>): Promise<this> {
         await db.get(DMChannel).persistAndFlush(options ? wrap(this).assign(options) : this)
+        return this
     }
 }

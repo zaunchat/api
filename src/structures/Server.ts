@@ -42,7 +42,8 @@ export class Server extends Base {
         return db.get(Server).findOne(query)
     }
 
-    async save(options?: Partial<Server>): Promise<void> {
+    async save(options?: Partial<Server>): Promise<this> {
         await db.get(Server).persistAndFlush(options ? wrap(this).assign(options) : this)
+        return this
     }
 }
