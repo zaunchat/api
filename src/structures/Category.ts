@@ -1,12 +1,21 @@
 import { Channel, ChannelTypes } from './Channel'
 import { Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
+import { validator } from '../utils'
 import db from '../database'
-
 
 export interface CreateCategoryOptions extends Omit<Partial<Category>, 'type'> {
     name: string
     serverId: string
 }
+
+
+export const CreateCategorySchema = validator.compile({
+    name: {
+        type: 'string',
+        min: 2,
+        max: 50
+    }
+})
 
 export class Category extends Channel {
     @Property()

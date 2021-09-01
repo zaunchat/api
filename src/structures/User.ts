@@ -1,5 +1,6 @@
 import { Entity, Property, wrap, FindOptions, FilterQuery, FindOneOptions } from 'mikro-orm'
 import { Base, Presence, Session } from '.'
+import { validator } from '../utils'
 import db from '../database'
 
 export enum RelationshipStatus {
@@ -22,6 +23,22 @@ export interface CreateUserOptions extends Partial<User> {
     password: string
     email: string
 }
+
+export const CreateUserSchema = validator.compile({
+    username: { type: 'string', min: 3, max: 32 },
+    email: { type: 'email', min: 5, max: 100 },
+    password: { type: 'string', min: 8, max: 72 }
+})
+
+export const LoginUserSchema = validator.compile({
+    email: { type: 'email', min: 5, max: 100 },
+    password: { type: 'string', min: 8, max: 72 }
+})
+
+export const LogoutUserSchema = validator.compile({
+    token: { type: 'string' },
+    userId: { type: 'string' }
+})
 
 @Entity({ tableName: 'users' })
 export class User extends Base {

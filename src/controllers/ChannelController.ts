@@ -1,19 +1,13 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { ChannelTypes, DMChannel, Group } from '../structures'
+import { ChannelTypes, DMChannel, Group, CreateGroupSchema } from '../structures'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
-import { validator } from '../utils'
 import config from '../../config'
+
 
 @web.basePath('/channels/@me')
 export class ChannelController {
-    checks = {
-        createGroup: validator.compile({
-            name: { type: 'string' }
-        })
-    }
-
     @web.get('/')
     async fetchChannels(req: Request, res: Response): Promise<void> {
         const [dms, groups] = await Promise.all([
@@ -31,19 +25,15 @@ export class ChannelController {
 
     @web.post('/')
     async createGroup(req: Request, res: Response): Promise<void> {
-        const valid = this.checks.createGroup(req.body)
-
-        if (valid !== true) {
-            return void res.status(400).send(valid)
-        }
+        req.check(CreateGroupSchema)
 
         const groupCount = await Group.count({
             deleted: false,
             recipients: req.user._id
         })
 
-        if (groupCount >= config.max.user.groups) {
-            return void res.status(403).send(new HTTPError('MAXIMUM_GROUPS'))
+        if (groupCount >= config.limits.user.groups) {
+            throw new HTTPError('MAXIMUM_GROUPS')
         }
 
         const group = await Group.from({
@@ -52,11 +42,9 @@ export class ChannelController {
             recipients: [req.user._id]
         }).save()
 
-        await Promise.all(group.recipients.map((userId) => {
-            return getaway.subscribe(userId, group._id)
-        }))
+        await Promise.all(group.recipients.map((userId) => getaway.subscribe(userId, group._id)))
 
-        getaway.emit(group._id, 'CHANNEL_CREATE', group)
+        getaway.publish(group._id, 'CHANNEL_CREATE', group)
 
         res.json(group)
     }
@@ -64,22 +52,18 @@ export class ChannelController {
 
     @web.get('/:channelId')
     async fetchChannel(req: Request, res: Response): Promise<void> {
-        let channel: DMChannel | Group | null = await DMChannel.findOne({
+        const channel = await DMChannel.findOne({
             _id: req.params.channelId,
+            recipients: req.user._id,
             deleted: false
-        })
-
-        if (!channel) channel = await Group.findOne({
+        }) ?? await Group.findOne({
             _id: req.params.channelId,
+            recipients: req.user._id,
             deleted: false
         })
 
         if (!channel) {
-            return void res.status(404).send(new HTTPError('UNKNOWN_CHANNEL'))
-        }
-
-        if (channel.type === ChannelTypes.GROUP && channel.ownerId !== req.user._id && !channel.recipients.some((id) => id === req.user._id)) {
-            return void res.status(400).send(new HTTPError('MISSING_ACCESS'))
+            throw new HTTPError('UNKNOWN_CHANNEL')
         }
 
         res.json(channel)
@@ -89,28 +73,28 @@ export class ChannelController {
 
     @web.route('delete', '/:channelId')
     async deleteChannel(req: Request, res: Response): Promise<void> {
-        let channel: DMChannel | Group | null = await DMChannel.findOne({
+        const channel = await DMChannel.findOne({
             _id: req.params.channelId,
+            recipients: req.user._id,
             deleted: false
-        })
-
-        if (!channel) channel = await Group.findOne({
+        }) ?? await Group.findOne({
             _id: req.params.channelId,
+            recipients: req.user._id,
             deleted: false
         })
 
         if (!channel) {
-            return void res.status(404).send(new HTTPError('UNKNOWN_CHANNEL'))
+            throw new HTTPError('UNKNOWN_CHANNEL')
         }
 
         if (channel.type === ChannelTypes.GROUP && channel.ownerId !== req.user._id) {
-            return void res.status(400).send(new HTTPError('MISSING_ACCESS'))
+            throw new HTTPError('MISSING_ACCESS')
         }
 
         await channel.save({ deleted: true })
 
-        getaway.emit(channel._id, 'CHANNEL_DELETE', { _id: channel._id })
+        getaway.publish(channel._id, 'CHANNEL_DELETE', { _id: channel._id })
 
-        res.sendStatus(202)
+        res.ok()
     }
 }

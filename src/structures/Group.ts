@@ -1,6 +1,6 @@
 import { Entity, Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
 import { ChannelTypes, Channel } from './Channel'
-import { DEFAULT_PERMISSION_DM } from '../utils'
+import { DEFAULT_PERMISSION_DM, validator } from '../utils'
 import db from '../database'
 
 export interface CreateGroupOptions extends Omit<Partial<Group>, 'type'> {
@@ -8,6 +8,14 @@ export interface CreateGroupOptions extends Omit<Partial<Group>, 'type'> {
     ownerId: string
     recipients: string[]
 }
+
+export const CreateGroupSchema = validator.compile({
+    name: {
+        type: 'string', 
+        min: 2, 
+        max: 50
+    }
+})
 
 @Entity({ tableName: 'channels' })
 export class Group extends Channel {

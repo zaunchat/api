@@ -1,20 +1,13 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { Server, Member, Category, TextChannel } from '../structures'
+import { Server, Member, Category, TextChannel, CreateServerSchema } from '../structures'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
-import { validator } from '../utils'
 import config from '../../config'
 
 
 @web.basePath('/servers')
 export class ServerController {
-    checks = {
-        createServer: validator.compile({
-            name: { type: 'string' }
-        })
-    }
-
     @web.post('/:serverId')
     async fetchServer(req: Request, res: Response): Promise<void> {
         const server = await Server.findOne({
@@ -23,7 +16,7 @@ export class ServerController {
         })
 
         if (!server) {
-            return void res.status(404).send(new HTTPError('UNKNOWN_SERVER'))
+            throw new HTTPError('UNKNOWN_SERVER')
         }
 
         const isExistsInServer = await Member.findOne({
@@ -32,7 +25,7 @@ export class ServerController {
         })
 
         if (!isExistsInServer) {
-            return void res.status(404).send(new HTTPError('MISSING_ACCESS'))
+            throw new HTTPError('MISSING_ACCESS')
         }
 
         res.json(server)
@@ -40,14 +33,10 @@ export class ServerController {
 
     @web.post('/')
     async createServer(req: Request, res: Response): Promise<void> {
-        const valid = this.checks.createServer(req.body)
+        req.check(CreateServerSchema)
 
-        if (valid !== true) {
-            return void res.status(400).send(valid)
-        }
-
-        if (req.user.servers.length >= config.max.user.servers) {
-            return void res.status(403).send(new HTTPError('MAXIMUM_SERVERS'))
+        if (req.user.servers.length >= config.limits.user.servers) {
+            throw new HTTPError('MAXIMUM_SERVERS')
         }
 
         const server = Server.from({
@@ -60,22 +49,17 @@ export class ServerController {
             serverId: server._id
         })
 
-        await Promise.all([
-            server.save(),
-            chat.save(),
-            Category.from({
-                name: 'General',
-                serverId: server._id,
-                channels: [chat._id]
-            }).save(),
-            Member.from({
-                _id: req.user._id,
-                serverId: server._id
-            }).save(),
-        ])
+        const category = Category.from({
+            name: 'General',
+            serverId: server._id,
+            channels: [chat._id]
+        })
 
-        await getaway.subscribe(req.user._id, server._id)
-        await getaway.emit(server._id, 'SERVER_CREATE', server)
+        await Promise.all([server.save(), chat.save(), category.save()])
+        await getaway.subscribe(req.user._id, server._id, chat._id, category._id)
+        await server.addMember(req.user)
+
+        getaway.publish(server._id, 'SERVER_CREATE', server)
 
         res.json(server)
     }

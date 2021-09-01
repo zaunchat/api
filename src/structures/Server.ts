@@ -1,12 +1,20 @@
-import { Base, Role } from '.'
+import { Base, Role, User, Member } from '.'
 import { Property, Entity, wrap, FindOptions, FilterQuery } from 'mikro-orm'
-import { DEFAULT_PERMISSION_EVERYONE } from '../utils'
+import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
 import db from '../database'
 
 export interface CreateServerOptions extends Partial<Server> {
     name: string
     ownerId: string
 }
+
+export const CreateServerSchema = validator.compile({
+    name: {
+        type: 'string', 
+        min: 2, 
+        max: 50
+    }
+})
 
 @Entity({ tableName: 'servers' })
 export class Server extends Base {
@@ -24,9 +32,6 @@ export class Server extends Base {
 
     @Property()
     ownerId!: string
-
-    @Property()
-    channels: string[] = []
 
     @Property()
     roles: Role[] = []
@@ -49,5 +54,13 @@ export class Server extends Base {
     async save(options?: Partial<Server>): Promise<this> {
         await db.get(Server).persistAndFlush(options ? wrap(this).assign(options) : this)
         return this
+    }
+
+    async addMember(user: User): Promise<void> {
+        user.servers.push(this._id)
+        await Member.from({
+            _id: user._id,
+            serverId: this._id
+        }).save()
     }
 }

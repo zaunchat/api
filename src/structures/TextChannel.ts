@@ -1,11 +1,27 @@
 import { Entity, Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
 import { Channel, ChannelTypes } from '.'
+import { validator } from '../utils'
 import db from '../database'
 
 export interface CreateTextChannelOptions extends Omit<Partial<TextChannel>, 'type'> {
     name: string
     serverId: string
 }
+
+export const CreateTextChannelSchema = validator.compile({
+    name: {
+        type: 'string',
+        min: 2,
+        max: 50
+    },
+    topic: {
+        type: 'string',
+        min: 1,
+        max: 1000,
+        optional: true
+    },
+    $$strict: true
+})
 
 @Entity({ tableName: 'channels' })
 export class TextChannel extends Channel {

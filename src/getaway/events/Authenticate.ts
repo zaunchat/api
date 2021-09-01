@@ -1,7 +1,7 @@
-import { Payload, WSCloseCodes, WSCodes } from '../Constants'
+import { Payload, WSCloseCodes, WSCodes, WSEvents } from '../Constants'
+import { DMChannel, User, Server, TextChannel, PresenceStatus, Group, ChannelTypes, Member } from '../../structures'
 import { Socket } from '../Socket'
-import { DMChannel, User, Server, TextChannel, PresenceStatus, Group, ChannelTypes } from '../../structures'
-import { WSEvents } from '../../@types'
+import { getaway } from '../../server'
 
 
 export const Authenticate = async (socket: Socket, data: Payload): Promise<void> => {
@@ -27,7 +27,6 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         return socket.close(WSCloseCodes.AUTHENTICATED_FAILED)
     }
 
-    user.presence.status = PresenceStatus.ONLINE
     socket.user_id = user._id
 
     socket.getaway.connections.set(user._id, socket)
@@ -35,7 +34,14 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
     await socket.send({ code: WSCodes.AUTHENTICATED })
 
 
-    const [users, servers, dms, groups, channels] = await Promise.all([
+    const [
+        users,
+        servers,
+        dms,
+        groups,
+        channels,
+        members
+    ] = await Promise.all([
         User.find({
             _id: {
                 $in: Array.from(user.relations.keys())
@@ -65,6 +71,12 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
                 $in: user.servers
             },
             deleted: false
+        }),
+        Member.find({
+            serverId: {
+                $in: user.servers
+            },
+            deleted: false
         })
     ])
 
@@ -74,7 +86,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         users,
         servers,
         channels: [...dms, ...groups, ...channels],
-        members: [] // TODO: Fetch members?
+        members
     }
 
     await socket.send({
@@ -84,9 +96,22 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
 
 
     await socket.subscribe([
-        user._id,
+        [user._id],
+        [...user.relations.keys()],
         user.servers,
-        Array.from(user.relations.keys()),
         readyData.channels.map(c => c._id)
     ])
+
+    if (!user.presence.ghostMode) {
+        const newPresence = {
+            ghostMode: user.presence.ghostMode,
+            status: PresenceStatus.ONLINE
+        }
+
+        await user.save({ presence: newPresence })
+        await getaway.publish(user._id, 'USER_UPDATE', {
+            _id: user._id,
+            presence: newPresence
+        })
+    }
 }

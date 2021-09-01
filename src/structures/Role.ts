@@ -1,8 +1,28 @@
-import { UUID } from '../utils'
+import { UUID, validator } from '../utils'
 
 export interface CreateRoleOptions extends Partial<Role> {
-    name: string   
+    name: string
 }
+
+export const CreateRoleSchema = validator.compile({
+    name: {
+        type: 'string',
+        min: 1,
+        max: 30
+    },
+    color: {
+        type: 'number',
+        optional: true
+    },
+    permissions: {
+        type: 'number',
+        optional: true
+    },
+    hoist: {
+        type: 'boolean',
+        optional: true
+    }
+})
 
 export class Role {
     _id!: string

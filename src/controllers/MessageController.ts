@@ -1,40 +1,34 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { HTTPError } from '../errors'
-import { Permissions, validator } from '../utils'
-import { Channel, DMChannel, Message } from '../structures'
+import { CreateMessageSchema, DMChannel, Group, Message } from '../structures'
+import { Permissions } from '../utils'
 import { getaway } from '../server'
 import config from '../../config'
 
 
 @web.basePath('/channels/:channelId/messages')
 export class MessageController {
-    checks = {
-        editMessage: validator.compile({
-            content: { type: 'string' }
-        }),
-        sendMessage: validator.compile({
-            content: { type: 'string' }
-        })
-    }
-
     @web.use()
-    async fetchChannelBeforeProcess(req: Request, res: Response, next: NextFunction): Promise<void> {
-        const channel = await Channel.findOne({
+    async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
+        const channel = await DMChannel.findOne({
             _id: req.params.channelId,
+            recipients: req.user._id,
+            deleted: false
+        }) ?? await Group.findOne({
+            _id: req.params.channelId,
+            recipients: req.user._id,
             deleted: false
         })
 
         if (!channel) {
-            return void res.status(404).send(new HTTPError('UNKNOWN_CHANNEL'))
+            throw new HTTPError('UNKNOWN_CHANNEL')
         }
 
-        // if (!channel.recipients.some((id) => id === req.user._id)) {
-        //     return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
-        // }
+        const permissions = await Permissions.fetch(req.user, null, channel)
 
-        Object.defineProperty(req, 'channel', {
-            value: channel
+        Object.defineProperty(req, 'permissions', {
+            value: permissions
         })
 
         next()
@@ -42,11 +36,7 @@ export class MessageController {
 
     @web.post('/')
     async sendMessage(req: Request, res: Response): Promise<void> {
-        const valid = this.checks.editMessage(req.body)
-
-        if (valid !== true) {
-            return void res.status(400).send(valid)
-        }
+        req.check(CreateMessageSchema)
 
         const message = Message.from({
             authorId: req.user._id,
@@ -55,30 +45,36 @@ export class MessageController {
         })
 
         if (!message.content?.length && !message.attachments.length) {
-            return void res.status(400).send(new HTTPError('EMPTY_MESSAGE'))
+            throw new HTTPError('EMPTY_MESSAGE')
         }
 
-        if ((message.content?.length ?? 0) > config.max.message.length) {
-            return void res.status(400).send(new HTTPError('MAXIMUM_MESSAGE_LENGTH'))
+        if ((message.content?.length ?? 0) > config.limits.message.length) {
+            throw new HTTPError('MAXIMUM_MESSAGE_LENGTH')
         }
 
-        if (message.replies.length > config.max.message.replies) {
-            return void res.status(400).send(new HTTPError('TOO_MANY_REPLIES'))
+        if (message.replies.length > config.limits.message.replies) {
+            throw new HTTPError('TOO_MANY_REPLIES')
         }
 
-        if (message.attachments.length > config.max.message.attachments) {
-            return void res.status(400).send(new HTTPError('TOO_MANY_ATTACHMENTS'))
+        if (message.attachments.length > config.limits.message.attachments) {
+            throw new HTTPError('TOO_MANY_ATTACHMENTS')
         }
 
         await message.save()
 
-        getaway.emit(message.channelId, 'MESSAGE_CREATE', message)
+        getaway.publish(message.channelId, 'MESSAGE_CREATE', message)
 
-        res.sendStatus(202)
+        res.json(message)
     }
 
     @web.get('/')
     async fetchMessages(req: Request, res: Response): Promise<void> {
+        const permissions = (req as unknown as { permissions: Permissions }).permissions
+
+        if (!permissions.has('READ_MESSAGE_HISTORY')) {
+            throw new HTTPError('MISSING_PERMISSIONS')
+        }
+
         const limit = 50 // TODO: Add limit option
         const messages = await Message.find({ channelId: req.params.channelId, deleted: false }, { limit })
         res.json(messages)
@@ -87,6 +83,12 @@ export class MessageController {
 
     @web.get('/:messageId')
     async fetchMessage(req: Request, res: Response): Promise<void> {
+        const permissions = (req as unknown as { permissions: Permissions }).permissions
+
+        if (!permissions.has('READ_MESSAGE_HISTORY')) {
+            throw new HTTPError('MISSING_PERMISSIONS')
+        }
+
         const message = await Message.findOne({
             _id: req.params.messageId,
             channelId: req.params.channelId,
@@ -94,7 +96,7 @@ export class MessageController {
         })
 
         if (!message) {
-            return void res.status(404).send(new HTTPError('UNKNOWN_MESSAGE'))
+            throw new HTTPError('UNKNOWN_MESSAGE')
         }
 
         res.json(message)
@@ -102,11 +104,7 @@ export class MessageController {
 
     @web.patch('/:messageId')
     async editMessage(req: Request, res: Response): Promise<void> {
-        const valid = this.checks.editMessage(req.body)
-
-        if (valid !== true) {
-            return void res.status(400).send(valid)
-        }
+        req.check(CreateMessageSchema)
 
         const message = await Message.findOne({
             _id: req.params.messageId,
@@ -115,22 +113,20 @@ export class MessageController {
         })
 
         if (!message) {
-            return void res.status(404).send(new HTTPError('UNKNOWN_MESSAGE'))
+            throw new HTTPError('UNKNOWN_MESSAGE')
         }
 
         if (message.authorId !== req.user._id) {
-            return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
+            throw new HTTPError('CANNOT_EDIT_MESSAGE_BY_OTHER')
         }
 
         await message.save(req.body)
 
-        res.sendStatus(202)
+        res.json(message)
     }
 
     @web.route('delete', '/:messageId')
     async deleteMessage(req: Request, res: Response): Promise<void> {
-        const channel = (req as unknown as { channel: Channel }).channel
-
         const message = await Message.findOne({
             _id: req.params.messageId,
             channelId: req.params.channelId,
@@ -138,24 +134,21 @@ export class MessageController {
         })
 
         if (!message) {
-            return void res.status(404).send(new HTTPError('UNKNOWN_MESSAGE'))
+            throw new HTTPError('UNKNOWN_MESSAGE')
         }
 
-        const permissions = new Permissions('CHANNEL')
-            .for(channel)
-            .with(req.user)
-
-        if (!permissions.has('MANAGE_MESSAGES') && message.authorId !== req.user._id) {
-            return void res.status(403).send(new HTTPError('MISSING_ACCESS'))
+        if (message.authorId !== req.user._id) {
+            const permissions = (req as unknown as { permissions: Permissions }).permissions
+            if (!permissions.has('MANAGE_MESSAGES')) throw new HTTPError('MISSING_PERMISSIONS')
         }
 
         await message.save({ deleted: true })
-        
-        getaway.emit(message.channelId, 'MESSAGE_DELETE', {
+
+        getaway.publish(message.channelId, 'MESSAGE_DELETE', {
             _id: message._id,
             channelId: message.channelId
         })
 
-        res.sendStatus(202)
+        res.ok()
     }
 }

@@ -6,7 +6,7 @@ import Redis from 'ioredis'
 export const DEFAULT_HEARTBEAT_TIME = 1000 * 42
 
 export class Socket {
-    heartbeatTimeout!: NodeJS.Timeout
+    heartbeatTimeout?: NodeJS.Timeout
     user_id!: string
     subscriptions = new Redis()
     constructor(public ws: WebSocket, public getaway: Getaway) {
@@ -21,7 +21,7 @@ export class Socket {
                     break
             }
 
-            this.ws.send(raw)  
+            this.ws.send(raw)
         })
     }
 
@@ -44,12 +44,19 @@ export class Socket {
         this.ws.close(code)
     }
 
-    async subscribe(...topics: (string | string[])[]): Promise<void> {
-        this.subscriptions.disconnect()
-        await this.subscriptions.subscribe(...topics.flat(4))
+    async subscribe(topics: string | string[] | string[][]): Promise<void> {
+        if (Array.isArray(topics)) {
+            await this.subscriptions.subscribe(...topics.flat(4))
+        } else {
+            await this.subscriptions.subscribe(topics)
+        }
     }
 
-    async unsubscribe(...topics: (string | string[])[]): Promise<void> {
-        await this.subscriptions.unsubscribe(...topics.flat(4))
+    async unsubscribe(topics: string | string[] | string[][]): Promise<void> {
+        if (Array.isArray(topics)) {
+            await this.subscriptions.unsubscribe(...topics.flat(4))
+        } else {
+            await this.subscriptions.unsubscribe(topics)
+        }
     }
 }

@@ -1,9 +1,9 @@
 import WebSocket from 'ws'
+import Redis from 'ioredis'
 import events from './events'
 import { Socket } from './Socket'
-import { WSEvents } from '../@types'
-import { WSCodes, WSCloseCodes, Payload } from './Constants'
-import Redis from 'ioredis'
+import { WSCodes, WSCloseCodes, WSEvents, Payload } from './Constants'
+import { PresenceStatus, User } from '../structures'
 import config from '../../config'
 
 export class Getaway {
@@ -16,21 +16,22 @@ export class Getaway {
         this.server.on('error', this.onError.bind(this))
     }
 
-    async emit<T extends keyof WSEvents = keyof WSEvents>(channel: string, event: T, data?: WSEvents[T]): Promise<void> {
+    async publish<T extends keyof WSEvents = keyof WSEvents>(channel: string, event: T, data?: WSEvents[T]): Promise<void> {
         await this.redis.publish(channel, JSON.stringify({ event, data }))
     }
 
-    async subscribe(targetId: string, ...topic: string[]): Promise<void> {
-        await this.connections.get(targetId)?.subscribe(topic)
+    async subscribe(targetId: string, ...topics: string[]): Promise<void> {
+        await this.connections.get(targetId)?.subscribe(topics)
     }
 
-    private async onConnection(_server: WebSocket.Server, _socket: WebSocket): Promise<void> {
+    private async onConnection(_socket: WebSocket): Promise<void> {
         const socket = new Socket(_socket, this)
 
         try {
             socket.ws
                 .once('close', this.onClose.bind(this, socket))
                 .on('message', (buffer) => this.onMessage(socket, buffer))
+                .on('error', this.onError.bind(this))
 
             await socket.send({
                 code: WSCodes.HELLO,
@@ -67,11 +68,35 @@ export class Getaway {
         }
     }
 
-    private onClose(socket: Socket): void {
-        if (socket.user_id) {
-            this.connections.delete(socket.user_id)
-        }
+    private async onClose(socket: Socket): Promise<void> {
         socket.subscriptions.disconnect()
+
+        if (!socket.user_id) return
+
+        this.connections.delete(socket.user_id)
+
+        const user = await User.findOne({
+            _id: socket.user_id,
+            deleted: false,
+            verified: true
+        })
+
+        if (!user) return
+
+        const wasOnline = user.presence.status !== PresenceStatus.OFFLINE
+
+        if (!wasOnline) return
+
+        const newPresence = {
+            ghostMode: user.presence.ghostMode,
+            status: PresenceStatus.OFFLINE
+        }
+
+        await user.save({ presence: newPresence })
+        await this.emit(socket.user_id, 'USER_UPDATE', {
+            _id: socket.user_id,
+            presence: newPresence
+        })
     }
 
     private onError(error: unknown): void {

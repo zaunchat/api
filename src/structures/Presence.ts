@@ -1,4 +1,4 @@
-export interface CreatePresenceOptions extends Partial<Presence> {}
+export type CreatePresenceOptions = Partial<Presence>
 
 export enum PresenceStatus {
 	ONLINE,
@@ -9,6 +9,7 @@ export enum PresenceStatus {
 
 export class Presence {
 	status = PresenceStatus.OFFLINE
+	ghostMode = false
 	static from(options: CreatePresenceOptions): Presence {
 		const presence = new Presence()
 		Object.assign(presence, options)

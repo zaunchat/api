@@ -1,10 +1,13 @@
 import 'dotenv/config'
 
 const config = {
-	database_uri: process.env.DATABASE_URI as string,
 	port: Number(process.env.PORT) || 8080,
+	database: {
+		uri: process.env.DATABASE_URI as string,
+		type: process.env.DATABASE_TYPE || 'mongo' // mongo | mysql | mariadb | postgresql | sqlite
+	},
 	redis: {
-		uri: 'redis://username:password@127.0.0.1:6380/4?allowUsernameInURI=true',
+		uri: process.env.REDIS_URI as string,
 		local: true
 	},
 	smtp: {
@@ -16,7 +19,7 @@ const config = {
 		key: process.env.CAPTCHA_KEY as string,
 		token: process.env.CAPTCHA_TOKEN as string
 	},
-	max: {
+	limits: {
 		user: {
 			servers: 100,
 			groups: 50,

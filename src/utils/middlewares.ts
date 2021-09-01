@@ -1,16 +1,15 @@
 import WebSocket from 'ws'
 import { NextFunction, Request, Response } from '@tinyhttp/app'
-import { Captcha } from './Captcha'
-import { HTTPError } from '../errors'
+import { HTTPError, CheckError } from '../errors'
 import { User } from '../structures'
 import config from '../../config'
 
-export const json = () => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+export const json = ({ parse }: { parse: typeof JSON.parse }) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     if (req.method && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
         try {
             let body = ''
             for await (const chunk of req) body += chunk
-            req.body = JSON.parse(body.toString())
+            req.body = parse(body.toString())
         } catch (e) {
             return next(e)
         }
@@ -19,50 +18,73 @@ export const json = () => async (req: Request, _res: Response, next: NextFunctio
 }
 
 export const ws = (wss: WebSocket.Server) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
-    const isSocket = req.headers.upgrade?.split(',').some((s) => s.trim() === 'websocket')
+    const isSocket = req.headers.upgrade?.toLowerCase() === 'websocket'
 
     if (isSocket) {
-        Object.defineProperty(req, 'ws', {
-            value: new Promise((resolve) => wss.handleUpgrade(req, req.socket, Buffer.alloc(0), (ws) => {
-                wss.emit('connection', ws, req)
-                resolve(ws)
-            }))
-        })
+        wss.handleUpgrade(req, req.socket, Buffer.alloc(0), ws => wss.emit('connection', ws))
     }
 
     next()
 }
 
-const NON_AUTH_ROUTES = ['login', 'register', 'verify'].map((r) => '/auth/' + r)
-
-
-export const auth = () => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    if (NON_AUTH_ROUTES.some((p) => req.path.includes(p))) {
-        if (config.captcha.enabled) {
-            const captchaChecked = req.body.captcha_key && await Captcha.check(req.body.captcha_key)
-            if (!captchaChecked) {
-                return void res.status(403).send(new HTTPError('FAILED_CAPTCHA'))
-            }
-        }
+export const auth = (unauthorized: string[]) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+    if (unauthorized.some((p) => req.path.includes(p))) {
         return next()
     }
 
     const token = req.headers['x-session-token']
     const userId = req.headers['x-session-id']
 
-    const user = token && userId && await User.findOne({
+    const user = token && userId ? await User.findOne({
         _id: userId,
         deleted: false,
         verified: true
-    })
+    }) : null
 
-    if (!user || !user.sessions.some((session) => session.token === token)) {
-        return void res.status(401).send(new HTTPError('UNAUTHORIZED'))
+    if (!user?.sessions.some(session => session.token === token)) {
+        throw new HTTPError('UNAUTHORIZED')
     }
 
     Object.defineProperty(req, 'user', {
         value: user
     })
+
+    next()
+}
+
+export const error = () => async (err: Error, _req: Request, res: Response, next?: NextFunction): Promise<void> => {
+    if (err instanceof HTTPError || err instanceof CheckError) {
+        res.status(err.status).send(err.message)
+    } else {
+        console.error(err)
+        res.sendStatus(502)
+    }
+    next?.(err)
+}
+
+
+export const captcha = (requiredRoutes: string[]) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+    if (config.captcha.enabled && requiredRoutes.some((p) => req.path.includes(p))) {
+        if (!req.body.captcha_key) {
+            throw new HTTPError('FAILED_CAPTCHA')
+        }
+
+        const payload = {
+            secret: config.captcha.token,
+            response: req.body.captcha_key,
+            sitekey: config.captcha.key
+        }
+
+        const res = await fetch('https://hcaptcha.com/siteverify', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        }).then((res) => res.json()).catch(() => false)
+
+
+        if (!res?.success) {
+            throw new HTTPError('FAILED_CAPTCHA')
+        }
+    }
 
     next()
 }

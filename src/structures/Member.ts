@@ -1,11 +1,22 @@
 import { Base } from './Base'
 import { Property, Entity, wrap, FilterQuery, FindOptions } from 'mikro-orm'
+import { validator } from '../utils'
 import db from '../database'
 
 export interface CreateMemberOptions extends Partial<Member> {
     _id: string,
     serverId: string
 }
+
+export const CreateMemberSchema = validator.compile({
+    nickname: {
+        type: 'string',
+        min: 1,
+        max: 30,
+        optional: true
+    }
+})
+
 
 @Entity({ tableName: 'members' })
 export class Member extends Base {
@@ -25,7 +36,7 @@ export class Member extends Base {
         return wrap(new Member()).assign(options)
     }
 
-    static find(query: FilterQuery<Member>, options: FindOptions<Member>): Promise<Member[]> {
+    static find(query: FilterQuery<Member>, options?: FindOptions<Member>): Promise<Member[]> {
         return db.get(Member).find(query, options)
     }
 

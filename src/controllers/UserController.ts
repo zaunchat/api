@@ -18,7 +18,7 @@ export class UserController {
         })
 
         if (!user) {
-            return void res.status(404).send(new HTTPError('UNKNOWN_USER'))
+            throw new HTTPError('UNKNOWN_USER')
         }
 
         res.json(user)
@@ -46,8 +46,8 @@ export class UserController {
             return void res.status(403).json('You can\'t DM yourself')
         }
 
-        if (!await User.count({ _id: userId })) {
-            return void res.status(403).send(new HTTPError('UNKNOWN_USER'))
+        if (!await User.findOne({ _id: userId })) {
+            throw new HTTPError('UNKNOWN_USER')
         }
 
         const exists = await DMChannel.findOne({
@@ -62,11 +62,9 @@ export class UserController {
             recipients: [userId, req.user._id]
         }).save()
 
-        await Promise.all(dm.recipients.map((userId) => {
-            return getaway.subscribe(userId, dm._id)
-        }))
+        await Promise.all(dm.recipients.map((userId) => getaway.subscribe(userId, dm._id)))
 
-        getaway.emit(dm._id, 'CHANNEL_CREATE', dm)
+        getaway.publish(dm._id, 'CHANNEL_CREATE', dm)
 
         res.json(dm)
     }
@@ -86,7 +84,7 @@ export class UserController {
         })
 
         if (!target) {
-            return void res.status(403).send(new HTTPError('UNKNOWN_USER'))
+            throw new HTTPError('UNKNOWN_USER')
         }
 
         const panding = target.relations.get(req.user._id) === RelationshipStatus.IN_COMING && req.user.relations.get(target._id) === RelationshipStatus.OUTGOING
@@ -124,7 +122,7 @@ export class UserController {
         })
 
         if (!target) {
-            return void res.status(403).send(new HTTPError('UNKNOWN_USER'))
+            throw new HTTPError('UNKNOWN_USER')
         }
 
         if (!req.user.relations.has(target._id)) {
@@ -156,7 +154,7 @@ export class UserController {
         })
 
         if (!target) {
-            return void res.status(403).send(new HTTPError('UNKNOWN_USER'))
+            throw new HTTPError('UNKNOWN_USER')
         }
 
         const alreadyBlocked = req.user.relations.get(target._id) === RelationshipStatus.BLOCKED
@@ -191,7 +189,7 @@ export class UserController {
         })
 
         if (!target) {
-            return void res.status(403).send(new HTTPError('UNKNOWN_USER'))
+            throw new HTTPError('UNKNOWN_USER')
         }
 
         req.user.relations.delete(target._id)

@@ -1,11 +1,22 @@
 import { Base } from './Base'
 import { Property, Entity, wrap, FilterQuery, FindOptions } from 'mikro-orm'
+import { validator } from '../utils'
 import db from '../database'
+import config from '../../config'
 
 export interface CreateMessageOptions extends Partial<Message> {
     authorId: string
     channelId: string
 }
+
+export const CreateMessageSchema = validator.compile({
+    content: {
+        type: 'string',
+        min: 1,
+        max: config.limits.message.length
+    },
+    $$strict: true
+})
 
 @Entity({ tableName: 'messages' })
 export class Message extends Base {

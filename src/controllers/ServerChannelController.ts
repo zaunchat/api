@@ -1,28 +1,18 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { HTTPError } from '../errors'
-import { Member, TextChannel } from '../structures'
+import { CreateTextChannelSchema, TextChannel } from '../structures'
 import { getaway } from '../server'
-import { Permissions, validator } from '../utils'
+import { Permissions } from '../utils'
 
 
 @web.basePath('/channels/:serverId')
 export class ServerChannelController {
-    checks = {
-        createChannel: validator.compile({ name: { type: 'string' } })
-    }
-
     @web.use()
-    async fetchServerBeforeProcess(req: Request, res: Response, next: NextFunction): Promise<void> {
-        const exists = await Member.findOne({
-            _id: req.user._id,
-            serverId: req.params.serverId
-        })
-
-        if (!exists) {
-            return void res.status(404).send(new HTTPError('UNKNOWN_SERVER'))
+    async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
+        if (!req.user.servers.some(id => id === req.params.serverId)) {
+            throw new HTTPError('UNKNOWN_SERVER')
         }
-
         next()
     }
 
@@ -45,7 +35,7 @@ export class ServerChannelController {
         })
 
         if (!channel) {
-            return void res.status(404).send(new HTTPError('UNKNOWN_CHANNEL'))
+            throw new HTTPError('UNKNOWN_CHANNEL')
         }
 
         res.json(channel)
@@ -53,24 +43,20 @@ export class ServerChannelController {
 
     @web.post('/')
     async createChannel(req: Request, res: Response): Promise<void> {
-        const valid = this.checks.createChannel(req.body)
+        req.check(CreateTextChannelSchema)
 
-        if (valid !== true) {
-            return void res.status(400).send(valid)
-        }
-
-        const channel = TextChannel.from({
-            ...req.body,
-            serverId: req.params.serverId
-        })
-
-        const permissions = new Permissions('SERVER').for(channel).with(req.user)
+        const permissions = await Permissions.fetch(req.user, req.params.serverId)
 
         if (!permissions.has('MANAGE_CHANNELS')) {
-            return void res.status(400).send(new HTTPError('MISSING_PERMISSIONS'))
+            throw new HTTPError('MISSING_PERMISSIONS')
         }
 
-        await channel.save()
+        const channel = await TextChannel.from({
+            ...req.body,
+            serverId: req.params.serverId
+        }).save()
+
+        getaway.publish(channel._id, 'CHANNEL_CREATE', channel)
 
         res.json(channel)
     }
@@ -84,22 +70,22 @@ export class ServerChannelController {
         })
 
         if (!channel) {
-            return void res.status(404).send(new HTTPError('UNKNOWN_CHANNEL'))
+            throw new HTTPError('UNKNOWN_CHANNEL')
         }
 
-        const permissions = new Permissions('SERVER').for(channel).with(req.user)
+        const permissions = await Permissions.fetch(req.user, req.params.serverId)
 
         if (!permissions.has('MANAGE_CHANNELS')) {
-            return void res.status(400).send(new HTTPError('MISSING_PERMISSIONS'))
+            throw new HTTPError('MISSING_PERMISSIONS')
         }
 
         await channel.save({ deleted: true })
 
-        getaway.emit(channel._id, 'CHANNEL_DELETE', {
+        getaway.publish(channel._id, 'CHANNEL_DELETE', {
             _id: channel._id,
             serverId: channel.serverId
         })
 
-        res.sendStatus(202)
+        res.ok()
     }
 }
