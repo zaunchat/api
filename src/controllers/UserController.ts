@@ -3,6 +3,7 @@ import { Response, Request } from '@tinyhttp/app'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
 import { DMChannel, RelationshipStatus, User } from '../structures'
+import { Snowflake } from '../utils'
 
 @web.basePath('/users')
 export class UserController {
@@ -59,7 +60,7 @@ export class UserController {
         }
 
         const dm = await DMChannel.from({
-            recipients: [userId, req.user._id]
+            recipients: [userId as Snowflake, req.user._id]
         }).save()
 
         await Promise.all(dm.recipients.map((userId) => getaway.subscribe(userId, dm._id)))

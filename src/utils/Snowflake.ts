@@ -8,6 +8,11 @@ export class SnowflakeUtil extends null {
   static processId = BigInt(process.pid % 31)
   static workerId = BigInt((cluster.worker?.id || 0) % 31)
 
+  static is(id: unknown): id is Snowflake {
+    if (typeof id !== 'string') return false
+    return /^\d{17,19}$/.test(id)
+  }
+
 
   static idToBinary(num: string): string {
     let bin = ''

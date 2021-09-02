@@ -1,6 +1,6 @@
 import { Entity, Property, wrap, FindOptions, FilterQuery, FindOneOptions } from 'mikro-orm'
 import { Base, Presence, Session } from '.'
-import { validator } from '../utils'
+import { Snowflake, validator } from '../utils'
 import db from '../database'
 
 export enum RelationshipStatus {
@@ -58,10 +58,10 @@ export class User extends Base {
     badges = 0
 
     @Property()
-    relations = new Map<string, RelationshipStatus>()
+    relations = new Map<Snowflake, RelationshipStatus>()
 
     @Property()
-    servers: string[] = []
+    servers: Snowflake[] = []
 
     @Property({ nullable: true })
     avatar?: string

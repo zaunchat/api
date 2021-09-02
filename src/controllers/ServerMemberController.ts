@@ -3,7 +3,7 @@ import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { Member, CreateMemberSchema, Server } from '../structures'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
-import { Permissions } from '../utils'
+import { Permissions, Snowflake } from '../utils'
 
 
 @web.basePath('/servers/:serverId/members')
@@ -64,7 +64,7 @@ export class ServerMemberController {
 		}
 
 		if (req.body.roles) {
-			if (!permissions.has(Permissions.FLAGS.MANGAE_MEMBERS)) throw new HTTPError('MISSING_PERMISSIONS')
+			if (!permissions.has(Permissions.FLAGS.MANAGE_ROLES)) throw new HTTPError('MISSING_PERMISSIONS')
 			for (const roleId of req.body.roles) {
 				if (!server.roles.includes(roleId)) throw new HTTPError('UNKNOWN_ROLE')
 				member.roles.push(roleId)
@@ -73,7 +73,7 @@ export class ServerMemberController {
 
 		getaway.publish(member._id, 'MEMBER_UPDATE', {
 			_id: member._id,
-			serverId: req.params.serverId,
+			serverId: req.params.serverId as Snowflake,
 		})
 
 		res.json(member)
