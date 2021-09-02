@@ -4,23 +4,24 @@ import events from './events'
 import { Socket } from './Socket'
 import { WSCodes, WSCloseCodes, WSEvents, Payload } from './Constants'
 import { PresenceStatus, User } from '../structures'
+import { Snowflake } from '../utils'
 import config from '../../config'
 
 export class Getaway {
     server: WebSocket.Server
     redis = new Redis(config.redis.uri && !config.redis.local ? config.redis.uri : void 0)
-    connections = new Map<string, Socket>()
+    connections = new Map<Snowflake, Socket>()
     constructor(options: WebSocket.ServerOptions = { noServer: true, maxPayload: 4096 }) {
         this.server = new WebSocket.Server(options)
         this.server.on('connection', this.onConnection.bind(this))
         this.server.on('error', this.onError.bind(this))
     }
 
-    async publish<T extends keyof WSEvents = keyof WSEvents>(channel: string, event: T, data?: WSEvents[T]): Promise<void> {
+    async publish<T extends keyof WSEvents = keyof WSEvents>(channel: Snowflake, event: T, data?: WSEvents[T]): Promise<void> {
         await this.redis.publish(channel, JSON.stringify({ event, data }))
     }
 
-    async subscribe(targetId: string, ...topics: string[]): Promise<void> {
+    async subscribe(targetId: Snowflake, ...topics: Snowflake[]): Promise<void> {
         await this.connections.get(targetId)?.subscribe(topics)
     }
 
@@ -93,7 +94,7 @@ export class Getaway {
         }
 
         await user.save({ presence: newPresence })
-        await this.emit(socket.user_id, 'USER_UPDATE', {
+        await this.publish(socket.user_id, 'USER_UPDATE', {
             _id: socket.user_id,
             presence: newPresence
         })

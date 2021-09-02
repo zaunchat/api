@@ -1,9 +1,10 @@
 import { Entity, FindOptions, Property, wrap, FilterQuery } from 'mikro-orm'
 import { Channel, ChannelTypes } from './Channel'
+import { Snowflake } from '../utils'
 import db from '../database'
 
 export interface CreateDMChannelOptions extends Omit<Partial<DMChannel>, 'type'> {
-    recipients: [string, string]
+    recipients: [Snowflake, Snowflake]
 }
 
 
@@ -13,7 +14,7 @@ export class DMChannel extends Channel {
     readonly type = ChannelTypes.DM
 
     @Property()
-    recipients!: [string, string]
+    recipients!: [Snowflake, Snowflake]
 
     static from(options: CreateDMChannelOptions): DMChannel {
         return wrap(new DMChannel().setID()).assign(options)

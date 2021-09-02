@@ -1,11 +1,11 @@
 import { Entity, Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
 import { Channel, ChannelTypes } from '.'
-import { validator } from '../utils'
+import { validator, Snowflake } from '../utils'
 import db from '../database'
 
 export interface CreateTextChannelOptions extends Omit<Partial<TextChannel>, 'type'> {
     name: string
-    serverId: string
+    serverId: Snowflake
 }
 
 export const CreateTextChannelSchema = validator.compile({
@@ -32,7 +32,7 @@ export class TextChannel extends Channel {
     name!: string
 
     @Property()
-    serverId!: string
+    serverId!: Snowflake
 
     @Property({ nullable: true })
     topic?: string

@@ -1,11 +1,11 @@
 import { Channel, ChannelTypes } from './Channel'
 import { Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
-import { validator } from '../utils'
+import { validator, Snowflake } from '../utils'
 import db from '../database'
 
 export interface CreateCategoryOptions extends Omit<Partial<Category>, 'type'> {
     name: string
-    serverId: string
+    serverId: Snowflake
 }
 
 
@@ -25,10 +25,10 @@ export class Category extends Channel {
     name!: string
 
     @Property()
-    serverId!: string
+    serverId!: Snowflake
 
     @Property()
-    channels: string[] = []
+    channels: Snowflake[] = []
 
     static from(options: CreateCategoryOptions): Category {
         return wrap(new Category().setID()).assign(options)

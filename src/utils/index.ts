@@ -1,4 +1,4 @@
-export * from './Permissions'
-export * from './UUID'
-export * as middlewares from './middlewares'
 export * from './validator'
+export * from './Permissions'
+export * from './Snowflake'
+export * as middlewares from './middlewares'

@@ -20,6 +20,8 @@ export const APIErrors = {
     UNKNOWN_TOKEN: [404, 'Unknown token'],
     UNKNOWN_SESSION: [404, 'Unknown session'],
     UNKNOWN_SERVER: [404, 'Unknwon server'],
+    UNKNOWN_MEMBER: [404, 'Unknown member'],
+    UNKNOWN_ROLE: [404, 'Unknown role'],
 
     // Maximum
     MAXIMUM_FRIENDS: [400, 'Maximum number of freinds reached'],

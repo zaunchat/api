@@ -1,17 +1,18 @@
 import WebSocket from 'ws'
 import { Payload, WSCloseCodes } from './Constants'
 import { Getaway } from './Getaway'
+import { Snowflake } from '../utils'
 import Redis from 'ioredis'
 
 export const DEFAULT_HEARTBEAT_TIME = 1000 * 42
 
 export class Socket {
     heartbeatTimeout?: NodeJS.Timeout
-    user_id!: string
+    user_id!: Snowflake
     subscriptions = new Redis()
     constructor(public ws: WebSocket, public getaway: Getaway) {
         this.setHeartbeat()
-        this.subscriptions.on('message', (topic: string, raw: string) => {
+        this.subscriptions.on('message', (topic: Snowflake, raw: string) => {
             const data = JSON.parse(raw) as Payload
 
             switch (data.event) {
@@ -44,7 +45,7 @@ export class Socket {
         this.ws.close(code)
     }
 
-    async subscribe(topics: string | string[] | string[][]): Promise<void> {
+    async subscribe(topics: Snowflake | Snowflake[] | Snowflake[][]): Promise<void> {
         if (Array.isArray(topics)) {
             await this.subscriptions.subscribe(...topics.flat(4))
         } else {
@@ -52,7 +53,7 @@ export class Socket {
         }
     }
 
-    async unsubscribe(topics: string | string[] | string[][]): Promise<void> {
+    async unsubscribe(topics: Snowflake | Snowflake[] | Snowflake[][]): Promise<void> {
         if (Array.isArray(topics)) {
             await this.subscriptions.unsubscribe(...topics.flat(4))
         } else {

@@ -1,39 +1,38 @@
 import { ChannelTypes, DMChannel, Group, Member, Server, TextChannel, User } from '../structures'
 
-export const FLAGS = {
-    VIEW_CHANNEL: 1 << 0,
-    SEND_MESSAGES: 1 << 1,
-    READ_MESSAGES: 1 << 2,
-    UPLOAD_FILES: 1 << 3,
-    EMBED_LINKS: 1 << 4,
-    MANAGE_CHANNELS: 1 << 5,
-    MANAGE_MESSAGES: 1 << 6,
-    ADMINISTRATOR: 1 << 7,
-    READ_MESSAGE_HISTORY: 1 << 8
-} as const
 
+export type PermissionString = keyof typeof Permissions.FLAGS
+export type PermissionsResolvable = number | PermissionString | Permissions | PermissionsResolvable[]
 
-export const DEFAULT_PERMISSION_DM =
-    FLAGS.READ_MESSAGES |
-    FLAGS.SEND_MESSAGES |
-    FLAGS.MANAGE_CHANNELS |
-    FLAGS.EMBED_LINKS |
-    FLAGS.VIEW_CHANNEL |
-    FLAGS.UPLOAD_FILES |
-    FLAGS.READ_MESSAGE_HISTORY
-
-export const DEFAULT_PERMISSION_EVERYONE =
-    FLAGS.READ_MESSAGES |
-    FLAGS.SEND_MESSAGES |
-    FLAGS.EMBED_LINKS |
-    FLAGS.VIEW_CHANNEL |
-    FLAGS.UPLOAD_FILES |
-    FLAGS.READ_MESSAGE_HISTORY
-
-
-export type PermissionsResolvable = number | keyof typeof FLAGS | PermissionsResolvable[]
 
 export class Permissions {
+    static readonly FLAGS = {
+        // Admin
+        ADMINISTRATOR: 1 << 0,
+
+
+        // Channel
+        VIEW_CHANNEL: 1 << 1,
+        SEND_MESSAGES: 1 << 2,
+        READ_MESSAGE_HISTORY: 1 << 3,
+        EMBED_LINKS: 1 << 4,
+        UPLOAD_FILES: 1 << 5,
+
+
+        // Manage
+        MANAGE_SERVER: 1 << 6,
+        MANAGE_CHANNELS: 1 << 7,
+        MANAGE_MESSAGES: 1 << 8,
+        MANAGE_ROLES: 1 << 9,
+        MANAGE_NICKNAMES: 1 << 10,
+        BAN_MEMBERS: 1 << 11,
+        KICK_MEMBERS: 1 << 12,
+
+
+        // Member
+        CHANGE_NICKNAME: 1 << 13
+    }
+
     bitfield = 0
     perspective!: User
 
@@ -51,7 +50,7 @@ export class Permissions {
             ]) as [Member, Server]
 
             if (member._id === server.ownerId) {
-                return new Permissions(FLAGS.ADMINISTRATOR)
+                return new Permissions(Permissions.FLAGS.ADMINISTRATOR)
             }
 
             const roles = server.roles.filter((r) => member.roles.includes(r._id)).map((r) => r.permissions)
@@ -70,7 +69,7 @@ export class Permissions {
             switch (channel.type) {
                 case ChannelTypes.GROUP:
                     if (channel.ownerId === userId) {
-                        bitfield = FLAGS.ADMINISTRATOR
+                        bitfield = Permissions.FLAGS.ADMINISTRATOR
                     } else if (channel.recipients.some(id => id === userId)) {
                         bitfield = channel.permissions
                     }
@@ -90,46 +89,102 @@ export class Permissions {
         return new Permissions()
     }
 
-    any(bit: PermissionsResolvable): boolean {
+    missing(bits: PermissionsResolvable, checkAdmin = true): PermissionString[] {
+        if (checkAdmin && this.has(Permissions.FLAGS.ADMINISTRATOR, false)) return []
+        return new Permissions(bits).remove(this).toArray()
+    }
+
+    any(bit: PermissionsResolvable, checkAdmin = true): boolean {
+        if (checkAdmin && this.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true
         bit = Permissions.resolve(bit)
         return (this.bitfield & bit) !== 0
     }
 
 
-    has(bit: PermissionsResolvable): boolean {
+    has(bit: PermissionsResolvable, checkAdmin = true): boolean {
+        if (checkAdmin && this.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true
         bit = Permissions.resolve(bit)
         return (this.bitfield & bit) === bit
     }
 
 
-    add(...bits: PermissionsResolvable[]): this {
+    add(...bits: PermissionsResolvable[]): Permissions {
         let total = 0
 
         for (const bit of bits) {
             total |= Permissions.resolve(bit)
         }
+
+        if (Object.isFrozen(this)) return new Permissions(this.bitfield | total)
 
         this.bitfield |= total
 
         return this
     }
 
-    remove(...bits: PermissionsResolvable[]): this {
+    remove(...bits: PermissionsResolvable[]): Permissions {
         let total = 0
 
         for (const bit of bits) {
             total |= Permissions.resolve(bit)
         }
 
+        if (Object.isFrozen(this)) return new Permissions(this.bitfield & ~total)
+
         this.bitfield &= ~total
 
         return this
     }
 
+    freeze(): Readonly<this> {
+        return Object.freeze(this)
+    }
+
+    valueOf(): number {
+        return this.bitfield
+    }
+
+    serialize(): Record<string, boolean> {
+        const serialized: Record<string, boolean> = {}
+        for (const [flag, bit] of Object.entries(Permissions.FLAGS)) serialized[flag] = this.has(bit)
+        return serialized
+    }
+
+    toArray(): PermissionString[] {
+        const flags = Object.keys(Permissions.FLAGS) as PermissionString[]
+        return flags.filter(bit => this.has(bit))
+    }
+
+    equals(bit: PermissionsResolvable): boolean {
+        return this.bitfield === Permissions.resolve(bit)
+    }
+
+    *[Symbol.iterator](): Iterable<PermissionString> {
+        yield* this.toArray()
+    }
+
     static resolve(bit: PermissionsResolvable): number {
         if (typeof bit === 'number') return bit
-        if (Array.isArray(bit)) return this.resolve(bit)
-        if (typeof FLAGS[bit] !== 'undefined') return FLAGS[bit]
+        if (Array.isArray(bit)) return bit.map(p => this.resolve(p)).reduce((prev, p) => prev | p, 0)
+        if (bit instanceof Permissions) return bit.bitfield
+        if (typeof Permissions.FLAGS[bit] !== 'undefined') return Permissions.FLAGS[bit]
         throw new Error('Invalid Bit')
     }
 }
+
+
+export const DEFAULT_PERMISSION_DM = new Permissions([
+    'VIEW_CHANNEL',
+    'SEND_MESSAGES',
+    'EMBED_LINKS',
+    'UPLOAD_FILES',
+    'READ_MESSAGE_HISTORY'
+]).bitfield
+
+export const DEFAULT_PERMISSION_EVERYONE = new Permissions([
+    'VIEW_CHANNEL',
+    'SEND_MESSAGES',
+    'EMBED_LINKS',
+    'UPLOAD_FILES',
+    'READ_MESSAGE_HISTORY'
+]).bitfield

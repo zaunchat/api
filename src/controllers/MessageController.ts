@@ -39,9 +39,9 @@ export class MessageController {
         req.check(CreateMessageSchema)
 
         const message = Message.from({
+            ...req.body,
             authorId: req.user._id,
             channelId: req.params.channelId,
-            ...req.body
         })
 
         if (!message.content?.length && !message.attachments.length) {
@@ -71,12 +71,16 @@ export class MessageController {
     async fetchMessages(req: Request, res: Response): Promise<void> {
         const permissions = (req as unknown as { permissions: Permissions }).permissions
 
-        if (!permissions.has('READ_MESSAGE_HISTORY')) {
+        if (!permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 
         const limit = 50 // TODO: Add limit option
-        const messages = await Message.find({ channelId: req.params.channelId, deleted: false }, { limit })
+        const messages = await Message.find({
+            channelId: req.params.channelId,
+            deleted: false
+        }, { limit })
+
         res.json(messages)
     }
 
@@ -85,7 +89,7 @@ export class MessageController {
     async fetchMessage(req: Request, res: Response): Promise<void> {
         const permissions = (req as unknown as { permissions: Permissions }).permissions
 
-        if (!permissions.has('READ_MESSAGE_HISTORY')) {
+        if (!permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 
@@ -139,7 +143,7 @@ export class MessageController {
 
         if (message.authorId !== req.user._id) {
             const permissions = (req as unknown as { permissions: Permissions }).permissions
-            if (!permissions.has('MANAGE_MESSAGES')) throw new HTTPError('MISSING_PERMISSIONS')
+            if (!permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) throw new HTTPError('MISSING_PERMISSIONS')
         }
 
         await message.save({ deleted: true })

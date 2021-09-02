@@ -27,7 +27,7 @@ export class ServerMessageController {
 
 		const permissions = await Permissions.fetch(req.user, null, channel)
 
-		if (!permissions.has('VIEW_CHANNEL')) {
+		if (!permissions.has(Permissions.FLAGS.VIEW_CHANNEL)) {
 			throw new HTTPError('MISSING_PERMISSIONS')
 		}
 
@@ -42,7 +42,7 @@ export class ServerMessageController {
 	async fetchMessages(req: Request, res: Response): Promise<void> {
 		const permissions = (req as unknown as { permissions: Permissions }).permissions
 
-		if (!permissions.has('READ_MESSAGE_HISTORY')) {
+		if (!permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
 			throw new HTTPError('MISSING_PERMISSIONS')
 		}
 
@@ -56,7 +56,7 @@ export class ServerMessageController {
 	async fetchMessage(req: Request, res: Response): Promise<void> {
 		const permissions = (req as unknown as { permissions: Permissions }).permissions
 
-		if (!permissions.has('READ_MESSAGE_HISTORY')) {
+		if (!permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
 			throw new HTTPError('MISSING_PERMISSIONS')
 		}
 
@@ -79,7 +79,7 @@ export class ServerMessageController {
 
 		const permissions = (req as unknown as { permissions: Permissions }).permissions
 
-		if (!permissions.has('SEND_MESSAGES')) {
+		if (!permissions.has(Permissions.FLAGS.SEND_MESSAGES)) {
 			throw new HTTPError('MISSING_PERMISSIONS')
 		}
 
@@ -149,7 +149,7 @@ export class ServerMessageController {
 
 		if (message.authorId !== req.user._id) {
 			const permissions = (req as unknown as { permissions: Permissions }).permissions
-			if (!permissions.has('MANAGE_MESSAGES')) throw new HTTPError('MISSING_PERMISSIONS')
+			if (!permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) throw new HTTPError('MISSING_PERMISSIONS')
 		}
 
 		await message.save({ deleted: true })

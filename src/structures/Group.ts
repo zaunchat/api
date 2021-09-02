@@ -1,12 +1,12 @@
 import { Entity, Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
 import { ChannelTypes, Channel } from './Channel'
-import { DEFAULT_PERMISSION_DM, validator } from '../utils'
+import { DEFAULT_PERMISSION_DM, Snowflake, validator } from '../utils'
 import db from '../database'
 
 export interface CreateGroupOptions extends Omit<Partial<Group>, 'type'> {
     name: string
-    ownerId: string
-    recipients: string[]
+    ownerId: Snowflake
+    recipients: Snowflake[]
 }
 
 export const CreateGroupSchema = validator.compile({
@@ -32,10 +32,10 @@ export class Group extends Channel {
     icon?: string
 
     @Property()
-    ownerId!: string
+    ownerId!: Snowflake
 
     @Property()
-    recipients: string[] = []
+    recipients: Snowflake[] = []
 
     @Property()
     permissions = DEFAULT_PERMISSION_DM

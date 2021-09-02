@@ -47,7 +47,7 @@ export class ServerChannelController {
 
         const permissions = await Permissions.fetch(req.user, req.params.serverId)
 
-        if (!permissions.has('MANAGE_CHANNELS')) {
+        if (!permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)) {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 
@@ -75,7 +75,7 @@ export class ServerChannelController {
 
         const permissions = await Permissions.fetch(req.user, req.params.serverId)
 
-        if (!permissions.has('MANAGE_CHANNELS')) {
+        if (!permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)) {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 

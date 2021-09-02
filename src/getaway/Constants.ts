@@ -1,4 +1,5 @@
 import type { Member, Message, Server, Channel, TextChannel, DMChannel, User, Group } from '../structures'
+import { Snowflake } from '../utils'
 
 export interface Payload {
     code: WSCodes
@@ -6,7 +7,7 @@ export interface Payload {
     data?: unknown
 }
 
-export type ID = { _id: string }
+export type ID = { _id: Snowflake }
 
 export interface WSEvents {
     READY: {
@@ -29,8 +30,8 @@ export interface WSEvents {
     SERVER_UPDATE: Partial<Pick<Server, 'roles' | 'name' | 'icon' | 'banner' | 'description' | 'ownerId' | 'permissions'>> & ID
     
     MEMBER_JOIN_SERVER: Member
-    MEMBER_LEAVE_SERVER: ID
-    MEMBER_UPDATE: Partial<Pick<Member, 'nickname' | 'roles'>> & ID
+    MEMBER_LEAVE_SERVER: ID & { serverId: Snowflake }
+    MEMBER_UPDATE: Partial<Pick<Member, 'nickname' | 'roles'>> & ID & { serverId: Snowflake }
 
     USER_UPDATE: Partial<Pick<User, 'presence' | 'username' | 'avatar' | 'badges'>> & ID
 }

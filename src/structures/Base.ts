@@ -1,12 +1,12 @@
 import { PrimaryKey, Property } from 'mikro-orm'
-import { UUID } from '../utils'
+import { SnowflakeUtil, Snowflake } from '../utils'
 
 export abstract class Base {
   @PrimaryKey({ unique: true })
-  _id!: string
+  _id!: Snowflake
 
   setID(): this {
-    this._id = UUID.generate()
+    this._id = SnowflakeUtil.generate()
     return this
   }
 

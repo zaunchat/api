@@ -1,18 +1,23 @@
 import { Base } from './Base'
 import { Property, Entity, wrap, FilterQuery, FindOptions } from 'mikro-orm'
-import { validator } from '../utils'
+import { Snowflake, validator } from '../utils'
 import db from '../database'
 
 export interface CreateMemberOptions extends Partial<Member> {
-    _id: string,
-    serverId: string
+    _id: Snowflake,
+    serverId: Snowflake
 }
 
 export const CreateMemberSchema = validator.compile({
     nickname: {
         type: 'string',
-        min: 1,
+        min: 0,
         max: 30,
+        optional: true
+    },
+    roles: {
+        type: 'array',
+        items: 'string',
         optional: true
     }
 })
@@ -30,7 +35,7 @@ export class Member extends Base {
     roles: string[] = []
 
     @Property()
-    serverId!: string
+    serverId!: Snowflake
 
     static from(options: CreateMemberOptions): Member {
         return wrap(new Member()).assign(options)

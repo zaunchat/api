@@ -1,4 +1,4 @@
-import { UUID, validator } from '../utils'
+import { SnowflakeUtil, validator, Snowflake } from '../utils'
 
 export interface CreateRoleOptions extends Partial<Role> {
     name: string
@@ -25,7 +25,7 @@ export const CreateRoleSchema = validator.compile({
 })
 
 export class Role {
-    _id!: string
+    _id!: Snowflake
     name!: string
     permissions = 0
     color?: number
@@ -33,7 +33,7 @@ export class Role {
     static from(options: CreateRoleOptions): Role {
         const role = new Role()
 
-        role._id = UUID.generate()
+        role._id = SnowflakeUtil.generate()
 
         Object.assign(role, options)
 
