@@ -23,19 +23,23 @@ const config = {
 		user: {
 			servers: 100,
 			groups: 50,
-			friends: 1000,
-			blocked: 1000
+			friends: 1_000,
+			blocked: 1_000
 		},
 		server: {
 			roles: 200,
 			channels: 200,
-			emojis: 50
+			emojis: 50,
+			members: 10_000
 		},
 		message: {
-			length: 2000,
+			length: 2_000,
 			attachments: 5,
 			replies: 5,
 			embeds: 1
+		},
+		group: {
+			members: 100
 		}
 	}
 } as const

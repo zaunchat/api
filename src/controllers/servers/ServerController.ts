@@ -1,15 +1,20 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { Server, Member, Category, TextChannel, CreateServerSchema } from '../structures'
-import { HTTPError } from '../errors'
-import { getaway } from '../server'
-import config from '../../config'
+import { Server, Category, TextChannel, CreateServerSchema } from '../../structures'
+import { HTTPError } from '../../errors'
+import { getaway } from '../../server'
+import { BASE_SERVER_PATH } from '.'
+import config from '../../../config'
 
 
-@web.basePath('/servers')
+@web.basePath(BASE_SERVER_PATH)
 export class ServerController {
     @web.post('/:serverId')
     async fetchServer(req: Request, res: Response): Promise<void> {
+        if (!req.user.servers.some(id => id === req.params.serverId)) {
+            throw new HTTPError('MISSING_ACCESS')
+        }
+
         const server = await Server.findOne({
             _id: req.params.serverId,
             deleted: false
@@ -17,15 +22,6 @@ export class ServerController {
 
         if (!server) {
             throw new HTTPError('UNKNOWN_SERVER')
-        }
-
-        const isExistsInServer = await Member.findOne({
-            serverId: server._id,
-            _id: req.user._id
-        })
-
-        if (!isExistsInServer) {
-            throw new HTTPError('MISSING_ACCESS')
         }
 
         res.json(server)

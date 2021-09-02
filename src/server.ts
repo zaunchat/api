@@ -1,8 +1,9 @@
 import { App, Response } from '@tinyhttp/app'
-import { middlewares } from './utils'
+import { IncomingMessage, ServerResponse } from 'http'
 import { register } from 'express-decorators'
-import * as Controllers from './controllers'
 import { Getaway } from './getaway'
+import * as middlewares from './middlewares'
+import * as Controllers from './controllers'
 
 
 export const getaway = new Getaway()
@@ -18,17 +19,17 @@ server
 
 
 for (const Controller of Object.values(Controllers)) {
-    register(server, new Controller())
+    if (typeof Controller !== 'string') register(server, new Controller())
 }
 
 
-Object.defineProperty(Response.prototype, 'ok', {
+Object.defineProperty(ServerResponse.prototype, 'ok', {
     value: function () {
         (this as Response).sendStatus(202)
     }
 })
 
-Object.defineProperty(Request.prototype, 'check', {
+Object.defineProperty(IncomingMessage.prototype, 'check', {
     value: function (check: (x: unknown) => boolean) {
         const valid = check(this.body)
 

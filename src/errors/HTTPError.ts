@@ -22,6 +22,7 @@ export const APIErrors = {
     UNKNOWN_SERVER: [404, 'Unknwon server'],
     UNKNOWN_MEMBER: [404, 'Unknown member'],
     UNKNOWN_ROLE: [404, 'Unknown role'],
+    UNKNOWN_GROUP: [404, 'Unknown group'],
 
     // Maximum
     MAXIMUM_FRIENDS: [400, 'Maximum number of freinds reached'],
@@ -30,6 +31,7 @@ export const APIErrors = {
     MAXIMUM_ROLES: [400, 'Maximum number of roles reached'],
     MAXIMUM_CHANNELS: [400, 'Maximum number of channels reached'],
     MAXIMUM_MESSAGE_LENGTH: [400],
+    MAXIMUM_GROUP_MEMBERS: [400, 'Maximum number of group members reached'],
 
     // Misc
     BOT_ONLY: [400],

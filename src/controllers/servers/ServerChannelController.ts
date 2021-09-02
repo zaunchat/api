@@ -1,9 +1,9 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { HTTPError } from '../errors'
-import { CreateTextChannelSchema, TextChannel } from '../structures'
-import { getaway } from '../server'
-import { Permissions } from '../utils'
+import { HTTPError } from '../../errors'
+import { CreateTextChannelSchema, TextChannel } from '../../structures'
+import { getaway } from '../../server'
+import { Permissions } from '../../utils'
 
 
 @web.basePath('/channels/:serverId')

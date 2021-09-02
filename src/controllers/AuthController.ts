@@ -47,19 +47,21 @@ export class AuthController {
             throw new HTTPError('UNKNOWN_USER')
         }
 
-        if (!await bcrypt.compare(password, user.password)) {
-            throw new HTTPError('INVALID_PASSWORD')
-        }
-
         if (!user.verified) {
             throw new HTTPError('USER_NOT_VERIFIED')
+        }
+
+        if (!await bcrypt.compare(password, user.password)) {
+            throw new HTTPError('INVALID_PASSWORD')
         }
 
         const session = Session.from({
             name: req.hostname
         })
 
-        await user.save({ sessions: [...user.sessions, session] })
+        user.sessions.push(session)
+
+        await user.save()
 
         res.json({
             token: session.token,
@@ -92,7 +94,7 @@ export class AuthController {
 
         await user.save()
 
-        res.sendStatus(202)
+        res.ok()
     }
 
     @web.post('/register')

@@ -1,5 +1,5 @@
 import { Payload, WSCloseCodes, WSCodes, WSEvents } from '../Constants'
-import { DMChannel, User, Server, TextChannel, PresenceStatus, Group, ChannelTypes, Member } from '../../structures'
+import { DMChannel, User, Server, TextChannel, PresenceStatus, Group, ChannelTypes } from '../../structures'
 import { Socket } from '../Socket'
 import { getaway } from '../../server'
 
@@ -39,8 +39,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         servers,
         dms,
         groups,
-        channels,
-        members
+        channels
     ] = await Promise.all([
         User.find({
             _id: {
@@ -71,12 +70,6 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
                 $in: user.servers
             },
             deleted: false
-        }),
-        Member.find({
-            serverId: {
-                $in: user.servers
-            },
-            deleted: false
         })
     ])
 
@@ -85,8 +78,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         user,
         users,
         servers,
-        channels: [...dms, ...groups, ...channels],
-        members
+        channels: [...dms, ...groups, ...channels]
     }
 
     await socket.send({

@@ -1,35 +1,25 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { HTTPError } from '../errors'
-import { CreateMessageSchema, DMChannel, Group, Message } from '../structures'
-import { Permissions } from '../utils'
-import { getaway } from '../server'
-import config from '../../config'
+import { HTTPError } from '../../errors'
+import { CreateMessageSchema, DMChannel, Message } from '../../structures'
+import { getaway } from '../../server'
+import config from '../../../config'
+import { BASE_CHANNEL_PATH } from '.'
 
 
-@web.basePath('/channels/:channelId/messages')
+@web.basePath(`${BASE_CHANNEL_PATH}/:channelId/messages`)
 export class MessageController {
     @web.use()
     async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
-        const channel = await DMChannel.findOne({
-            _id: req.params.channelId,
-            recipients: req.user._id,
-            deleted: false
-        }) ?? await Group.findOne({
+        const dm = await DMChannel.findOne({
             _id: req.params.channelId,
             recipients: req.user._id,
             deleted: false
         })
 
-        if (!channel) {
+        if (!dm) {
             throw new HTTPError('UNKNOWN_CHANNEL')
         }
-
-        const permissions = await Permissions.fetch(req.user, null, channel)
-
-        Object.defineProperty(req, 'permissions', {
-            value: permissions
-        })
 
         next()
     }
@@ -69,30 +59,17 @@ export class MessageController {
 
     @web.get('/')
     async fetchMessages(req: Request, res: Response): Promise<void> {
-        const permissions = (req as unknown as { permissions: Permissions }).permissions
-
-        if (!permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
-            throw new HTTPError('MISSING_PERMISSIONS')
-        }
-
         const limit = 50 // TODO: Add limit option
         const messages = await Message.find({
             channelId: req.params.channelId,
             deleted: false
         }, { limit })
-
         res.json(messages)
     }
 
 
     @web.get('/:messageId')
     async fetchMessage(req: Request, res: Response): Promise<void> {
-        const permissions = (req as unknown as { permissions: Permissions }).permissions
-
-        if (!permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
-            throw new HTTPError('MISSING_PERMISSIONS')
-        }
-
         const message = await Message.findOne({
             _id: req.params.messageId,
             channelId: req.params.channelId,
@@ -142,8 +119,7 @@ export class MessageController {
         }
 
         if (message.authorId !== req.user._id) {
-            const permissions = (req as unknown as { permissions: Permissions }).permissions
-            if (!permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) throw new HTTPError('MISSING_PERMISSIONS')
+            throw new HTTPError('MISSING_PERMISSIONS')
         }
 
         await message.save({ deleted: true })

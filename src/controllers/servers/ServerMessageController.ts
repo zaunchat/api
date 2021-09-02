@@ -1,13 +1,14 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { HTTPError } from '../errors'
-import { Message, CreateMessageSchema, TextChannel } from '../structures'
-import { getaway } from '../server'
-import { Permissions } from '../utils'
-import config from '../../config'
+import { HTTPError } from '../../errors'
+import { Message, CreateMessageSchema, TextChannel } from '../../structures'
+import { getaway } from '../../server'
+import { Permissions } from '../../utils'
+import { BASE_SERVER_PATH } from '.'
+import config from '../../../config'
 
 
-@web.basePath('/servers/:serverId/channels/:channelId/messages')
+@web.basePath(`${BASE_SERVER_PATH}/:serverId/channels/:channelId/messages`)
 export class ServerMessageController {
 	@web.use()
 	async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
@@ -47,7 +48,10 @@ export class ServerMessageController {
 		}
 
 		const limit = 50 // TODO: Add limit option
-		const messages = await Message.find({ channelId: req.params.channelId, deleted: false }, { limit })
+		const messages = await Message.find({
+			channelId: req.params.channelId,
+			deleted: false
+		}, { limit })
 
 		res.json(messages)
 	}
@@ -135,6 +139,7 @@ export class ServerMessageController {
 		res.json(message)
 	}
 
+	@web.route('delete', '/:messageId')
 	async deleteMessage(req: Request, res: Response): Promise<void> {
 		const message = await Message.findOne({
 			_id: req.params.messageId,

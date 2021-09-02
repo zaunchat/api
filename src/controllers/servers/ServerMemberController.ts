@@ -1,12 +1,13 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { Member, CreateMemberSchema, Server } from '../structures'
-import { HTTPError } from '../errors'
-import { getaway } from '../server'
-import { Permissions, Snowflake } from '../utils'
+import { Member, CreateMemberSchema, Server } from '../../structures'
+import { HTTPError } from '../../errors'
+import { getaway } from '../../server'
+import { Permissions, Snowflake } from '../../utils'
+import { BASE_SERVER_PATH } from '.'
 
 
-@web.basePath('/servers/:serverId/members')
+@web.basePath(`${BASE_SERVER_PATH}/:serverId/members`)
 export class ServerMemberController {
 	@web.use()
 	async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {

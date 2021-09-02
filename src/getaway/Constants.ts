@@ -15,7 +15,6 @@ export interface WSEvents {
         channels: Channel[]
         servers: Server[]
         users: User[]
-        members: Member[]
     }
     
     MESSAGE_CREATE: Message
@@ -32,6 +31,9 @@ export interface WSEvents {
     MEMBER_JOIN_SERVER: Member
     MEMBER_LEAVE_SERVER: ID & { serverId: Snowflake }
     MEMBER_UPDATE: Partial<Pick<Member, 'nickname' | 'roles'>> & ID & { serverId: Snowflake }
+
+    MEMBER_JOIN_GROUP: ID
+    MEMBER_LEAVE_GROUP: ID
 
     USER_UPDATE: Partial<Pick<User, 'presence' | 'username' | 'avatar' | 'badges'>> & ID
 }
