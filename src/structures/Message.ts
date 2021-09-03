@@ -47,6 +47,10 @@ export class Message extends Base {
     @Property()
     authorId!: Snowflake
 
+    isEmpty(): boolean {
+        return !this.content?.length && !this.attachments.length
+    }
+
     static from(options: CreateMessageOptions): Message {
         return wrap(new Message().setID()).assign(options)
     }

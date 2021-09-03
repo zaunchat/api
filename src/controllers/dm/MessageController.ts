@@ -34,7 +34,7 @@ export class MessageController {
             channelId: req.params.channelId,
         })
 
-        if (!message.content?.length && !message.attachments.length) {
+        if (message.isEmpty()) {
             throw new HTTPError('EMPTY_MESSAGE')
         }
 
