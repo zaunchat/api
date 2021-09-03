@@ -21,7 +21,8 @@ export interface WSEvents {
     MESSAGE_UPDATE: Partial<Pick<Message,| 'channelId' | 'content' | 'attachments' | 'embeds'>> & ID
     
     CHANNEL_CREATE: TextChannel | DMChannel | Group
-    CHANNEL_DELETE: ID | Pick<TextChannel, '_id' | 'serverId'>    
+    CHANNEL_UPDATE: Partial<Pick<Group, 'description' | 'name' | 'icon' | 'permissions'>> & ID
+    CHANNEL_DELETE: ID | Pick<TextChannel, '_id' | 'serverId'> 
 
     SERVER_CREATE: Server
     SERVER_DELETE: ID
@@ -30,9 +31,6 @@ export interface WSEvents {
     MEMBER_JOIN_SERVER: Member
     MEMBER_LEAVE_SERVER: ID & { serverId: Snowflake }
     MEMBER_UPDATE: Partial<Pick<Member, 'nickname' | 'roles'>> & ID & { serverId: Snowflake }
-
-    MEMBER_JOIN_GROUP: ID
-    MEMBER_LEAVE_GROUP: ID
 
     USER_UPDATE: Partial<Pick<User, 'presence' | 'username' | 'avatar' | 'badges'>> & ID
 }

@@ -10,10 +10,7 @@ import { BASE_CHANNEL_PATH } from '.'
 export class ChannelController {
     @web.get('/')
     async fetchDMs(req: Request, res: Response): Promise<void> {
-        const channels = await DMChannel.find({
-            recipients: req.user._id,
-            deleted: false
-        })
+        const channels = await DMChannel.find({ recipients: req.user._id })
         res.json(channels)
     }
 
@@ -23,7 +20,7 @@ export class ChannelController {
         const dm = await DMChannel.findOne({
             _id: req.params.channelId,
             recipients: req.user._id,
-            deleted: false
+            
         })
 
         if (!dm) {
@@ -40,15 +37,16 @@ export class ChannelController {
         const dm = await DMChannel.findOne({
             _id: req.params.channelId,
             recipients: req.user._id,
-            deleted: false
+            
         })
 
         if (!dm) {
             throw new HTTPError('UNKNOWN_CHANNEL')
         }
 
-        await dm.save({ deleted: true })
+        await dm.delete()
 
+        // TODO: Create DMChannelSubscriber
         getaway.publish(dm._id, 'CHANNEL_DELETE', { _id: dm._id })
 
         res.ok()

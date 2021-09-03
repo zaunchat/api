@@ -3,7 +3,6 @@ import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { Group } from '../../structures'
 import { HTTPError } from '../../errors'
 import { Permissions } from '../../utils'
-import { getaway } from '../../server'
 import { BASE_GROUP_PATH } from '.'
 import config from '../../../config'
 
@@ -14,8 +13,7 @@ export class GroupMemberController {
 	async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
 		const group = await Group.findOne({
 			_id: req.params.groupId,
-			recipients: req.user._id,
-			deleted: false
+			recipients: req.user._id
 		})
 
 		if (!group) {
@@ -45,10 +43,6 @@ export class GroupMemberController {
 
 		await group.save()
 
-		getaway.publish(group._id, 'MEMBER_JOIN_GROUP', {
-			_id: req.params.userId as Snowflake
-		})
-
 		res.json(group)
 	}
 
@@ -72,10 +66,6 @@ export class GroupMemberController {
 
 		await group.save({
 			recipients: group.recipients.filter((id) => id !== req.params.userId)
-		})
-
-		getaway.publish(group._id, 'MEMBER_LEAVE_GROUP', {
-			_id: req.params.userId as Snowflake
 		})
 
 		res.ok()

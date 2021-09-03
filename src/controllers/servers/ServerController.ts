@@ -2,7 +2,6 @@ import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { Server, Category, TextChannel, CreateServerSchema, Member } from '../../structures'
 import { HTTPError } from '../../errors'
-import { getaway } from '../../server'
 import { BASE_SERVER_PATH } from '.'
 import config from '../../../config'
 import db from '../../database'
@@ -17,8 +16,7 @@ export class ServerController {
         }
 
         const server = await Server.findOne({
-            _id: req.params.serverId,
-            deleted: false
+            _id: req.params.serverId
         })
 
         if (!server) {
@@ -63,10 +61,6 @@ export class ServerController {
             category,
             member
         ])
-        
-        await getaway.subscribe(req.user._id, server._id, chat._id, category._id)
-
-        getaway.publish(server._id, 'SERVER_CREATE', server)
 
         res.json(server)
     }

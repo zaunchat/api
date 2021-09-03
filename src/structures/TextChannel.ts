@@ -58,4 +58,8 @@ export class TextChannel extends Channel {
         await TextChannel.save(options ? wrap(this).assign(options) : this)
         return this
     }
+
+    async delete(): Promise<void> {
+        await db.get(TextChannel).removeAndFlush(this)
+    }
 }

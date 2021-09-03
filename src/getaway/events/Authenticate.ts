@@ -16,7 +16,6 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
 
     const user = auth.user_id && auth.token ? await User.findOne({
         _id: auth.user_id,
-        deleted: false,
         verified: true
     }, {
         fields: ['_id', 'avatar', 'username', 'badges', 'email', 'relations', 'servers', 'sessions']
@@ -45,7 +44,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
             _id: {
                 $in: Array.from(user.relations.keys())
             },
-            deleted: false
+            
         }, {
             fields: ['_id', 'avatar', 'username', 'badges']
         }),
@@ -53,23 +52,23 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
             _id: {
                 $in: user.servers
             },
-            deleted: false
+            
         }),
         DMChannel.find({
             type: ChannelTypes.DM,
             recipients: user._id,
-            deleted: false
+            
         }),
         Group.find({
             type: ChannelTypes.GROUP,
             recipients: user._id,
-            deleted: false
+            
         }),
         TextChannel.find({
             serverId: {
                 $in: user.servers
             },
-            deleted: false
+            
         })
     ])
 

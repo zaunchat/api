@@ -2,7 +2,6 @@ import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { HTTPError } from '../../errors'
 import { Message, CreateMessageSchema, TextChannel } from '../../structures'
-import { getaway } from '../../server'
 import { Permissions } from '../../utils'
 import { BASE_SERVER_PATH } from '.'
 import config from '../../../config'
@@ -18,8 +17,7 @@ export class ServerMessageController {
 
 		const channel = await TextChannel.findOne({
 			_id: req.params.channelId,
-			serverId: req.params.serverId,
-			deleted: false
+			serverId: req.params.serverId
 		})
 
 		if (!channel) {
@@ -49,8 +47,7 @@ export class ServerMessageController {
 
 		const limit = 50 // TODO: Add limit option
 		const messages = await Message.find({
-			channelId: req.params.channelId,
-			deleted: false
+			channelId: req.params.channelId
 		}, { limit })
 
 		res.json(messages)
@@ -66,8 +63,7 @@ export class ServerMessageController {
 
 		const message = await Message.findOne({
 			_id: req.params.messageId,
-			channelId: req.params.channelId,
-			deleted: false
+			channelId: req.params.channelId
 		})
 
 		if (!message) {
@@ -111,8 +107,6 @@ export class ServerMessageController {
 
 		await message.save()
 
-		getaway.publish(message.channelId, 'MESSAGE_CREATE', message)
-
 		res.json(message)
 	}
 
@@ -122,8 +116,7 @@ export class ServerMessageController {
 
 		const message = await Message.findOne({
 			_id: req.params.messageId,
-			channelId: req.params.channelId,
-			deleted: false
+			channelId: req.params.channelId	
 		})
 
 		if (!message) {
@@ -143,8 +136,7 @@ export class ServerMessageController {
 	async deleteMessage(req: Request, res: Response): Promise<void> {
 		const message = await Message.findOne({
 			_id: req.params.messageId,
-			channelId: req.params.channelId,
-			deleted: false
+			channelId: req.params.channelId
 		})
 
 		if (!message) {
@@ -157,12 +149,7 @@ export class ServerMessageController {
 			if (!permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) throw new HTTPError('MISSING_PERMISSIONS')
 		}
 
-		await message.save({ deleted: true })
-
-		getaway.publish(message.channelId, 'MESSAGE_DELETE', {
-			_id: message._id,
-			channelId: message.channelId
-		})
+		await message.delete()
 
 		res.ok()
 	}

@@ -13,7 +13,7 @@ export class UserController {
 
         const user = await User.findOne({
             _id: userId === '@me' ? req.user._id : userId,
-            deleted: false
+            
         }, {
             fields: ['_id', 'avatar', 'username', 'badges']
         })
@@ -31,7 +31,7 @@ export class UserController {
             _id: {
                 $in: Array.from(req.user.relations.keys())
             },
-            deleted: false
+            
         }, {
             fields: ['_id', 'avatar', 'username', 'badges']
         })
@@ -76,8 +76,7 @@ export class UserController {
         }
 
         const target = await User.findOne({
-            _id: userId,
-            deleted: false
+            _id: userId
         })
 
         if (!target) {
@@ -114,8 +113,7 @@ export class UserController {
         }
 
         const target = await User.findOne({
-            _id: userId,
-            deleted: false
+            _id: userId
         })
 
         if (!target) {
@@ -146,8 +144,7 @@ export class UserController {
         }
 
         const target = await User.findOne({
-            _id: userId,
-            deleted: false
+            _id: userId
         })
 
         if (!target) {
@@ -181,8 +178,7 @@ export class UserController {
         }
 
         const target = await User.findOne({
-            _id: userId,
-            deleted: false
+            _id: userId
         })
 
         if (!target) {

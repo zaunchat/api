@@ -24,6 +24,10 @@ export class Getaway {
         await this.connections.get(targetId)?.subscribe(topics)
     }
 
+    async unsubscribe(targetId: Snowflake, ...topics: Snowflake[]): Promise<void> {
+        await this.connections.get(targetId)?.unsubscribe(topics)
+    }
+
     private async onConnection(_socket: WebSocket): Promise<void> {
         const socket = new Socket(_socket, this)
 
@@ -77,7 +81,6 @@ export class Getaway {
 
         const user = await User.findOne({
             _id: socket.user_id,
-            deleted: false,
             verified: true
         })
 

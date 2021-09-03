@@ -15,7 +15,6 @@ export class AuthController {
 
         const user = token && userId ? await User.findOne({
             _id: userId,
-            deleted: false,
             verified: true
         }, {
             fields: ['sessions']
@@ -72,8 +71,7 @@ export class AuthController {
         const { userId, token } = req.body
 
         const user = await User.findOne({
-            _id: userId,
-            deleted: false
+            _id: userId
         })
 
         if (!user) {
@@ -140,13 +138,13 @@ export class AuthController {
 
     @web.get('/verify/:userId/:token')
     async verify(req: Request, res: Response): Promise<void> {
-        const { userId, token } = req.params
+        const { userId, token } = req.params as { userId: Snowflake; token: string }
 
-        if (!mail.valid(userId as Snowflake, token)) {
+        if (!mail.valid(userId, token)) {
             throw new HTTPError('UNKNOWN_TOKEN')
         }
 
-        mail.queue.delete(userId as Snowflake)
+        mail.queue.delete(userId)
 
         const user = await User.findOne({
             _id: userId

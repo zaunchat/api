@@ -13,8 +13,8 @@ export interface CreateGroupOptions extends Omit<Partial<Group>, 'type'> {
 
 export const CreateGroupSchema = validator.compile({
     name: {
-        type: 'string', 
-        min: 1, 
+        type: 'string',
+        min: 1,
         max: config.limits.group.name
     }
 })
@@ -61,5 +61,9 @@ export class Group extends Channel {
     async save(options?: Partial<Group>): Promise<this> {
         await db.get(Group).persistAndFlush(options ? wrap(this).assign(options) : this)
         return this
+    }
+
+    async delete(): Promise<void> {
+        await db.get(Group).removeAndFlush(this)
     }
 }

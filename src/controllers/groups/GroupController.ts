@@ -1,9 +1,8 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { CreateGroupSchema, Group, ChannelTypes } from '../../structures'
+import { Group, CreateGroupSchema } from '../../structures'
 import { HTTPError } from '../../errors'
 import { BASE_GROUP_PATH } from '.'
-import { getaway } from '../../server'
 import config from '../../../config'
 
 
@@ -12,8 +11,7 @@ export class GroupController {
 	@web.get('/')
 	async fetchGroups(req: Request, res: Response): Promise<void> {
 		const groups = await Group.find({
-			recipients: req.user._id,
-			deleted: false
+			recipients: req.user._id	
 		})
 		res.json(groups)
 	}
@@ -22,8 +20,7 @@ export class GroupController {
 	async fetchGroup(req: Request, res: Response): Promise<void> {
 		const group = await Group.findOne({
 			_id: req.params.groupId,
-			recipients: req.user._id,
-			deleted: false
+			recipients: req.user._id
 		})
 
 		if (!group) {
@@ -38,8 +35,7 @@ export class GroupController {
 		req.check(CreateGroupSchema)
 
 		const groupCount = await Group.count({
-			recipients: req.user._id,
-			deleted: false
+			recipients: req.user._id
 		})
 
 		if (groupCount >= config.limits.user.groups) {
@@ -52,32 +48,25 @@ export class GroupController {
 			recipients: [req.user._id]
 		}).save()
 
-		await Promise.all(group.recipients.map((userId) => getaway.subscribe(userId, group._id)))
-
-		getaway.publish(group._id, 'CHANNEL_CREATE', group)
-
 		res.json(group)
 	}
 
 	@web.route('delete', '/:groupId')
-	async deleteChannel(req: Request, res: Response): Promise<void> {
+	async deleteGroup(req: Request, res: Response): Promise<void> {
 		const group = await Group.findOne({
 			_id: req.params.groupId,
-			recipients: req.user._id,
-			deleted: false
+			recipients: req.user._id
 		})
 
 		if (!group) {
 			throw new HTTPError('UNKNOWN_GROUP')
 		}
 
-		if (group.type === ChannelTypes.GROUP && group.ownerId !== req.user._id) {
+		if (group.ownerId !== req.user._id) {
 			throw new HTTPError('MISSING_ACCESS')
 		}
 
-		await group.save({ deleted: true })
-
-		getaway.publish(group._id, 'CHANNEL_DELETE', { _id: group._id })
+		await group.delete()
 
 		res.ok()
 	}

@@ -13,8 +13,7 @@ export class GroupMessageController {
     async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
         const channel = await Group.findOne({
             _id: req.params.channelId,
-            recipients: req.user._id,
-            deleted: false
+            recipients: req.user._id
         })
 
         if (!channel) {
@@ -73,8 +72,7 @@ export class GroupMessageController {
 
         const limit = 50 // TODO: Add limit option
         const messages = await Message.find({
-            channelId: req.params.channelId,
-            deleted: false
+            channelId: req.params.channelId
         }, { limit })
 
         res.json(messages)
@@ -91,8 +89,7 @@ export class GroupMessageController {
 
         const message = await Message.findOne({
             _id: req.params.messageId,
-            channelId: req.params.channelId,
-            deleted: false
+            channelId: req.params.channelId
         })
 
         if (!message) {
@@ -108,8 +105,7 @@ export class GroupMessageController {
 
         const message = await Message.findOne({
             _id: req.params.messageId,
-            channelId: req.params.channelId,
-            deleted: false
+            channelId: req.params.channelId
         })
 
         if (!message) {
@@ -130,7 +126,7 @@ export class GroupMessageController {
         const message = await Message.findOne({
             _id: req.params.messageId,
             channelId: req.params.channelId,
-            deleted: false
+            
         })
 
         if (!message) {
@@ -142,7 +138,7 @@ export class GroupMessageController {
             if (!permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) throw new HTTPError('MISSING_PERMISSIONS')
         }
 
-        await message.save({ deleted: true })
+        await message.delete()
 
         getaway.publish(message.channelId, 'MESSAGE_DELETE', {
             _id: message._id,

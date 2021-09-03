@@ -1,4 +1,4 @@
-import { PrimaryKey, Property } from 'mikro-orm'
+import { PrimaryKey } from 'mikro-orm'
 import { SnowflakeUtil } from '../utils'
 
 export abstract class Base {
@@ -9,7 +9,4 @@ export abstract class Base {
     this._id = SnowflakeUtil.generate()
     return this
   }
-
-  @Property()
-  deleted = false
 }

@@ -2,7 +2,6 @@ import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { Member, CreateMemberSchema, Server, User } from '../../structures'
 import { HTTPError } from '../../errors'
-import { getaway } from '../../server'
 import { Permissions } from '../../utils'
 import { BASE_SERVER_PATH } from '.'
 
@@ -43,8 +42,6 @@ export class ServerMemberController {
 		req.check(CreateMemberSchema)
 
 		const { serverId, memberId } = req.params as Record<string, Snowflake>
-
-
 		const member = await Member.findOne({
 			_id: memberId,
 			serverId: serverId
@@ -75,10 +72,7 @@ export class ServerMemberController {
 			}
 		}
 
-		getaway.publish(serverId, 'MEMBER_UPDATE', {
-			_id: memberId,
-			serverId,
-		})
+		await member.save()
 
 		res.json(member)
 	}
@@ -100,8 +94,7 @@ export class ServerMemberController {
 				serverId: serverId
 			}),
 			User.findOne({
-				_id: memberId,
-				deleted: false
+				_id: memberId
 			})
 		])
 
@@ -113,15 +106,7 @@ export class ServerMemberController {
 			throw new HTTPError('UNKNOWN_USER')
 		}
 
-		await Promise.all([
-			user.save({ servers: user.servers.filter(id => id !== serverId) }),
-			member.leave()
-		])
-
-		getaway.publish(serverId, 'MEMBER_LEAVE_SERVER', {
-			_id: memberId,
-			serverId: serverId
-		})
+		await member.delete()
 
 		res.ok()
 	}

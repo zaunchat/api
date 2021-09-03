@@ -13,7 +13,6 @@ export const auth = (unauthorizedRoutes: string[]) => async (req: Request, _res:
 
     const user = token && userId ? await User.findOne({
         _id: userId,
-        deleted: false,
         verified: true
     }) : null
 

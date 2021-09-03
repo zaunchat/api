@@ -31,4 +31,8 @@ export class DMChannel extends Channel {
         await db.get(DMChannel).persistAndFlush(options ? wrap(this).assign(options) : this)
         return this
     }
+
+    async delete(): Promise<void> {
+        await db.get(DMChannel).removeAndFlush(this)
+    }
 }

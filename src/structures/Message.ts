@@ -71,4 +71,8 @@ export class Message extends Base {
         await Message.save(options ? wrap(this).assign(options) : this)
         return this
     }
+
+    async delete(): Promise<void> {
+        await db.get(Message).removeAndFlush(this)
+    }
 }

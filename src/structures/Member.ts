@@ -1,5 +1,5 @@
-import { Base, User } from '.'
-import { Property, Entity, wrap, FilterQuery, FindOptions, AfterCreate, AfterDelete } from 'mikro-orm'
+import { Base } from './Base'
+import { Property, Entity, wrap, FilterQuery, FindOptions } from 'mikro-orm'
 import { validator } from '../utils'
 import db from '../database'
 import config from '../../config'
@@ -38,21 +38,6 @@ export class Member extends Base {
     @Property()
     serverId!: Snowflake
 
-    @AfterCreate()
-    async onCreate(): Promise<void> {
-        const user = await User.findOne({ _id: this._id })
-
-        user?.servers.push(this.serverId)
-
-        await user?.save()
-    }
-
-    @AfterDelete()
-    async onDelete(): Promise<void> {
-        const user = await User.findOne({ _id: this._id })
-        await user?.save({ servers: user.servers.filter(id => id !== this.serverId) })
-    }
-
     static from(options: CreateMemberOptions): Member {
         return wrap(new Member()).assign(options)
     }
@@ -74,7 +59,7 @@ export class Member extends Base {
         return this
     }
 
-    async leave(): Promise<void> {
+    async delete(): Promise<void> {
         await db.get(Member).removeAndFlush(this)
     }
 }

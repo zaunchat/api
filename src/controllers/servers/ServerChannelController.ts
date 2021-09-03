@@ -20,7 +20,7 @@ export class ServerChannelController {
     async fetchChannels(req: Request, res: Response): Promise<void> {
         const channels = await TextChannel.find({
             serverId: req.params.serverId,
-            deleted: false
+
         })
         res.json(channels)
     }
@@ -31,7 +31,7 @@ export class ServerChannelController {
         const channel = await TextChannel.findOne({
             _id: req.params.channelId,
             serverId: req.params.serverId,
-            deleted: false
+
         })
 
         if (!channel) {
@@ -56,7 +56,7 @@ export class ServerChannelController {
             serverId: req.params.serverId
         }).save()
 
-        getaway.publish(channel._id, 'CHANNEL_CREATE', channel)
+        getaway.publish(channel.serverId, 'CHANNEL_CREATE', channel)
 
         res.json(channel)
     }
@@ -65,7 +65,6 @@ export class ServerChannelController {
     @web.route('delete', '/:channelId')
     async deleteChannel(req: Request, res: Response): Promise<void> {
         const channel = await TextChannel.findOne({
-            deleted: false,
             _id: req.params.channelId
         })
 
@@ -79,9 +78,10 @@ export class ServerChannelController {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 
-        await channel.save({ deleted: true })
+        await channel.delete()
 
-        getaway.publish(channel._id, 'CHANNEL_DELETE', {
+        // TODO: Create TextChannelSubscriber
+        getaway.publish(channel.serverId, 'CHANNEL_DELETE', {
             _id: channel._id,
             serverId: channel.serverId
         })
