@@ -2,7 +2,7 @@ import config from '../config'
 import server from './server'
 import db from './database'
 
-async function main(): Promise<void> {
+(async () => {
 	try {
 		console.log('Connecting to database...')
 
@@ -15,6 +15,4 @@ async function main(): Promise<void> {
 		console.error(err)
 		process.exit(-1)
 	}
-}
-
-main()
+})()
