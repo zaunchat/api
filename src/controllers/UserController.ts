@@ -41,13 +41,9 @@ export class UserController {
 
     @web.get('/:userId/dm')
     async openDM(req: Request, res: Response): Promise<void> {
-        const { userId } = req.params
+        const { userId } = req.params as Record<string, Snowflake>
 
-        if (userId === req.user._id || userId === '@me') {
-            throw new HTTPError('MISSING_ACCESS')
-        }
-
-        if (!await User.findOne({ _id: userId })) {
+        if (userId !== req.user._id && !await User.findOne({ _id: userId })) {
             throw new HTTPError('UNKNOWN_USER')
         }
 
@@ -63,7 +59,7 @@ export class UserController {
             recipients: [userId as Snowflake, req.user._id]
         }).save()
 
-        await Promise.all(dm.recipients.map((userId) => getaway.subscribe(userId, dm._id)))
+        await getaway.subscribe(userId, ...dm.recipients)
 
         getaway.publish(dm._id, 'CHANNEL_CREATE', dm)
 
