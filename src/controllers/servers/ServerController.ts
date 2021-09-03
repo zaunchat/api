@@ -1,10 +1,11 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { Server, Category, TextChannel, CreateServerSchema } from '../../structures'
+import { Server, Category, TextChannel, CreateServerSchema, Member } from '../../structures'
 import { HTTPError } from '../../errors'
 import { getaway } from '../../server'
 import { BASE_SERVER_PATH } from '.'
 import config from '../../../config'
+import db from '../../database'
 
 
 @web.basePath(BASE_SERVER_PATH)
@@ -51,9 +52,13 @@ export class ServerController {
             channels: [chat._id]
         })
 
-        await Promise.all([server.save(), chat.save(), category.save()])
+        const member = Member.from({
+            _id: req.user._id,
+            serverId: server._id
+        })
+
+        await db.em.persistAndFlush([server, chat, category, member])
         await getaway.subscribe(req.user._id, server._id, chat._id, category._id)
-        await server.addMember(req.user)
 
         getaway.publish(server._id, 'SERVER_CREATE', server)
 
