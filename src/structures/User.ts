@@ -26,12 +26,12 @@ export interface CreateUserOptions extends Partial<User> {
 
 export const CreateUserSchema = validator.compile({
     username: { type: 'string', min: 3, max: 32 },
-    email: { type: 'email', min: 5, max: 100 },
+    email: { type: 'string', min: 3, max: 320 },
     password: { type: 'string', min: 8, max: 72 }
 })
 
 export const LoginUserSchema = validator.compile({
-    email: { type: 'email', min: 5, max: 100 },
+    email: { type: 'string', min: 3, max: 320 },
     password: { type: 'string', min: 8, max: 72 }
 })
 

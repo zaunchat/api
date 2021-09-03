@@ -1,18 +1,10 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { User, Session, CreateUserSchema, LoginUserSchema, LogoutUserSchema } from '../structures'
+import { mail, Snowflake } from '../utils'
 import { HTTPError } from '../errors'
-import { createTransport } from 'nodemailer'
-import { nanoid } from 'nanoid'
-import bcrypt from 'bcrypt'
-import config from '../../config'
+import argon2 from 'argon2'
 
-const mail = config.smtp.enabled && config.smtp.uri ? createTransport(config.smtp.uri) : null
-const waitingForVerify = new Map<string, string>()
-const EMAIL_MESSAGE_TEMPLATE = `Hello @%%USERNAME%%,
-
-You're almost there! If you did not perform this action you can safely ignore this email.
-Please verify your account here: %%LINK%%`
 
 @web.basePath('/auth')
 export class AuthController {
@@ -41,6 +33,10 @@ export class AuthController {
 
         const { email, password } = req.body
 
+        if (!mail.isEmail(email)) {
+            throw new HTTPError('INVALID_EMAIL')
+        }
+
         const user = await User.findOne({ email })
 
         if (!user) {
@@ -51,7 +47,7 @@ export class AuthController {
             throw new HTTPError('USER_NOT_VERIFIED')
         }
 
-        if (!await bcrypt.compare(password, user.password)) {
+        if (!await argon2.verify(password, user.password)) {
             throw new HTTPError('INVALID_PASSWORD')
         }
 
@@ -103,6 +99,10 @@ export class AuthController {
 
         const { username, email, password } = req.body
 
+        if (!mail.isEmail(email)) {
+            throw new HTTPError('INVALID_EMAIL')
+        }
+
         const exists = await User.findOne({
             $or: [{ username }, { email }]
         })
@@ -118,34 +118,23 @@ export class AuthController {
         const user = await User.from({
             username,
             email,
-            password: await bcrypt.hash(password, 12)
-        }).save({ verified: !mail })
+            password: await argon2.hash(password)
+        }).save({ verified: !mail.enabled })
 
-        if (!mail) {
+        if (!mail.enabled) {
             return void res.redirect(`https://${req.headers.host}/auth/login`)
         }
 
-        const token = nanoid(50)
-        const link = `https://${req.headers.host}/auth/verify/${user._id}/${token}`
-
         try {
-
-            await mail.sendMail({
-                subject: 'Verify your Itchat account.‏‏',
-                from: 'noreply@itchat.com',
-                to: user.email,
-                text: EMAIL_MESSAGE_TEMPLATE
-                    .replace('%%USERNAME%%', user.username)
-                    .replace('%%LINK%%', link)
+            res.json({
+                url: await mail.send({
+                    title: 'Verify your Itchat account.‏‏',
+                    user
+                })
             })
-
-            waitingForVerify.set(user._id, token)
-
-            res.json({ link })
         } catch (err) {
-            console.error(err)
             await User.remove(user)
-            res.sendStatus(500)
+            throw err
         }
     }
 
@@ -153,9 +142,11 @@ export class AuthController {
     async verify(req: Request, res: Response): Promise<void> {
         const { userId, token } = req.params
 
-        if (token !== waitingForVerify.get(userId)) {
+        if (!mail.valid(userId as Snowflake, token)) {
             throw new HTTPError('UNKNOWN_TOKEN')
         }
+
+        mail.queue.delete(userId as Snowflake)
 
         const user = await User.findOne({
             _id: userId
@@ -166,8 +157,6 @@ export class AuthController {
         }
 
         await user.save({ verified: true })
-
-        waitingForVerify.delete(userId)
 
         res.redirect(`https://${req.headers.host}/auth/login`)
     }

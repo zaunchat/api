@@ -12,8 +12,11 @@ export const server = new App({
 })
 
 server
+    .use(middlewares.helmet())
+    .use(middlewares.rateLimit({ interval: 1000, maxInInterval: 50 }))
+    .use(middlewares.cors())
+    .use(middlewares.json({ parser: JSON.parse }))
     .use(middlewares.captcha(['/auth/login', '/auth/register']))
-    .use(middlewares.json({ parse: JSON.parse }))
     .use(middlewares.auth(['/auth/verify', '/auth/check', '/ws']))
     .use('/ws', middlewares.ws(getaway.server))
 

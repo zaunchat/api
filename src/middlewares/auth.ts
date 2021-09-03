@@ -3,8 +3,8 @@ import { User } from '../structures'
 import { HTTPError } from '../errors'
 
 
-export const auth = (unauthorized: string[]) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
-    if (unauthorized.some((p) => req.path.includes(p))) {
+export const auth = (unauthorizedRoutes: string[]) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+    if (unauthorizedRoutes.some((p) => req.path.includes(p))) {
         return next()
     }
 
