@@ -1,6 +1,6 @@
 import { Entity, Property, wrap, FindOptions, FilterQuery, FindOneOptions } from 'mikro-orm'
 import { Base, Presence, Session } from '.'
-import { Snowflake, validator } from '../utils'
+import { validator } from '../utils'
 import db from '../database'
 
 export enum RelationshipStatus {

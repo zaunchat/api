@@ -1,6 +1,6 @@
 import { Channel, ChannelTypes } from './Channel'
 import { Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
-import { validator, Snowflake } from '../utils'
+import { validator } from '../utils'
 import db from '../database'
 
 export interface CreateCategoryOptions extends Omit<Partial<Category>, 'type'> {

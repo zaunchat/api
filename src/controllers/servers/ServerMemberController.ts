@@ -3,7 +3,7 @@ import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { Member, CreateMemberSchema, Server } from '../../structures'
 import { HTTPError } from '../../errors'
 import { getaway } from '../../server'
-import { Permissions, Snowflake } from '../../utils'
+import { Permissions } from '../../utils'
 import { BASE_SERVER_PATH } from '.'
 
 

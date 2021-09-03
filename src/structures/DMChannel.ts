@@ -1,6 +1,5 @@
 import { Entity, FindOptions, Property, wrap, FilterQuery } from 'mikro-orm'
 import { Channel, ChannelTypes } from './Channel'
-import { Snowflake } from '../utils'
 import db from '../database'
 
 export interface CreateDMChannelOptions extends Omit<Partial<DMChannel>, 'type'> {

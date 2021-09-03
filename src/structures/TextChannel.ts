@@ -1,6 +1,6 @@
 import { Entity, Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
 import { Channel, ChannelTypes } from '.'
-import { validator, Snowflake } from '../utils'
+import { validator } from '../utils'
 import db from '../database'
 
 export interface CreateTextChannelOptions extends Omit<Partial<TextChannel>, 'type'> {

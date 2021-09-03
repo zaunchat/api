@@ -1,7 +1,6 @@
 import WebSocket from 'ws'
 import { Payload, WSCloseCodes } from './Constants'
 import { Getaway } from './Getaway'
-import { Snowflake } from '../utils'
 import Redis from 'ioredis'
 
 export const DEFAULT_HEARTBEAT_TIME = 1000 * 42

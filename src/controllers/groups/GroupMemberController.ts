@@ -2,10 +2,10 @@ import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { Group } from '../../structures'
 import { HTTPError } from '../../errors'
-import { Permissions, Snowflake } from '../../utils'
+import { Permissions } from '../../utils'
 import { getaway } from '../../server'
-import config from '../../../config'
 import { BASE_GROUP_PATH } from '.'
+import config from '../../../config'
 
 
 @web.basePath(`${BASE_GROUP_PATH}/:groupId/members`)

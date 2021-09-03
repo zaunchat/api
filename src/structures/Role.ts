@@ -1,4 +1,4 @@
-import { SnowflakeUtil, validator, Snowflake } from '../utils'
+import { SnowflakeUtil, validator } from '../utils'
 
 export interface CreateRoleOptions extends Partial<Role> {
     name: string

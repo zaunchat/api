@@ -1,5 +1,5 @@
 import { PrimaryKey, Property } from 'mikro-orm'
-import { SnowflakeUtil, Snowflake } from '../utils'
+import { SnowflakeUtil } from '../utils'
 
 export abstract class Base {
   @PrimaryKey({ unique: true })

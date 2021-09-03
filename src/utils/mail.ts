@@ -1,6 +1,5 @@
 import { createTransport } from 'nodemailer'
 import { nanoid } from 'nanoid'
-import { Snowflake } from './Snowflake'
 import { User } from '../structures'
 import isEmail from 'validator/lib/isEmail'
 import config from '../../config'

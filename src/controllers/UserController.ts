@@ -3,7 +3,7 @@ import { Response, Request } from '@tinyhttp/app'
 import { DMChannel, RelationshipStatus, User } from '../structures'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
-import { Snowflake } from '../utils'
+
 
 @web.basePath('/users')
 export class UserController {

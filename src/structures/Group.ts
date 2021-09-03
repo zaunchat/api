@@ -1,6 +1,6 @@
 import { Entity, Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
 import { ChannelTypes, Channel } from './Channel'
-import { DEFAULT_PERMISSION_DM, Snowflake, validator } from '../utils'
+import { DEFAULT_PERMISSION_DM, validator } from '../utils'
 import db from '../database'
 
 export interface CreateGroupOptions extends Omit<Partial<Group>, 'type'> {

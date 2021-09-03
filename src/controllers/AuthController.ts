@@ -1,7 +1,7 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { User, Session, CreateUserSchema, LoginUserSchema, LogoutUserSchema } from '../structures'
-import { mail, Snowflake } from '../utils'
+import { mail } from '../utils'
 import { HTTPError } from '../errors'
 import argon2 from 'argon2'
 

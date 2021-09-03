@@ -3,8 +3,8 @@ import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { HTTPError } from '../../errors'
 import { CreateMessageSchema, DMChannel, Message } from '../../structures'
 import { getaway } from '../../server'
-import config from '../../../config'
 import { BASE_CHANNEL_PATH } from '.'
+import config from '../../../config'
 
 
 @web.basePath(`${BASE_CHANNEL_PATH}/:channelId/messages`)

@@ -11,3 +11,7 @@ declare module '@tinyhttp/app' {
         ok(): void
     }
 }
+
+declare global {
+    type Snowflake = `${bigint}`
+}

@@ -1,5 +1,4 @@
 import type { Member, Message, Server, Channel, TextChannel, DMChannel, User, Group } from '../structures'
-import { Snowflake } from '../utils'
 
 export interface Payload {
     code: WSCodes

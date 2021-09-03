@@ -1,6 +1,6 @@
 import { Base } from './Base'
 import { Property, Entity, wrap, FilterQuery, FindOptions } from 'mikro-orm'
-import { Snowflake, validator } from '../utils'
+import { validator } from '../utils'
 import db from '../database'
 
 export interface CreateMemberOptions extends Partial<Member> {

@@ -1,7 +1,5 @@
 import cluster from 'cluster'
 
-export type Snowflake = `${bigint}`
-
 export class SnowflakeUtil extends null {
   static readonly EPOCH = new Date('2021-01-01').getTime()
   static INCREMENT = 0

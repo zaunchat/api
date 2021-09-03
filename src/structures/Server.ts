@@ -1,6 +1,6 @@
 import { Base, Role, User, Member } from '.'
 import { Property, Entity, wrap, FindOptions, FilterQuery } from 'mikro-orm'
-import { DEFAULT_PERMISSION_EVERYONE, Snowflake, validator } from '../utils'
+import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
 import db from '../database'
 
 export interface CreateServerOptions extends Partial<Server> {

@@ -4,7 +4,6 @@ import events from './events'
 import { Socket } from './Socket'
 import { WSCodes, WSCloseCodes, WSEvents, Payload } from './Constants'
 import { PresenceStatus, User } from '../structures'
-import { Snowflake } from '../utils'
 import config from '../../config'
 
 export class Getaway {
