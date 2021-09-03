@@ -18,7 +18,7 @@ export class ServerMessageController {
 
 		const channel = await TextChannel.findOne({
 			_id: req.params.channelId,
-			serverId: req.params._id,
+			serverId: req.params.serverId,
 			deleted: false
 		})
 
