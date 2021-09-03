@@ -72,11 +72,14 @@ export class Server extends Base {
         return this
     }
 
-    async addMember(user: User): Promise<void> {
-        user.servers.push(this._id)
-        await Member.from({
+    async addMember(user: User): Promise<Member> {
+        const member = await Member.from({
             _id: user._id,
             serverId: this._id
         }).save()
+
+        user.servers.push(this._id)
+        
+        return member
     }
 }

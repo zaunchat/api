@@ -1,6 +1,6 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { Member, CreateMemberSchema, Server } from '../../structures'
+import { Member, CreateMemberSchema, Server, User } from '../../structures'
 import { HTTPError } from '../../errors'
 import { getaway } from '../../server'
 import { Permissions } from '../../utils'
@@ -42,16 +42,19 @@ export class ServerMemberController {
 	async editMember(req: Request, res: Response): Promise<void> {
 		req.check(CreateMemberSchema)
 
+		const { serverId, memberId } = req.params as Record<string, Snowflake>
+
+
 		const member = await Member.findOne({
-			_id: req.params.memberId,
-			serverId: req.params.serverId
+			_id: memberId,
+			serverId: serverId
 		})
 
 		if (!member) {
 			throw new HTTPError('UNKNOWN_MEMBER')
 		}
 
-		const server = await Server.findOne({ _id: req.params.serverId }) as Server
+		const server = await Server.findOne({ _id: serverId }) as Server
 		const permissions = await Permissions.fetch(req.user, server)
 
 
@@ -72,11 +75,54 @@ export class ServerMemberController {
 			}
 		}
 
-		getaway.publish(member._id, 'MEMBER_UPDATE', {
-			_id: member._id,
-			serverId: req.params.serverId as Snowflake,
+		getaway.publish(serverId, 'MEMBER_UPDATE', {
+			_id: memberId,
+			serverId,
 		})
 
 		res.json(member)
+	}
+
+	@web.route('delete', '/:memberId')
+	async kickMember(req: Request, res: Response): Promise<void> {
+		const { serverId, memberId } = req.params as Record<string, Snowflake>
+
+		if (memberId !== req.user._id) {
+			const permissions = await Permissions.fetch(req.user, serverId)
+			if (!permissions.has(Permissions.FLAGS.KICK_MEMBERS)) {
+				throw new HTTPError('MISSING_PERMISSIONS')
+			}
+		}
+
+		const [member, user] = await Promise.all([
+			Member.findOne({
+				_id: memberId,
+				serverId: serverId
+			}),
+			User.findOne({
+				_id: memberId,
+				deleted: false
+			})
+		])
+
+		if (!member) {
+			throw new HTTPError('UNKNOWN_MEMBER')
+		}
+
+		if (!user) {
+			throw new HTTPError('UNKNOWN_USER')
+		}
+
+		await Promise.all([
+			user.save({ servers: user.servers.filter(id => id !== serverId) }),
+			member.leave()
+		])
+
+		getaway.publish(serverId, 'MEMBER_LEAVE_SERVER', {
+			_id: memberId,
+			serverId: serverId
+		})
+
+		res.ok()
 	}
 }

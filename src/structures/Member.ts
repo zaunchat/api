@@ -57,4 +57,8 @@ export class Member extends Base {
         await Member.save(options ? wrap(this).assign(options) : this)
         return this
     }
+
+    async leave(): Promise<void> {
+        await db.get(Member).removeAndFlush(this)
+    }
 }
