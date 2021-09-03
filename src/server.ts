@@ -1,5 +1,5 @@
-import { App, Response } from '@tinyhttp/app'
-import { IncomingMessage, ServerResponse } from 'http'
+import { App } from '@tinyhttp/app'
+import { IncomingMessage as Request, ServerResponse as Response } from 'http'
 import { register } from 'express-decorators'
 import { Getaway } from './getaway'
 import { CheckError } from './errors'
@@ -27,13 +27,13 @@ for (const Controller of Object.values(Controllers)) {
 }
 
 
-Object.defineProperty(ServerResponse.prototype, 'ok', {
+Object.defineProperty(Response.prototype, 'ok', {
     value: function () {
-        (this as Response).sendStatus(202)
+        this.sendStatus(202)
     }
 })
 
-Object.defineProperty(IncomingMessage.prototype, 'check', {
+Object.defineProperty(Request.prototype, 'check', {
     value: function (check: (x: unknown) => boolean) {
         const valid = check(this.body)
 
