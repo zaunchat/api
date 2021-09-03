@@ -8,6 +8,10 @@ class Database extends MikroORM {
 	get<T extends AnyEntity<T>, U extends EntityRepository<T> = EntityRepository<T>>(entityName: EntityName<T>): GetRepository<T, U> {
 		return this.em.getRepository(entityName)
 	}
+
+	save<T extends AnyEntity<T>>(entity: T | T[]) {
+		return this.em.persistAndFlush(entity)
+	}
 }
 
 const db = new Database({

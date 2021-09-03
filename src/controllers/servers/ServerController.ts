@@ -57,7 +57,13 @@ export class ServerController {
             serverId: server._id
         })
 
-        await db.em.persistAndFlush([server, chat, category, member])
+        await db.save([
+            server,
+            chat,
+            category,
+            member
+        ])
+        
         await getaway.subscribe(req.user._id, server._id, chat._id, category._id)
 
         getaway.publish(server._id, 'SERVER_CREATE', server)
