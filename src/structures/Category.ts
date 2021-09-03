@@ -2,6 +2,7 @@ import { Channel, ChannelTypes } from './Channel'
 import { Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
 import { validator } from '../utils'
 import db from '../database'
+import config from '../../config'
 
 export interface CreateCategoryOptions extends Omit<Partial<Category>, 'type'> {
     name: string
@@ -12,8 +13,8 @@ export interface CreateCategoryOptions extends Omit<Partial<Category>, 'type'> {
 export const CreateCategorySchema = validator.compile({
     name: {
         type: 'string',
-        min: 2,
-        max: 50
+        min: 1,
+        max: config.limits.channel.name
     }
 })
 

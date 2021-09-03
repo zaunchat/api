@@ -21,16 +21,22 @@ const config = {
 	},
 	limits: {
 		user: {
+			username: 32,
 			servers: 100,
 			groups: 50,
 			friends: 1_000,
-			blocked: 1_000
+			blocked: 1_000,
 		},
 		server: {
+			name: 50,
+			description: 1_000,
 			roles: 200,
 			channels: 200,
 			emojis: 50,
 			members: 10_000
+		},
+		member: {
+			nickname: 32
 		},
 		message: {
 			length: 2_000,
@@ -39,7 +45,13 @@ const config = {
 			embeds: 1
 		},
 		group: {
-			members: 100
+			name: 50,
+			members: 100,
+			description: 1_000
+		},
+		channel: {
+			name: 50,
+			topic: 1000
 		}
 	}
 } as const

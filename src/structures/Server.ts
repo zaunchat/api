@@ -2,6 +2,7 @@ import { Base, Role } from '.'
 import { Property, Entity, wrap, FindOptions, FilterQuery } from 'mikro-orm'
 import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
 import db from '../database'
+import config from '../../config'
 
 export interface CreateServerOptions extends Partial<Server> {
     name: string
@@ -11,22 +12,22 @@ export interface CreateServerOptions extends Partial<Server> {
 export const CreateServerSchema = validator.compile({
     name: {
         type: 'string',
-        min: 2,
-        max: 50
+        min: 1,
+        max: config.limits.server.name
     }
 })
 
 export const ModifyServerSchema = validator.compile({
     name: {
         type: 'string',
-        min: 2,
-        max: 50,
+        min: 1,
+        max: config.limits.server.name,
         optional: true
     },
     description: {
         type: 'string',
         min: 0,
-        max: 1000,
+        max: config.limits.server.description,
         optional: true
     }
 })

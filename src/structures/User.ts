@@ -2,6 +2,7 @@ import { Entity, Property, wrap, FindOptions, FilterQuery, FindOneOptions } from
 import { Base, Presence, Session } from '.'
 import { validator } from '../utils'
 import db from '../database'
+import config from '../../config'
 
 export enum RelationshipStatus {
     FRIEND,
@@ -25,9 +26,21 @@ export interface CreateUserOptions extends Partial<User> {
 }
 
 export const CreateUserSchema = validator.compile({
-    username: { type: 'string', min: 3, max: 32 },
-    email: { type: 'string', min: 3, max: 320 },
-    password: { type: 'string', min: 8, max: 72 }
+    username: {
+        type: 'string',
+        min: 3,
+        max: config.limits.user.username
+    },
+    email: {
+        type: 'string',
+        min: 3,
+        max: 320
+    },
+    password: {
+        type: 'string',
+        min: 8,
+        max: 72
+    }
 })
 
 export const LoginUserSchema = validator.compile({

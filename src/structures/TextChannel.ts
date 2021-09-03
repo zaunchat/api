@@ -2,6 +2,7 @@ import { Entity, Property, wrap, FilterQuery, FindOptions } from 'mikro-orm'
 import { Channel, ChannelTypes } from '.'
 import { validator } from '../utils'
 import db from '../database'
+import config from '../../config'
 
 export interface CreateTextChannelOptions extends Omit<Partial<TextChannel>, 'type'> {
     name: string
@@ -12,12 +13,12 @@ export const CreateTextChannelSchema = validator.compile({
     name: {
         type: 'string',
         min: 2,
-        max: 50
+        max: config.limits.channel.name
     },
     topic: {
         type: 'string',
         min: 1,
-        max: 1000,
+        max: config.limits.channel.topic,
         optional: true
     },
     $$strict: true

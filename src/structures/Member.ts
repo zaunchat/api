@@ -2,6 +2,7 @@ import { Base, User } from '.'
 import { Property, Entity, wrap, FilterQuery, FindOptions, AfterCreate, AfterDelete } from 'mikro-orm'
 import { validator } from '../utils'
 import db from '../database'
+import config from '../../config'
 
 export interface CreateMemberOptions extends Partial<Member> {
     _id: Snowflake,
@@ -12,7 +13,7 @@ export const CreateMemberSchema = validator.compile({
     nickname: {
         type: 'string',
         min: 0,
-        max: 30,
+        max: config.limits.member.nickname,
         optional: true
     },
     roles: {
