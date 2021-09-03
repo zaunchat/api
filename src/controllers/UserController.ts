@@ -44,7 +44,7 @@ export class UserController {
         const { userId } = req.params
 
         if (userId === req.user._id || userId === '@me') {
-            return void res.status(403).json('You can\'t DM yourself')
+            throw new HTTPError('MISSING_ACCESS')
         }
 
         if (!await User.findOne({ _id: userId })) {
@@ -76,7 +76,7 @@ export class UserController {
         const { userId } = req.params
 
         if (userId === req.user._id || userId === '@me') {
-            return void res.status(403).json('You can\'t friend yourself')
+            throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
@@ -114,7 +114,7 @@ export class UserController {
         const { userId } = req.params
 
         if (userId === req.user._id || userId === '@me') {
-            return void res.status(403).json('You can\'t un-friend yourself')
+            throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
@@ -146,7 +146,7 @@ export class UserController {
         const { userId } = req.params
 
         if (userId === req.user._id || userId === '@me') {
-            return void res.status(403).json('You can\'t block yourself')
+            throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
@@ -181,7 +181,7 @@ export class UserController {
         const { userId } = req.params
 
         if (userId === req.user._id || userId === '@me') {
-            return void res.status(403).json('You can\'t unblock yourself')
+            throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
