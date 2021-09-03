@@ -50,9 +50,3 @@ export class HTTPError<T extends keyof typeof APIErrors = keyof typeof APIErrors
         this.status = status
     }
 }
-
-
-export class CheckError {
-    readonly status = 400
-    constructor(public message: unknown) {}
-}

@@ -2,6 +2,7 @@ import { App, Response } from '@tinyhttp/app'
 import { IncomingMessage, ServerResponse } from 'http'
 import { register } from 'express-decorators'
 import { Getaway } from './getaway'
+import { CheckError } from './errors'
 import * as middlewares from './middlewares'
 import * as Controllers from './controllers'
 
@@ -37,7 +38,7 @@ Object.defineProperty(IncomingMessage.prototype, 'check', {
         const valid = check(this.body)
 
         if (valid !== true) {
-            throw new Error(String(valid))
+            throw new CheckError(valid)
         }
 
         return true

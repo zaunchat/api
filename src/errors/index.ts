@@ -1,1 +1,2 @@
-export { HTTPError, CheckError } from './HTTPError'
+export * from './HTTPError'
+export * from './CheckError'
