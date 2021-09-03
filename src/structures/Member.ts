@@ -39,7 +39,7 @@ export class Member extends Base {
 
     @AfterCreate()
     async onCreate(): Promise<void> {
-        const user = await User.findOne({ _id: this._id, deleted: false })
+        const user = await User.findOne({ _id: this._id })
 
         user?.servers.push(this.serverId)
 
@@ -48,7 +48,7 @@ export class Member extends Base {
 
     @AfterDelete()
     async onDelete(): Promise<void> {
-        const user = await User.findOne({ _id: this._id, deleted: false })
+        const user = await User.findOne({ _id: this._id })
         await user?.save({ servers: user.servers.filter(id => id !== this.serverId) })
     }
 
