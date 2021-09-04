@@ -6,6 +6,7 @@ export type PermissionsResolvable = number | PermissionString | Permissions | Pe
 
 
 export class Permissions {
+    static readonly DEFAULT_BIT = 0
     static readonly FLAGS = {
         // Admin
         ADMINISTRATOR: 1 << 0,
@@ -32,9 +33,8 @@ export class Permissions {
         // Member
         CHANGE_NICKNAME: 1 << 13
     }
-
-    bitfield = 0
-    perspective!: User
+    
+    bitfield = Permissions.DEFAULT_BIT
 
     constructor(...bits: PermissionsResolvable[]) {
         this.bitfield = Permissions.resolve(bits)
@@ -64,7 +64,7 @@ export class Permissions {
         if (channel) {
             const userId = user = typeof user === 'string' ? user : user._id
 
-            let bitfield = 0
+            let bitfield = Permissions.DEFAULT_BIT
 
             switch (channel.type) {
                 case ChannelTypes.GROUP:
@@ -97,7 +97,7 @@ export class Permissions {
     any(bit: PermissionsResolvable, checkAdmin = true): boolean {
         if (checkAdmin && this.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true
         bit = Permissions.resolve(bit)
-        return (this.bitfield & bit) !== 0
+        return (this.bitfield & bit) !== Permissions.DEFAULT_BIT
     }
 
 
@@ -165,7 +165,7 @@ export class Permissions {
 
     static resolve(bit: PermissionsResolvable): number {
         if (typeof bit === 'number') return bit
-        if (Array.isArray(bit)) return bit.map(p => this.resolve(p)).reduce((prev, p) => prev | p, 0)
+        if (Array.isArray(bit)) return bit.map(p => this.resolve(p)).reduce((prev, p) => prev | p, Permissions.DEFAULT_BIT)
         if (bit instanceof Permissions) return bit.bitfield
         if (typeof Permissions.FLAGS[bit] !== 'undefined') return Permissions.FLAGS[bit]
         throw new Error('Invalid Bit')
