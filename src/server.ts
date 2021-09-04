@@ -5,16 +5,34 @@ import { Getaway } from './getaway'
 import { CheckError } from './errors'
 import * as middlewares from './middlewares'
 import * as Controllers from './controllers'
+import config from '../config'
+import ms from 'ms'
 
 
 export const getaway = new Getaway()
 export const server = new App({
     onError: middlewares.error()
-})
+}).use(middlewares.helmet())
+
+
+for (const [route, opts] of Object.entries(config.routes)) {
+    const [max, interval, onlyIP] = opts.split(/\/|--/).map(s => s.trim())
+
+    const options = {
+        max: Number(max),
+        interval: ms(interval),
+        onlyIP: Boolean(onlyIP)
+    }
+
+    if (route === 'global') {
+        server.use(middlewares.rateLimit(options, 'global'))
+    } else {
+        server.use(`/${route}`, middlewares.rateLimit(options, route))
+    }
+}
+
 
 server
-    .use(middlewares.helmet())
-    .use(middlewares.rateLimit({ interval: 1000, maxInInterval: 50 }))
     .use(middlewares.json({ parser: JSON.parse }))
     .use(middlewares.captcha(['/auth/login', '/auth/register']))
     .use(middlewares.auth(['/auth/verify', '/auth/check', '/ws']))
