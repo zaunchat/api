@@ -3,7 +3,7 @@ import { RedisRateLimiter } from 'rolling-rate-limiter'
 import Redis from 'ioredis'
 import config from '../../config'
 
-const client = new Redis(config.redis.uri && !config.redis.local ? config.redis.uri : void 0)
+const client = new Redis(config.database.redis)
 
 interface RateLimitOptions {
   max: number

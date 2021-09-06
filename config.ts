@@ -1,23 +1,21 @@
 import 'dotenv/config'
+import env from 'env-var'
 
 const config = {
-	port: Number(process.env.PORT) || 8080,
+	port: env.get('PORT').default(8080).asPortNumber(),
 	database: {
-		uri: process.env.DATABASE_URI as string,
-		type: process.env.DATABASE_TYPE || 'mongo' // mongo | mysql | mariadb | postgresql | sqlite
-	},
-	redis: {
-		uri: process.env.REDIS_URI as string,
-		local: true
+		uri: env.get('DATABASE_URI').required().asUrlString(),
+		type: env.get('DATABASE_TYPE').default('mongo').asString(), // mongo | mysql | mariadb | postgresql | sqlite
+		redis: env.get('REDIS_URI').asString()
 	},
 	smtp: {
-		enabled: false,
-		uri: process.env.SMTP_URI as string,
+		enabled: env.get('SMTP_ENABLED').default('true').asBool(),
+		uri: env.get('SMTP_URI').required().asUrlString()
 	},
 	captcha: {
-		enabled: false,
-		key: process.env.CAPTCHA_KEY as string,
-		token: process.env.CAPTCHA_TOKEN as string
+		enabled: env.get('CATPCHA_ENABLED').default('true').asBool(),
+		key: env.get('CAPTCHA_KEY').asString(),
+		token: env.get('CAPTCHA_TOKEN').asString()
 	},
 	limits: {
 		user: {
@@ -61,10 +59,10 @@ const config = {
 		'auth/register': '3/24h --ip',
 		'auth/verify': '2/24h --ip',
 		servers: '5/5s',
-		groups: '5/5s',
 		channels: '5/5s',
 		users: '5/5s'
 	}
 } as const
+
 
 export default config

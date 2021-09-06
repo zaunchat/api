@@ -3,7 +3,7 @@ import Redis from 'ioredis'
 import config from '../../config'
 
 export class RedisCacheAdapter implements CacheAdapter {
-	db = new Redis(config.redis.uri && !config.redis.local ? config.redis.uri : void 0)
+	db = new Redis(config.database.redis)
 
 	async set(key: string, value: unknown, _origin: string, expiration?: number): Promise<void> {
 		const data = JSON.stringify(value)

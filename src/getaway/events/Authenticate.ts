@@ -47,8 +47,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         Server.find({
             _id: {
                 $in: user.servers
-            },
-
+            }
         }),
         Channel.find({
             $or: [{

@@ -12,6 +12,7 @@
     "argon2": "^0.28.2",
     "cluster": "^0.7.7",
     "dotenv": "^10.0.0",
+    "env-var": "^7.0.1",
     "express-decorators": "^1.2.1",
     "fastest-validator": "^1.11.1",
     "helmet": "^4.6.0",

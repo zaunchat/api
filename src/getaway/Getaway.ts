@@ -8,7 +8,7 @@ import config from '../../config'
 
 export class Getaway {
     server: WebSocket.Server
-    redis = new Redis(config.redis.uri && !config.redis.local ? config.redis.uri : void 0)
+    redis = new Redis(config.database.redis)
     connections = new Map<Snowflake, Socket>()
     constructor(options: WebSocket.ServerOptions = { noServer: true, maxPayload: 4096 }) {
         this.server = new WebSocket.Server(options)

@@ -35,8 +35,8 @@ for (const [route, opts] of Object.entries(config.routes)) {
 server
     .use(middlewares.json({ parser: JSON.parse }))
     .use(middlewares.captcha(['/auth/login', '/auth/register']))
-    .use(middlewares.auth(['/auth/verify', '/auth/check', '/ws']))
-    .use('/ws', middlewares.ws(getaway.server))
+    .use(middlewares.auth(['/auth/verify', '/auth/check', '/gateway']))
+    .use('/gateway', middlewares.ws(getaway.server))
 
 
 for (const Controller of Object.values(Controllers)) {

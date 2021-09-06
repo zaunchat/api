@@ -10,7 +10,7 @@ export const DEFAULT_HEARTBEAT_TIME = 1000 * 42
 export class Socket {
     heartbeatTimeout?: NodeJS.Timeout
     user_id!: Snowflake
-    subscriptions = new Redis(config.redis.uri && !config.redis.local ? config.redis.uri : void 0)
+    subscriptions = new Redis(config.database.redis)
     constructor(public ws: WebSocket, public getaway: Getaway) {
         this.setHeartbeat()
 
