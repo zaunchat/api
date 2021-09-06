@@ -1,15 +1,24 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { Server, Category, TextChannel, CreateServerSchema, Member } from '../../structures'
+import { Server, Channel, CreateServerSchema, Member, ChannelTypes } from '../../structures'
 import { HTTPError } from '../../errors'
-import { BASE_SERVER_PATH } from '.'
 import config from '../../../config'
 import db from '../../database'
 
 
-@web.basePath(BASE_SERVER_PATH)
+@web.basePath('/servers')
 export class ServerController {
-    @web.post('/:serverId')
+    @web.get('/')
+    async fetchServers(req: Request, res: Response): Promise<void> {
+        const servers = await Server.find({
+            _id: {
+                $in: req.user.servers
+            }
+        })
+        res.json(servers)
+    }
+
+    @web.get('/:serverId')
     async fetchServer(req: Request, res: Response): Promise<void> {
         if (!req.user.servers.some(id => id === req.params.serverId)) {
             throw new HTTPError('MISSING_ACCESS')
@@ -39,12 +48,14 @@ export class ServerController {
             ownerId: req.user._id
         })
 
-        const chat = TextChannel.from({
-            name: 'general',
-            serverId: server._id
+        const chat = Channel.from({
+            type: ChannelTypes.TEXT,
+            serverId: server._id,
+            name: 'general'
         })
 
-        const category = Category.from({
+        const category = Channel.from({
+            type: ChannelTypes.CATEGORY,
             name: 'General',
             serverId: server._id,
             channels: [chat._id]

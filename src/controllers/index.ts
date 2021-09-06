@@ -1,5 +1,3 @@
 export * from './AuthController'
 export * from './UserController'
-export * from './dm'
-export * from './groups'
 export * from './servers'

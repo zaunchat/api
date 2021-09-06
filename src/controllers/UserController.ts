@@ -1,6 +1,6 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { DMChannel, RelationshipStatus, User } from '../structures'
+import { Channel, ChannelTypes, RelationshipStatus, User } from '../structures'
 import { HTTPError } from '../errors'
 import { getaway } from '../server'
 
@@ -47,7 +47,8 @@ export class UserController {
             throw new HTTPError('UNKNOWN_USER')
         }
 
-        const exists = await DMChannel.findOne({
+        const exists = await Channel.findOne({
+            type: ChannelTypes.DM,
             recipients: userId
         })
 
@@ -55,7 +56,8 @@ export class UserController {
             return void res.json(exists)
         }
 
-        const dm = await DMChannel.from({
+        const dm = await Channel.from({
+            type: ChannelTypes.DM,
             recipients: [userId as Snowflake, req.user._id]
         }).save()
 

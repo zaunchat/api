@@ -1,4 +1,4 @@
-import type { Member, Message, Server, Channel, TextChannel, DMChannel, User, Group } from '../structures'
+import type { Member, Message, Server, Channel, User } from '../structures'
 
 export interface Payload {
     code: WSCodes
@@ -20,9 +20,9 @@ export interface WSEvents {
     MESSAGE_DELETE: Pick<Message, '_id' | 'channelId'>
     MESSAGE_UPDATE: Partial<Pick<Message,| 'channelId' | 'content' | 'attachments' | 'embeds'>> & ID
     
-    CHANNEL_CREATE: TextChannel | DMChannel | Group
-    CHANNEL_UPDATE: Partial<Pick<Group, 'description' | 'name' | 'icon' | 'permissions'>> & ID
-    CHANNEL_DELETE: ID | Pick<TextChannel, '_id' | 'serverId'> 
+    CHANNEL_CREATE: Channel
+    CHANNEL_UPDATE: Partial<Channel> & ID
+    CHANNEL_DELETE: ID & { serverId?: Snowflake }
 
     SERVER_CREATE: Server
     SERVER_DELETE: ID

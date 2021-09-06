@@ -40,7 +40,7 @@ server
 
 
 for (const Controller of Object.values(Controllers)) {
-    if (typeof Controller !== 'string') register(server, new Controller())
+    register(server, new Controller())
 }
 
 

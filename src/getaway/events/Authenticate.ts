@@ -1,7 +1,6 @@
 import { Payload, WSCloseCodes, WSCodes, WSEvents } from '../Constants'
-import { DMChannel, User, Server, TextChannel, PresenceStatus, Group, ChannelTypes } from '../../structures'
+import { Channel, User, Server, PresenceStatus, ChannelTypes } from '../../structures'
 import { Socket } from '../Socket'
-import { getaway } from '../../server'
 
 
 export const Authenticate = async (socket: Socket, data: Payload): Promise<void> => {
@@ -36,15 +35,12 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
     const [
         users,
         servers,
-        dms,
-        groups,
         channels
     ] = await Promise.all([
         User.find({
             _id: {
                 $in: Array.from(user.relations.keys())
-            },
-            
+            }
         }, {
             fields: ['_id', 'avatar', 'username', 'badges']
         }),
@@ -52,23 +48,20 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
             _id: {
                 $in: user.servers
             },
-            
+
         }),
-        DMChannel.find({
-            type: ChannelTypes.DM,
-            recipients: user._id,
-            
-        }),
-        Group.find({
-            type: ChannelTypes.GROUP,
-            recipients: user._id,
-            
-        }),
-        TextChannel.find({
-            serverId: {
-                $in: user.servers
-            },
-            
+        Channel.find({
+            $or: [{
+                type: ChannelTypes.DM,
+                recipients: user._id
+            }, {
+                type: ChannelTypes.GROUP,
+                recipients: user._id
+            }, {
+                serverId: {
+                    $in: user.servers
+                }
+            }]
         })
     ])
 
@@ -77,7 +70,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         user,
         users,
         servers,
-        channels: [...dms, ...groups, ...channels]
+        channels
     }
 
     await socket.send({
@@ -90,19 +83,13 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         [user._id],
         [...user.relations.keys()],
         user.servers,
-        readyData.channels.map(c => c._id)
+        channels.map(c => c._id)
     ])
 
-    if (!user.presence.ghostMode) {
-        const newPresence = {
+    if (!user.presence.ghostMode) await user.save({
+        presence: {
             ghostMode: user.presence.ghostMode,
             status: PresenceStatus.ONLINE
         }
-
-        await user.save({ presence: newPresence })
-        await getaway.publish(user._id, 'USER_UPDATE', {
-            _id: user._id,
-            presence: newPresence
-        })
-    }
+    })
 }

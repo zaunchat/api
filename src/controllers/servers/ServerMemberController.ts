@@ -3,10 +3,9 @@ import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { Member, CreateMemberSchema, Server, User } from '../../structures'
 import { HTTPError } from '../../errors'
 import { Permissions } from '../../utils'
-import { BASE_SERVER_PATH } from '.'
 
 
-@web.basePath(`${BASE_SERVER_PATH}/:serverId/members`)
+@web.basePath('/servers/:serverId/members')
 export class ServerMemberController {
 	@web.use()
 	async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {

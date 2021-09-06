@@ -8,4 +8,12 @@ export class ServerSubscriber<T extends Server = Server> implements EventSubscri
 		await getaway.subscribe(server.ownerId, server._id)
 		await getaway.publish(server._id, 'SERVER_CREATE', server)
 	}
+
+	async afterUpdate({ entity: server }: EventArgs<T>): Promise<void> {
+		await getaway.publish(server._id, 'SERVER_UPDATE', server)
+	}
+
+	async afterDelete({ entity: server }: EventArgs<T>): Promise<void> {
+		await getaway.publish(server._id, 'SERVER_DELETE', { _id: server._id })
+	}
 }
