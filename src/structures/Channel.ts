@@ -100,6 +100,7 @@ export class Channel extends Base implements DMChannel, Group, TextChannel, Cate
     @Property()
     permissions = DEFAULT_PERMISSION_DM
 
+    // Category
     @Property()
     channels!: Snowflake[]
 
