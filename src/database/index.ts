@@ -1,33 +1,23 @@
-import { AnyEntity, EntityName, EntityRepository, GetRepository, MikroORM, Configuration } from 'mikro-orm'
-import { Message, User, Server, Member, Channel } from '../structures'
-import * as Subscribers from '../subscribers'
-import { RedisCacheAdapter } from './redis'
-import config from '../../config'
+import { AnyEntity, EntityName, EntityRepository, GetRepository, MikroORM } from 'mikro-orm'
+import config from './config'
 
+class Database {
+	db!: MikroORM
 
-class Database extends MikroORM {
 	get<T extends AnyEntity<T>, U extends EntityRepository<T> = EntityRepository<T>>(entityName: EntityName<T>): GetRepository<T, U> {
-		return this.em.getRepository(entityName)
+		return this.db.em.getRepository(entityName)
 	}
 
-	save<T extends AnyEntity<T>>(entity: T | T[]) {
-		return this.em.persistAndFlush(entity)
+	save<T extends AnyEntity<T>>(entity: T | T[]): Promise<void> {
+		return this.db.em.persistAndFlush(entity)
+	}
+
+	async connect(): Promise<this> {
+		this.db = await MikroORM.init(config)
+		return this
 	}
 }
 
-const db = new Database({
-	clientUrl: config.database.uri,
-	type: config.database.type as keyof typeof Configuration.PLATFORMS,
-	entities: [User, Message, Server, Member, Channel],
-	subscribers: Object.values(Subscribers).map(Subscriber => new Subscriber()),
-	dbName: 'b9s8hx7mvxwjetc',
-	debug: false,
-	cache: {
-		adapter: RedisCacheAdapter
-	},
-	resultCache: {
-		adapter: RedisCacheAdapter
-	}
-})
+const db = new Database()
 
 export default db

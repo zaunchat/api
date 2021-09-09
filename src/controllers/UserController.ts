@@ -2,18 +2,16 @@ import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { Channel, ChannelTypes, RelationshipStatus, User } from '../structures'
 import { HTTPError } from '../errors'
-import { getaway } from '../server'
 
 
 @web.basePath('/users')
 export class UserController {
-    @web.get('/:userId')
-    async fetchUser(req: Request, res: Response): Promise<void> {
-        const { userId } = req.params
+    @web.get('/:user_id')
+    async fetchOne(req: Request, res: Response): Promise<void> {
+        const { user_id } = req.params
 
         const user = await User.findOne({
-            _id: userId === '@me' ? req.user._id : userId,
-            
+            _id: user_id === '@me' ? req.user._id : user_id
         }, {
             fields: ['_id', 'avatar', 'username', 'badges']
         })
@@ -30,8 +28,7 @@ export class UserController {
         const relationships = await User.find({
             _id: {
                 $in: Array.from(req.user.relations.keys())
-            },
-            
+            }
         }, {
             fields: ['_id', 'avatar', 'username', 'badges']
         })
@@ -39,17 +36,21 @@ export class UserController {
         res.json(relationships)
     }
 
-    @web.get('/:userId/dm')
+    @web.get('/:user_id/dm')
     async openDM(req: Request, res: Response): Promise<void> {
-        const { userId } = req.params as Record<string, Snowflake>
+        const { user_id } = req.params as Record<string, ID>
 
-        if (userId !== req.user._id && !await User.findOne({ _id: userId })) {
+        const target = await User.findOne({
+            _id: user_id
+        })
+
+        if (!target) {
             throw new HTTPError('UNKNOWN_USER')
         }
 
         const exists = await Channel.findOne({
             type: ChannelTypes.DM,
-            recipients: userId
+            recipients: user_id
         })
 
         if (exists) {
@@ -58,27 +59,23 @@ export class UserController {
 
         const dm = await Channel.from({
             type: ChannelTypes.DM,
-            recipients: [userId as Snowflake, req.user._id]
+            recipients: [req.user, target]
         }).save()
-
-        await getaway.subscribe(userId, ...dm.recipients)
-
-        getaway.publish(dm._id, 'CHANNEL_CREATE', dm)
 
         res.json(dm)
     }
 
 
-    @web.post('/:userId/friend')
+    @web.post('/:user_id/friend')
     async friend(req: Request, res: Response): Promise<void> {
-        const { userId } = req.params
+        const { user_id } = req.params
 
-        if (userId === req.user._id || userId === '@me') {
+        if (user_id === req.user._id || user_id === '@me') {
             throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
-            _id: userId
+            _id: user_id
         })
 
         if (!target) {
@@ -106,16 +103,16 @@ export class UserController {
         res.send({ status })
     }
 
-    @web.route('delete', '/:userId/friend')
+    @web.route('delete', '/:user_id/friend')
     async unfriend(req: Request, res: Response): Promise<void> {
-        const { userId } = req.params
+        const { user_id } = req.params
 
-        if (userId === req.user._id || userId === '@me') {
+        if (user_id === req.user._id || user_id === '@me') {
             throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
-            _id: userId
+            _id: user_id
         })
 
         if (!target) {
@@ -137,16 +134,16 @@ export class UserController {
         return void res.json({ status: null })
     }
 
-    @web.post('/:userId/block')
+    @web.post('/:user_id/block')
     async block(req: Request, res: Response): Promise<void> {
-        const { userId } = req.params
+        const { user_id } = req.params
 
-        if (userId === req.user._id || userId === '@me') {
+        if (user_id === req.user._id || user_id === '@me') {
             throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
-            _id: userId
+            _id: user_id
         })
 
         if (!target) {
@@ -171,16 +168,16 @@ export class UserController {
         res.json({ status: RelationshipStatus.BLOCKED })
     }
 
-    @web.route('delete', '/:userId')
+    @web.route('delete', '/:user_id')
     async unblock(req: Request, res: Response): Promise<void> {
-        const { userId } = req.params
+        const { user_id } = req.params
 
-        if (userId === req.user._id || userId === '@me') {
+        if (user_id === req.user._id || user_id === '@me') {
             throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
-            _id: userId
+            _id: user_id
         })
 
         if (!target) {

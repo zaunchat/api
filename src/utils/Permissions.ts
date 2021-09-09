@@ -1,4 +1,4 @@
-import { ChannelTypes, DMChannel, Group, Member, Server, TextChannel, User } from '../structures'
+import { ChannelTypes, DMChannel, Group, Member, Server, TextChannel, User, Category } from '../structures'
 
 
 export type PermissionString = keyof typeof Permissions.FLAGS
@@ -33,14 +33,19 @@ export class Permissions {
         // Member
         CHANGE_NICKNAME: 1 << 13
     }
-    
+
     bitfield = Permissions.DEFAULT_BIT
 
     constructor(...bits: PermissionsResolvable[]) {
         this.bitfield = Permissions.resolve(bits)
     }
 
-    static async fetch(user: User | string, server?: Server | string | null, channel?: DMChannel | Group | TextChannel): Promise<Permissions> {
+    static async fetch(user: User | string, server?: Server | string | null, channel?: DMChannel | Group | TextChannel | Category): Promise<Permissions> {
+        user = typeof user === 'string' ? await User.findOne({ _id: user as ID }) as User : user
+
+        const permissions = new Permissions()
+
+
         if (server) {
             let member: Member
 
@@ -49,44 +54,41 @@ export class Permissions {
                 typeof server === 'string' ? Server.findOne({ _id: server }) : server,
             ]) as [Member, Server]
 
-            if (member._id === server.ownerId) {
-                return new Permissions(Permissions.FLAGS.ADMINISTRATOR)
+            if (member._id === server.owner._id) {
+                return permissions.add(Permissions.FLAGS.ADMINISTRATOR)
+            } else {
+                permissions.add(server.permissions)
+                for (const role of server.roles.getItems()) {
+                    if (member.roles.contains(role)) permissions.add(role.permissions)
+                }
             }
-
-            const roles = server.roles.filter((r) => member.roles.includes(r._id)).map((r) => r.permissions)
-
-            roles.push(server.permissions)
-
-            return new Permissions(roles)
         }
 
+        if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) {
+            return permissions
+        }
 
         if (channel) {
-            const userId = user = typeof user === 'string' ? user : user._id
-
-            let bitfield = Permissions.DEFAULT_BIT
-
             switch (channel.type) {
                 case ChannelTypes.GROUP:
-                    if (channel.ownerId === userId) {
-                        bitfield = Permissions.FLAGS.ADMINISTRATOR
-                    } else if (channel.recipients.some(id => id === userId)) {
-                        bitfield = channel.permissions
+                    if (channel.owner._id === user._id) {
+                        permissions.add(Permissions.FLAGS.ADMINISTRATOR)
+                    } else if (channel.recipients.contains(user)) {
+                        permissions.add(channel.permissions)
                     }
                     break
                 case ChannelTypes.DM:
-                    if (channel.recipients.some(id => id === userId)) bitfield = DEFAULT_PERMISSION_DM
+                    if (channel.recipients.contains(user)) permissions.add(DEFAULT_PERMISSION_DM)
                     break
                 case ChannelTypes.TEXT:
-                    break
+                case ChannelTypes.CATEGORY:
+                    break // Todo: Handle channel overwrites
                 default:
-                    break
+                    throw new Error(`Unknown channel type - ${channel}`)
             }
-
-            return new Permissions(bitfield)
         }
 
-        return new Permissions()
+        return permissions
     }
 
     missing(bits: PermissionsResolvable, checkAdmin = true): PermissionString[] {

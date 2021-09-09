@@ -1,32 +1,43 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { Member, CreateMemberSchema, Server, User } from '../../structures'
+import { Member, CreateMemberSchema, Server } from '../../structures'
 import { HTTPError } from '../../errors'
 import { Permissions } from '../../utils'
 
 
-@web.basePath('/servers/:serverId/members')
+@web.basePath('/servers/:server_id/members')
 export class ServerMemberController {
 	@web.use()
 	async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
-		if (!req.user.servers.some(id => id === req.params.serverId)) {
+		const { server_id } = req.params as { server_id: ID }
+
+		if (!req.user.servers.getItems().some(server => server._id === server_id)) {
 			throw new HTTPError('UNKNOWN_SERVER')
 		}
+
 		next()
 	}
 
 	@web.get('/')
-	async fetchMembers(req: Request, res: Response): Promise<void> {
-		const limit = 1000
-		const members = await Member.find({ serverId: req.params.serverId }, { limit })
+	async fetchMany(req: Request, res: Response): Promise<void> {
+		const limit = 1000 // TODO: Add Limit option
+
+		const members = await Member.find({
+			server: {
+				_id: req.params.server_id
+			}
+		}, { limit })
+
 		res.json(members)
 	}
 
-	@web.get('/:memberId')
-	async fetchMember(req: Request, res: Response): Promise<void> {
+	@web.get('/:member_id')
+	async fetchOne(req: Request, res: Response): Promise<void> {
 		const member = await Member.findOne({
-			_id: req.params.memberId,
-			serverId: req.params.serverId
+			_id: req.params.member_id,
+			server: {
+				_id: req.params.server_id
+			}
 		})
 
 		if (!member) {
@@ -36,21 +47,23 @@ export class ServerMemberController {
 		res.json(member)
 	}
 
-	@web.patch('/:memberId')
-	async editMember(req: Request, res: Response): Promise<void> {
+	@web.patch('/:member_id')
+	async edit(req: Request, res: Response): Promise<void> {
 		req.check(CreateMemberSchema)
 
-		const { serverId, memberId } = req.params as Record<string, Snowflake>
+		const { server_id, member_id } = req.params as Record<string, ID>
 		const member = await Member.findOne({
-			_id: memberId,
-			serverId: serverId
+			_id: member_id,
+			server: {
+				_id: server_id
+			}
 		})
 
 		if (!member) {
 			throw new HTTPError('UNKNOWN_MEMBER')
 		}
 
-		const server = await Server.findOne({ _id: serverId }) as Server
+		const server = await Server.findOne({ _id: server_id }) as Server
 		const permissions = await Permissions.fetch(req.user, server)
 
 
@@ -65,9 +78,15 @@ export class ServerMemberController {
 
 		if (req.body.roles) {
 			if (!permissions.has(Permissions.FLAGS.MANAGE_ROLES)) throw new HTTPError('MISSING_PERMISSIONS')
-			for (const roleId of req.body.roles) {
-				if (!server.roles.includes(roleId)) throw new HTTPError('UNKNOWN_ROLE')
-				member.roles.push(roleId)
+
+			const roles = server.roles.getItems()
+
+			member.roles.removeAll()
+
+			for (const role_id of req.body.roles) {
+				const role = roles.find(r => r._id === role_id)
+				if (!role) throw new HTTPError('UNKNOWN_ROLE')
+				member.roles.add(role)
 			}
 		}
 
@@ -76,33 +95,26 @@ export class ServerMemberController {
 		res.json(member)
 	}
 
-	@web.route('delete', '/:memberId')
-	async kickMember(req: Request, res: Response): Promise<void> {
-		const { serverId, memberId } = req.params as Record<string, Snowflake>
+	@web.route('delete', '/:member_id')
+	async kick(req: Request, res: Response): Promise<void> {
+		const { server_id, member_id } = req.params as Record<string, ID>
 
-		if (memberId !== req.user._id) {
-			const permissions = await Permissions.fetch(req.user, serverId)
+		if (member_id !== req.user._id) {
+			const permissions = await Permissions.fetch(req.user, server_id)
 			if (!permissions.has(Permissions.FLAGS.KICK_MEMBERS)) {
 				throw new HTTPError('MISSING_PERMISSIONS')
 			}
 		}
 
-		const [member, user] = await Promise.all([
-			Member.findOne({
-				_id: memberId,
-				serverId: serverId
-			}),
-			User.findOne({
-				_id: memberId
-			})
-		])
+		const member = await Member.findOne({
+			_id: member_id,
+			server: {
+				_id: server_id
+			}
+		})
 
 		if (!member) {
 			throw new HTTPError('UNKNOWN_MEMBER')
-		}
-
-		if (!user) {
-			throw new HTTPError('UNKNOWN_USER')
 		}
 
 		await member.delete()

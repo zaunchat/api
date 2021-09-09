@@ -1,12 +1,12 @@
-import { Base } from './Base'
-import { Property, Entity, wrap, FilterQuery, FindOptions } from 'mikro-orm'
+import { Base, User, Channel } from '.'
+import { Property, Entity, wrap, FilterQuery, FindOptions, OneToOne } from 'mikro-orm'
 import { validator } from '../utils'
 import db from '../database'
 import config from '../../config'
 
 export interface CreateMessageOptions extends Partial<Message> {
-    authorId: Snowflake
-    channelId: Snowflake
+    author: User
+    channel: Channel
 }
 
 export const CreateMessageSchema = validator.compile({
@@ -21,10 +21,10 @@ export const CreateMessageSchema = validator.compile({
 @Entity({ tableName: 'messages' })
 export class Message extends Base {
     @Property({ onCreate: () => Date.now() })
-    createdTimestamp!: number
+    created_timestamp!: number
 
-    @Property({ nullable: true, onUpdate: () => Date.now() })
-    editedTimestamp?: number
+    @Property({ onUpdate: () => Date.now() })
+    edited_timestamp?: number
 
     @Property()
     embeds: unknown[] = []
@@ -32,27 +32,30 @@ export class Message extends Base {
     @Property()
     attachments: unknown[] = []
 
-    @Property({ nullable: true })
+    @Property()
     content?: string
 
     @Property()
-    mentions: string[] = []
+    mentions: ID[] = []
 
     @Property()
-    replies: string[] = []
+    replies: {
+        id: ID
+        mention: boolean
+    }[] = []
 
-    @Property()
-    channelId!: Snowflake
+    @OneToOne('Channel')
+    channel!: Channel
 
-    @Property()
-    authorId!: Snowflake
+    @OneToOne('User')
+    author!: User
 
     isEmpty(): boolean {
         return !this.content?.length && !this.attachments.length
     }
 
     static from(options: CreateMessageOptions): Message {
-        return wrap(new Message().setID()).assign(options)
+        return wrap(new Message().setID()).assign(options, { em: db.db.em })
     }
 
     static find(query: FilterQuery<Message>, options?: FindOptions<Message>): Promise<Message[]> {

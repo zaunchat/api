@@ -18,7 +18,7 @@ interface CreateMailOptions {
 
 class Mail {
 	transport = config.smtp.enabled && config.smtp.uri ? createTransport(config.smtp.uri) : null
-	queue = new Map<Snowflake, string>()
+	queue = new Map<ID, string>()
 
 	get enabled(): boolean  {
 		return !!this.transport
@@ -33,8 +33,8 @@ class Mail {
 			throw new Error('Mail not enabled')
 		}
 
-		const token = nanoid(50)
-		const link = `https://localhost/auth/verify/${user._id}/${token}`
+		const token = nanoid(64)
+		const link = `${config.endpoints.main}/auth/verify/${user._id}/${token}`
 
 		await this.transport.sendMail({
 			from: 'noreply@itchat.com',
@@ -50,7 +50,7 @@ class Mail {
 		return link
 	}
 
-	valid(id: Snowflake, token: string): boolean {
+	valid(id: ID, token: string): boolean {
 		return this.queue.get(id) === token
 	}
 }

@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from '@tinyhttp/app'
-import WebSocket from 'ws'
+import { Server as WebSocketServer } from 'ws'
 
-export const ws = (wss: WebSocket.Server) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+export const ws = (server: WebSocketServer) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     const isSocket = req.headers.upgrade?.toLowerCase() === 'websocket'
 
     if (isSocket) {
-        wss.handleUpgrade(req, req.socket, Buffer.alloc(0), ws => wss.emit('connection', ws))
+        server.handleUpgrade(req, req.socket, Buffer.alloc(0), ws => server.emit('connection', ws))
     }
 
     next()

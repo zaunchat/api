@@ -4,6 +4,7 @@ import { User, Session, CreateUserSchema, LoginUserSchema, LogoutUserSchema } fr
 import { mail } from '../utils'
 import { HTTPError } from '../errors'
 import argon2 from 'argon2'
+import config from '../../config'
 
 
 @web.basePath('/auth')
@@ -11,10 +12,10 @@ export class AuthController {
     @web.get('/check')
     async check(req: Request, res: Response): Promise<void> {
         const token = req.headers['x-session-token']
-        const userId = req.headers['x-session-id']
+        const user_id = req.headers['x-session-id']
 
-        const user = token && userId ? await User.findOne({
-            _id: userId,
+        const user = token && user_id ? await User.findOne({
+            _id: user_id,
             verified: true
         }, {
             fields: ['sessions']
@@ -68,10 +69,10 @@ export class AuthController {
     async logout(req: Request, res: Response): Promise<void> {
         req.check(LogoutUserSchema)
 
-        const { userId, token } = req.body
+        const { user_id, token } = req.body
 
         const user = await User.findOne({
-            _id: userId
+            _id: user_id
         })
 
         if (!user) {
@@ -103,6 +104,8 @@ export class AuthController {
 
         const exists = await User.findOne({
             $or: [{ username }, { email }]
+        }, {
+            fields: ['username', 'email']
         })
 
         if (exists) {
@@ -120,15 +123,12 @@ export class AuthController {
         }).save({ verified: !mail.enabled })
 
         if (!mail.enabled) {
-            return void res.redirect(`https://${req.headers.host}/auth/login`)
+            return void res.redirect(`https://${config.endpoints.main}/auth/login`)
         }
 
         try {
             res.json({
-                url: await mail.send({
-                    title: 'Verify your Itchat account.‏‏',
-                    user
-                })
+                url: await mail.send({ title: 'Verify your Itchat account.‏‏', user })
             })
         } catch (err) {
             await User.remove(user)
@@ -136,18 +136,18 @@ export class AuthController {
         }
     }
 
-    @web.get('/verify/:userId/:token')
+    @web.get('/verify/:user_id/:token')
     async verify(req: Request, res: Response): Promise<void> {
-        const { userId, token } = req.params as { userId: Snowflake; token: string }
+        const { user_id, token } = req.params as { user_id: ID; token: string }
 
-        if (!mail.valid(userId, token)) {
+        if (!mail.valid(user_id, token)) {
             throw new HTTPError('UNKNOWN_TOKEN')
         }
 
-        mail.queue.delete(userId)
+        mail.queue.delete(user_id)
 
         const user = await User.findOne({
-            _id: userId
+            _id: user_id
         })
 
         if (!user) {
@@ -156,6 +156,6 @@ export class AuthController {
 
         await user.save({ verified: true })
 
-        res.redirect(`https://${req.headers.host}/auth/login`)
+        res.redirect(`${config.endpoints.main}/auth/login`)
     }
 }

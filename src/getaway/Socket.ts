@@ -9,18 +9,18 @@ export const DEFAULT_HEARTBEAT_TIME = 1000 * 42
 
 export class Socket {
     heartbeatTimeout?: NodeJS.Timeout
-    user_id!: Snowflake
+    user_id!: ID
     subscriptions = new Redis(config.database.redis)
     constructor(public ws: WebSocket, public getaway: Getaway) {
         this.setHeartbeat()
 
-        this.subscriptions.on('message', (topic: Snowflake, raw: string) => {
+        this.subscriptions.on('message', (topic: ID, raw: string) => {
             const data = JSON.parse(raw)
 
             switch (data.event as keyof WSEvents) {
                 case 'MEMBER_LEAVE_SERVER':
                     if (this.user_id === data?.data?._id) {
-                        this.subscriptions.unsubscribe(data.data.serverId)
+                        this.subscriptions.unsubscribe(data.data.server_id)
                     }
                     break
                 case 'SERVER_DELETE':
@@ -65,7 +65,7 @@ export class Socket {
         this.ws.close(code)
     }
 
-    async subscribe(topics: Snowflake | Snowflake[] | Snowflake[][]): Promise<void> {
+    async subscribe(topics: ID | ID[] | ID[][]): Promise<void> {
         if (Array.isArray(topics)) {
             await this.subscriptions.subscribe(...topics.flat(4))
         } else {
@@ -73,7 +73,7 @@ export class Socket {
         }
     }
 
-    async unsubscribe(topics: Snowflake | Snowflake[] | Snowflake[][]): Promise<void> {
+    async unsubscribe(topics: ID | ID[] | ID[][]): Promise<void> {
         if (Array.isArray(topics)) {
             await this.subscriptions.unsubscribe(...topics.flat(4))
         } else {

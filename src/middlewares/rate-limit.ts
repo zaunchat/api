@@ -9,6 +9,7 @@ interface RateLimitOptions {
   max: number
   interval: number
   onlyIP?: boolean
+  message?: string
 }
 
 export const rateLimit = (options: RateLimitOptions, prefix: string): typeof middleware => {
@@ -19,6 +20,8 @@ export const rateLimit = (options: RateLimitOptions, prefix: string): typeof mid
     interval: options.interval
   })
 
+  if (!options.message) options.message = 'Too many requests, please try again later.'
+
   const middleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     let key = (req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress) as string
 
@@ -26,20 +29,21 @@ export const rateLimit = (options: RateLimitOptions, prefix: string): typeof mid
 
     const info = await limiter.limitWithInfo(key)
 
-    if (info.blocked) {
-      if (!res.headersSent) {
-        res.setHeader('X-RateLimit-Limit', options.max)
-        res.setHeader('X-RateLimit-Remaining', info.actionsRemaining)
-        res.setHeader('Retry-After', Math.ceil(info.millisecondsUntilAllowed / 1000))
-      }
+    if (!info.blocked) {
+      return next()
+    }
 
-      res.status(429).json({
-        message: 'Too many requests, please try again later.',
+    if (!res.headersSent) res
+      .setHeader('X-RateLimit-Limit', options.max)
+      .setHeader('X-RateLimit-Remaining', info.actionsRemaining)
+      .setHeader('Retry-After', Math.ceil(info.millisecondsUntilAllowed / 1000))
+
+    res
+      .status(429)
+      .json({
+        message: options.message,
         retry_after: Math.ceil(info.millisecondsUntilAllowed / 1000)
       })
-    } else {
-      next()
-    }
   }
 
   return middleware

@@ -1,12 +1,12 @@
 import cluster from 'cluster'
 
-export class SnowflakeUtil extends null {
+export class Snowflake extends null {
   static readonly EPOCH = new Date('2021-01-01').getTime()
   static INCREMENT = 0
   static processId = BigInt(process.pid % 31)
   static workerId = BigInt((cluster.worker?.id || 0) % 31)
 
-  static is(id: unknown): id is Snowflake {
+  static is(id: string): id is ID {
     if (typeof id !== 'string') return false
     return /^\d{17,19}$/.test(id)
   }
@@ -28,7 +28,7 @@ export class SnowflakeUtil extends null {
   }
 
 
-  static binaryToId(num: string): Snowflake {
+  static binaryToId(num: string): ID {
     let dec = ''
 
     while (num.length > 50) {
@@ -45,20 +45,20 @@ export class SnowflakeUtil extends null {
       number = Math.floor(number / 10)
     }
 
-    return dec as Snowflake
+    return dec as ID
   }
 
-  static generate(now = Date.now()): Snowflake {
+  static generate(now = Date.now()): ID {
     if (this.INCREMENT >= 4095) this.INCREMENT = 0
     const time = BigInt(now - this.EPOCH) << 22n
     const workerId = this.workerId << 17n
     const processId = this.processId << 12n
     const increment = BigInt(this.INCREMENT++)
-    return (time | workerId | processId | increment).toString() as Snowflake
+    return (time | workerId | processId | increment).toString() as ID
   }
 
 
-  static deconstruct(snowflake: string): {
+  static deconstruct(id: string): {
     timestamp: number
     date: Date
     workerId: number
@@ -66,7 +66,7 @@ export class SnowflakeUtil extends null {
     increment: number
     binary: string
   } {
-    const BINARY = this.idToBinary(snowflake).padStart(64, '0')
+    const BINARY = this.idToBinary(id).padStart(64, '0')
     return {
       timestamp: parseInt(BINARY.substring(0, 42), 2) + this.EPOCH,
       get date() {

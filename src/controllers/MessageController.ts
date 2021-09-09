@@ -7,12 +7,12 @@ import { Permissions } from '../utils'
 import config from '../../config'
 
 
-@web.basePath('/channels/:channelId/messages')
+@web.basePath('/channels/:channel_id/messages')
 export class MessageController {
     @web.use()
     async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
         const channel = await Channel.findOne({
-            _id: req.params.channelId
+            _id: req.params.channel_id
         })
 
         if (!channel) {
@@ -25,16 +25,27 @@ export class MessageController {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 
-        Object.defineProperty(req, 'permissions', {
-            value: permissions
+        Object.defineProperties(req, {
+            permissions: {
+                value: permissions
+            },
+            channel: {
+                value: channel
+            }
         })
 
         next()
     }
 
     @web.post('/')
-    async sendMessage(req: Request, res: Response): Promise<void> {
-        const permissions = (req as unknown as { permissions: Permissions }).permissions
+    async send(req: Request, res: Response): Promise<void> {
+        const {
+            permissions,
+            channel
+        } = (req as unknown as {
+            permissions: Permissions
+            channel: Channel
+        })
 
         if (!permissions.has(Permissions.FLAGS.SEND_MESSAGES)) {
             throw new HTTPError('MISSING_PERMISSIONS')
@@ -44,8 +55,8 @@ export class MessageController {
 
         const message = Message.from({
             ...req.body,
-            authorId: req.user._id,
-            channelId: req.params.channelId,
+            author: req.user,
+            channel
         })
 
         if (message.isEmpty()) {
@@ -70,60 +81,54 @@ export class MessageController {
     }
 
     @web.get('/')
-    async fetchMessages(req: Request, res: Response): Promise<void> {
+    async fetchMany(req: Request, res: Response): Promise<void> {
         const permissions = (req as unknown as { permissions: Permissions }).permissions
 
         if (!permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 
-        let {
+        const {
             limit = 50,
             before,
             after,
             around
         } = req.query
 
-        limit = Number(limit)
-
-        if (isNaN(limit) || limit > 100) {
+        if (isNaN(Number(limit)) || limit > 100) {
             throw new HTTPError('MISSING_ACCESS')
         }
 
         const options: FilterQuery<Message> = {
-            channelId: req.params.channelId
-        }
-
-        if (typeof around === 'string') {
-            options._id = {
-                $or: [{
-                    $gte: around
-                }, {
-                    $lt: around
-                }]
+            channel: {
+                _id: req.params.channel_id
             }
         }
 
-        if (typeof after === 'string') {
-            options._id = {
-                $gt: after
-            }
-        }
-        
-        if (typeof before === 'string') {
-            options._id = {
-                $lt: before
-            }
+        if (typeof around === 'string') options._id = {
+            $or: [{
+                $gte: around
+            }, {
+                $lt: around
+            }]
         }
 
-        const messages = await Message.find(options, { limit })
+        if (typeof after === 'string') options._id = {
+            $gt: after
+        }
+
+        if (typeof before === 'string') options._id = {
+            $lt: before
+        }
+
+        const messages = await Message.find(options, { limit: Number(limit) })
 
         res.json(messages)
     }
 
 
-    @web.get('/:messageId')
-    async fetchMessage(req: Request, res: Response): Promise<void> {
+    @web.get('/:message_id')
+    async fetchOne(req: Request, res: Response): Promise<void> {
         const permissions = (req as unknown as { permissions: Permissions }).permissions
 
         if (!permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
@@ -131,8 +136,10 @@ export class MessageController {
         }
 
         const message = await Message.findOne({
-            _id: req.params.messageId,
-            channelId: req.params.channelId
+            _id: req.params.message_id,
+            channel: {
+                _id: req.params.channel_id
+            }
         })
 
         if (!message) {
@@ -142,20 +149,22 @@ export class MessageController {
         res.json(message)
     }
 
-    @web.patch('/:messageId')
-    async editMessage(req: Request, res: Response): Promise<void> {
+    @web.patch('/:message_id')
+    async edit(req: Request, res: Response): Promise<void> {
         req.check(CreateMessageSchema)
 
         const message = await Message.findOne({
-            _id: req.params.messageId,
-            channelId: req.params.channelId
+            _id: req.params.message_id,
+            channel: {
+                _id: req.params.channel_id
+            }
         })
 
         if (!message) {
             throw new HTTPError('UNKNOWN_MESSAGE')
         }
 
-        if (message.authorId !== req.user._id) {
+        if (message.author._id !== req.user._id) {
             throw new HTTPError('CANNOT_EDIT_MESSAGE_BY_OTHER')
         }
 
@@ -164,18 +173,20 @@ export class MessageController {
         res.json(message)
     }
 
-    @web.route('delete', '/:messageId')
-    async deleteMessage(req: Request, res: Response): Promise<void> {
+    @web.route('delete', '/:message_id')
+    async delete(req: Request, res: Response): Promise<void> {
         const message = await Message.findOne({
-            _id: req.params.messageId,
-            channelId: req.params.channelId
+            _id: req.params.message_id,
+            channel: {
+                _id: req.params.channel_id
+            }
         })
 
         if (!message) {
             throw new HTTPError('UNKNOWN_MESSAGE')
         }
 
-        if (message.authorId !== req.user._id) {
+        if (message.author._id !== req.user._id) {
             const permissions = (req as unknown as { permissions: Permissions }).permissions
             if (!permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) {
                 throw new HTTPError('MISSING_PERMISSIONS')

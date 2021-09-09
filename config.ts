@@ -4,6 +4,7 @@ import env from 'env-var'
 const config = {
 	port: env.get('PORT').default(8080).asPortNumber(),
 	database: {
+		name: env.get('DATABASE_NAME').asString(),
 		uri: env.get('DATABASE_URI').required().asUrlString(),
 		type: env.get('DATABASE_TYPE').default('mongo').asString(), // mongo | mysql | mariadb | postgresql | sqlite
 		redis: env.get('REDIS_URI').asString()
@@ -61,6 +62,12 @@ const config = {
 		servers: '5/5s',
 		channels: '5/5s',
 		users: '5/5s'
+	},
+	endpoints: {
+		main: env.get('DOMAIN').default('https://itchat.com').asUrlString(),
+		app: env.get('APP_DOMAIN').default('https://itchat.com/app').asUrlString(),
+		api: env.get('API_DOMAIN').default('https://api.itchat.com').asUrlString(),
+		cdn: env.get('CDN_DOMAIN').default('https://cdn.itchat.com').asUrlString()
 	}
 } as const
 

@@ -1,12 +1,12 @@
-import { Base, Role } from '.'
-import { Property, Entity, wrap, FindOptions, FilterQuery } from 'mikro-orm'
+import { Base, Role, User } from '.'
+import { Property, Entity, wrap, FindOptions, FilterQuery, ManyToMany, Collection, OneToOne } from 'mikro-orm'
 import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
 import db from '../database'
 import config from '../../config'
 
 export interface CreateServerOptions extends Partial<Server> {
     name: string
-    ownerId: Snowflake
+    owner: User
 }
 
 export const CreateServerSchema = validator.compile({
@@ -47,11 +47,11 @@ export class Server extends Base {
     @Property({ nullable: true })
     banner?: string
 
-    @Property()
-    ownerId!: Snowflake
+    @OneToOne('User')
+    owner!: User
 
-    @Property()
-    roles: Role[] = []
+    @ManyToMany('Role')
+    roles = new Collection<Role>(this)
 
     @Property()
     permissions = DEFAULT_PERMISSION_EVERYONE
@@ -71,5 +71,9 @@ export class Server extends Base {
     async save(options?: Partial<Server>): Promise<this> {
         await db.get(Server).persistAndFlush(options ? wrap(this).assign(options) : this)
         return this
+    }
+
+    async delete(): Promise<void> {
+        await db.get(Server).removeAndFlush(this)
     }
 }

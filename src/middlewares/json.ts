@@ -14,8 +14,8 @@ export const json = ({ parser }: { parser: typeof JSON.parse }) => async (req: R
             let body = ''
             for await (const chunk of req) body += chunk
             req.body = parser(body)
-        } catch (e) {
-            return next(e)
+        } catch {
+            return next('Invalid JSON body')
         }
     }
     

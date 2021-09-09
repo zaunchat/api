@@ -6,7 +6,6 @@ export interface Payload {
     data?: unknown
 }
 
-export type ID = { _id: Snowflake }
 
 export interface WSEvents {
     READY: {
@@ -17,22 +16,22 @@ export interface WSEvents {
     }
     
     MESSAGE_CREATE: Message
-    MESSAGE_DELETE: Pick<Message, '_id' | 'channelId'>
-    MESSAGE_UPDATE: Partial<Pick<Message,| 'channelId' | 'content' | 'attachments' | 'embeds'>> & ID
+    MESSAGE_DELETE: Pick<Message, '_id' | 'channel'>
+    MESSAGE_UPDATE: Partial<Message> & { _id: ID }
     
     CHANNEL_CREATE: Channel
-    CHANNEL_UPDATE: Partial<Channel> & ID
-    CHANNEL_DELETE: ID & { serverId?: Snowflake }
+    CHANNEL_UPDATE: Partial<Channel> & { _id: ID }
+    CHANNEL_DELETE: { _id: ID } & { server_id?: ID }
 
     SERVER_CREATE: Server
-    SERVER_DELETE: ID
-    SERVER_UPDATE: Partial<Pick<Server, 'roles' | 'name' | 'icon' | 'banner' | 'description' | 'ownerId' | 'permissions'>> & ID
+    SERVER_DELETE: { _id: ID }
+    SERVER_UPDATE: Partial<Server> & { _id: ID }
     
     MEMBER_JOIN_SERVER: Member
-    MEMBER_LEAVE_SERVER: ID & { serverId: Snowflake }
-    MEMBER_UPDATE: Partial<Pick<Member, 'nickname' | 'roles'>> & ID & { serverId: Snowflake }
+    MEMBER_LEAVE_SERVER: { _id: ID } & { server_id: ID }
+    MEMBER_UPDATE: Partial<Member>
 
-    USER_UPDATE: Partial<Pick<User, 'presence' | 'username' | 'avatar' | 'badges'>> & ID
+    USER_UPDATE: Partial<User> & { _id: ID }
 }
 
 export enum WSCodes {

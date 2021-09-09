@@ -1,7 +1,12 @@
-import { SnowflakeUtil, validator } from '../utils'
+import { Property, wrap, Entity, FilterQuery, FindOptions, OneToOne } from 'mikro-orm'
+import { Base, Server } from '.'
+import { validator } from '../utils'
+import db from '../database'
+
 
 export interface CreateRoleOptions extends Partial<Role> {
     name: string
+    server: Server
 }
 
 export const CreateRoleSchema = validator.compile({
@@ -24,19 +29,37 @@ export const CreateRoleSchema = validator.compile({
     }
 })
 
-export class Role {
-    _id!: Snowflake
+@Entity({ tableName: 'roles' })
+export class Role extends Base {
+    @Property()
     name!: string
+
+    @Property()
     permissions = 0
+
+    @Property()
     color?: number
+
+    @Property()
     hoist = false
+
+    @OneToOne('Server')
+    server!: Server
+
     static from(options: CreateRoleOptions): Role {
-        const role = new Role()
+        return wrap(new Role().setID()).assign(options)
+    }
 
-        role._id = SnowflakeUtil.generate()
+    static find(query: FilterQuery<Role>, options?: FindOptions<Role>): Promise<Role[]> {
+        return db.get(Role).find(query, options)
+    }
 
-        Object.assign(role, options)
+    static findOne(query: FilterQuery<Role>): Promise<Role | null> {
+        return db.get(Role).findOne(query)
+    }
 
-        return role
+    async save(options?: Partial<Role>): Promise<this> {
+        await db.get(Role).persistAndFlush(options ? wrap(this).assign(options) : this)
+        return this
     }
 }

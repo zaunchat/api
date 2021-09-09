@@ -9,23 +9,20 @@ import db from '../../database'
 @web.basePath('/servers')
 export class ServerController {
     @web.get('/')
-    async fetchServers(req: Request, res: Response): Promise<void> {
-        const servers = await Server.find({
-            _id: {
-                $in: req.user.servers
-            }
-        })
-        res.json(servers)
+    async fetchMany(req: Request, res: Response): Promise<void> {
+        res.json(req.user.servers.getItems())
     }
 
-    @web.get('/:serverId')
-    async fetchServer(req: Request, res: Response): Promise<void> {
-        if (!req.user.servers.some(id => id === req.params.serverId)) {
+    @web.get('/:server_id')
+    async fetchOne(req: Request, res: Response): Promise<void> {
+        const { server_id } = req.params as { server_id: ID }
+
+        if (!req.user.servers.getItems().some(server => server._id === server_id)) {
             throw new HTTPError('MISSING_ACCESS')
         }
 
         const server = await Server.findOne({
-            _id: req.params.serverId
+            _id: server_id
         })
 
         if (!server) {
@@ -36,41 +33,46 @@ export class ServerController {
     }
 
     @web.post('/')
-    async createServer(req: Request, res: Response): Promise<void> {
+    async create(req: Request, res: Response): Promise<void> {
         req.check(CreateServerSchema)
 
-        if (req.user.servers.length >= config.limits.user.servers) {
+        if (req.user.servers.count() >= config.limits.user.servers) {
             throw new HTTPError('MAXIMUM_SERVERS')
         }
 
         const server = Server.from({
             ...req.body,
-            ownerId: req.user._id
+            owner: req.user
         })
 
         const chat = Channel.from({
             type: ChannelTypes.TEXT,
-            serverId: server._id,
+            server_id: server._id,
             name: 'general'
         })
 
         const category = Channel.from({
             type: ChannelTypes.CATEGORY,
             name: 'General',
-            serverId: server._id,
+            server_id: server._id,
             channels: [chat._id]
         })
 
         const member = Member.from({
             _id: req.user._id,
-            serverId: server._id
+            server: server
         })
+
+        const user = req.user
+
+        user.servers.add(server)
 
         await db.save([
             server,
             chat,
             category,
-            member
+            member,
+            user
         ])
 
         res.json(server)

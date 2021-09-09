@@ -1,5 +1,5 @@
-import { Entity, Enum, FindOptions, FilterQuery, Property, wrap } from 'mikro-orm'
-import { Base } from './Base'
+import { Entity, Enum, FindOptions, FilterQuery, Property, wrap, ManyToMany, Collection, OneToOne } from 'mikro-orm'
+import { Base, User } from '.'
 import { DEFAULT_PERMISSION_DM, validator } from '../utils'
 import db from '../database'
 import config from '../../config'
@@ -13,29 +13,43 @@ export enum ChannelTypes {
     UNKNOWN = -1
 }
 
+export type OverwriteType = 'role' | 'member'
+
+export interface ChannelOverwrite {
+    id: ID
+    type: OverwriteType
+    allow: number
+    deny: number
+}
+
+export type ChannelOverwrites = ChannelOverwrite[]
+
 export interface DMChannel extends Channel {
     type: ChannelTypes.DM
-    recipients: Snowflake[]
+    recipients: Collection<User>
 }
 
 export interface Group extends Channel {
     type: ChannelTypes.GROUP
     name: string
-    ownerId: Snowflake
-    recipients: Snowflake[]
+    owner: User
+    recipients: Collection<User>
+    permissions: number
 }
 
 export interface TextChannel extends Channel {
     type: ChannelTypes.TEXT
     name: string
-    serverId: Snowflake
+    server_id: ID
+    overwrites: ChannelOverwrites
 }
 
 export interface Category extends Channel {
     type: ChannelTypes.CATEGORY
     name: string
-    serverId: Snowflake
-    channels: Snowflake[]
+    server_id: ID
+    channels: ID[]
+    overwrites: ChannelOverwrites
 }
 
 
@@ -83,16 +97,19 @@ export class Channel extends Base implements DMChannel, Group, TextChannel, Cate
     @Property({ nullable: true })
     topic?: string
 
-    @Property({ nullable: true })
-    serverId!: Snowflake
+    @Property()
+    server_id!: ID
+
+    @Property()
+    overwrites!: ChannelOverwrites
 
     // Group/DM
 
-    @Property()
-    recipients!: Snowflake[]
+    @ManyToMany('User')
+    recipients = new Collection<User>(this)
 
-    @Property()
-    ownerId!: Snowflake
+    @OneToOne('User')
+    owner!: User
 
     @Property({ nullable: true })
     icon?: string
@@ -102,7 +119,7 @@ export class Channel extends Base implements DMChannel, Group, TextChannel, Cate
 
     // Category
     @Property()
-    channels!: Snowflake[]
+    channels!: ID[]
 
     static count(query: FilterQuery<Channel>): Promise<number> {
         return db.get(Channel).count(query)
@@ -121,7 +138,8 @@ export class Channel extends Base implements DMChannel, Group, TextChannel, Cate
     static from(options: { type: ChannelTypes.GROUP } & Partial<Group>): Group
     static from(options: { type: ChannelTypes.CATEGORY } & Partial<Category>): Category
     static from(options: Partial<DMChannel | Group | TextChannel | Category>): Channel {
-        return wrap(new Channel().setID()).assign(options)
+        const channel = wrap(new Channel().setID()).assign(options)
+        return channel
     }
 
     static async save(...channels: Channel[]): Promise<void> {

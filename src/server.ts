@@ -1,4 +1,4 @@
-import { App } from '@tinyhttp/app'
+import { App as Server } from '@tinyhttp/app'
 import { IncomingMessage as Request, ServerResponse as Response } from 'http'
 import { register } from 'express-decorators'
 import { Getaway } from './getaway'
@@ -10,7 +10,7 @@ import ms from 'ms'
 
 
 export const getaway = new Getaway()
-export const server = new App({
+export const server = new Server({
     onError: middlewares.error()
 }).use(middlewares.helmet())
 

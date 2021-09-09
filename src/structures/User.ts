@@ -1,5 +1,5 @@
-import { Entity, Property, wrap, FindOptions, FilterQuery, FindOneOptions } from 'mikro-orm'
-import { Base, Presence, Session } from '.'
+import { Entity, Property, wrap, FindOptions, FilterQuery, FindOneOptions, Enum, ManyToMany, Collection } from 'mikro-orm'
+import { Base, Presence, Session, Server } from '.'
 import { validator } from '../utils'
 import db from '../database'
 import config from '../../config'
@@ -50,7 +50,7 @@ export const LoginUserSchema = validator.compile({
 
 export const LogoutUserSchema = validator.compile({
     token: { type: 'string' },
-    userId: { type: 'string' }
+    user_id: { type: 'string' }
 })
 
 @Entity({ tableName: 'users' })
@@ -67,16 +67,16 @@ export class User extends Base {
     @Property()
     presence = Presence.from({})
 
-    @Property()
+    @Enum(() => UserBadges)
     badges = 0
 
     @Property()
-    relations = new Map<Snowflake, RelationshipStatus>()
+    relations = new Map<ID, RelationshipStatus>()
+
+    @ManyToMany({ lazy: true, entity: 'Server' })
+    servers = new Collection<Server>(this)
 
     @Property()
-    servers: Snowflake[] = []
-
-    @Property({ nullable: true })
     avatar?: string
 
     @Property()
@@ -112,5 +112,9 @@ export class User extends Base {
     async save(options?: Partial<User>): Promise<this> {
         await User.save(options ? wrap(this).assign(options) : this)
         return this
+    }
+
+    async delete(): Promise<void> {
+        await db.get(User).removeAndFlush(this)
     }
 }

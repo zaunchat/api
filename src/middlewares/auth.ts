@@ -9,10 +9,10 @@ export const auth = (unauthorizedRoutes: string[]) => async (req: Request, _res:
     }
 
     const token = req.headers['x-session-token']
-    const userId = req.headers['x-session-id']
+    const user_id = req.headers['x-session-id']
 
-    const user = token && userId ? await User.findOne({
-        _id: userId,
+    const user = token && user_id ? await User.findOne({
+        _id: user_id,
         verified: true
     }) : null
 
