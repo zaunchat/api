@@ -1,3 +1,6 @@
 export * from './AuthController'
 export * from './UserController'
+export * from './MessageController'
+export * from './ChannelController'
+export * from './InviteController'
 export * from './servers'
