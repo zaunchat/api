@@ -9,24 +9,6 @@ import config from '../../config'
 
 @web.basePath('/auth')
 export class AuthController {
-    @web.get('/check')
-    async check(req: Request, res: Response): Promise<void> {
-        const token = req.headers['x-session-token']
-        const user_id = req.headers['x-session-id']
-
-        const user = token && user_id ? await User.findOne({
-            _id: user_id,
-            verified: true
-        }, {
-            fields: ['sessions']
-        }) : null
-
-        res.json({
-            valid: !!user?.sessions.some((session) => session.token === token)
-        })
-    }
-
-
     @web.post('/login')
     async login(req: Request, res: Response): Promise<void> {
         req.check(LoginUserSchema)

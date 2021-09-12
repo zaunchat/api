@@ -55,7 +55,6 @@ const config = {
 	},
 	routes: {
 		global: '20/5s',
-		'auth/check': '30/5m --ip',
 		'auth/login': '3/24h --ip',
 		'auth/register': '3/24h --ip',
 		'auth/verify': '2/24h --ip',

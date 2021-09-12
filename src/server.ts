@@ -36,7 +36,7 @@ server
     .use(middlewares.validID())
     .use(middlewares.json({ parser: JSON.parse }))
     .use(middlewares.captcha(['/auth/login', '/auth/register']))
-    .use(middlewares.auth(['/auth/verify', '/auth/check', '/gateway']))
+    .use(middlewares.auth(['/auth/verify', '/gateway']))
     .use('/gateway', middlewares.ws(getaway.server))
 
 
