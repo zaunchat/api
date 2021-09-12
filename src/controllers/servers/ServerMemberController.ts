@@ -1,6 +1,6 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { Member, CreateMemberSchema, Server } from '../../structures'
+import { Member, CreateMemberSchema } from '../../structures'
 import { HTTPError } from '../../errors'
 import { Permissions } from '../../utils'
 
@@ -9,11 +9,17 @@ import { Permissions } from '../../utils'
 export class ServerMemberController {
 	@web.use()
 	async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
-		const { server_id } = req.params as { server_id: ID }
+		const server = req.user.servers.getItems().find((s) => {
+			return s._id === req.params.server_id
+		})
 
-		if (!req.user.servers.getItems().some(server => server._id === server_id)) {
+		if (!server) {
 			throw new HTTPError('UNKNOWN_SERVER')
 		}
+
+		Object.defineProperty(req, 'server', {
+			value: server
+		})
 
 		next()
 	}
@@ -63,7 +69,7 @@ export class ServerMemberController {
 			throw new HTTPError('UNKNOWN_MEMBER')
 		}
 
-		const server = await Server.findOne({ _id: server_id }) as Server
+		const server = req.server
 		const permissions = await Permissions.fetch(req.user, server)
 
 
