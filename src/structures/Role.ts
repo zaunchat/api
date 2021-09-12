@@ -1,4 +1,4 @@
-import { Property, wrap, Entity, FilterQuery, FindOptions, OneToOne } from 'mikro-orm'
+import { Property, wrap, Entity, FilterQuery, FindOptions, OneToOne } from '@mikro-orm/core'
 import { Base, Server } from '.'
 import { validator } from '../utils'
 import db from '../database'
@@ -61,5 +61,9 @@ export class Role extends Base {
     async save(options?: Partial<Role>): Promise<this> {
         await db.get(Role).persistAndFlush(options ? wrap(this).assign(options) : this)
         return this
+    }
+
+    async delete(): Promise<void> {
+        await db.get(Role).removeAndFlush(this)
     }
 }

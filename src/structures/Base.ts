@@ -1,4 +1,4 @@
-import { PrimaryKey } from 'mikro-orm'
+import { PrimaryKey } from '@mikro-orm/core'
 import { Snowflake } from '../utils'
 
 export abstract class Base {

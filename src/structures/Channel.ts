@@ -1,5 +1,5 @@
-import { Entity, Enum, FindOptions, FilterQuery, Property, wrap, ManyToMany, Collection, OneToOne } from 'mikro-orm'
-import { Base, User } from '.'
+import { Entity, Enum, FindOptions, FilterQuery, Property, wrap, ManyToMany, Collection, OneToOne } from '@mikro-orm/core'
+import { Base, User, Server } from '.'
 import { DEFAULT_PERMISSION_DM, validator } from '../utils'
 import db from '../database'
 import config from '../../config'
@@ -13,7 +13,10 @@ export enum ChannelTypes {
     UNKNOWN = -1
 }
 
-export type OverwriteType = 'role' | 'member'
+export enum OverwriteType {
+    ROLE,
+    MEMBER
+}
 
 export interface ChannelOverwrite {
     id: ID
@@ -40,14 +43,14 @@ export interface Group extends Channel {
 export interface TextChannel extends Channel {
     type: ChannelTypes.TEXT
     name: string
-    server_id: ID
+    server: Server
     overwrites: ChannelOverwrites
 }
 
 export interface Category extends Channel {
     type: ChannelTypes.CATEGORY
     name: string
-    server_id: ID
+    server: Server
     channels: ID[]
     overwrites: ChannelOverwrites
 }
@@ -94,11 +97,11 @@ export class Channel extends Base implements DMChannel, Group, TextChannel, Cate
     @Property()
     name!: string
 
-    @Property({ nullable: true })
+    @Property()
     topic?: string
 
-    @Property()
-    server_id!: ID
+    @OneToOne('Server')
+    server!: Server
 
     @Property()
     overwrites!: ChannelOverwrites
@@ -106,12 +109,12 @@ export class Channel extends Base implements DMChannel, Group, TextChannel, Cate
     // Group/DM
 
     @ManyToMany('User')
-    recipients = new Collection<User>(this)
+    recipients!: Collection<User>
 
     @OneToOne('User')
     owner!: User
 
-    @Property({ nullable: true })
+    @Property()
     icon?: string
 
     @Property()
@@ -139,6 +142,11 @@ export class Channel extends Base implements DMChannel, Group, TextChannel, Cate
     static from(options: { type: ChannelTypes.CATEGORY } & Partial<Category>): Category
     static from(options: Partial<DMChannel | Group | TextChannel | Category>): Channel {
         const channel = wrap(new Channel().setID()).assign(options)
+        
+        if ([ChannelTypes.GROUP, ChannelTypes.DM].includes(channel.type)) {
+            channel.recipients = new Collection<User>(channel)
+        }
+
         return channel
     }
 

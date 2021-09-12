@@ -1,5 +1,5 @@
-import { Base, Role, User } from '.'
-import { Property, Entity, wrap, FindOptions, FilterQuery, ManyToMany, Collection, OneToOne } from 'mikro-orm'
+import { Base, Role, User, Channel } from '.'
+import { Property, Entity, wrap, FindOptions, FilterQuery, ManyToMany, Collection, OneToOne } from '@mikro-orm/core'
 import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
 import db from '../database'
 import config from '../../config'
@@ -38,20 +38,23 @@ export class Server extends Base {
     @Property()
     name!: string
 
-    @Property({ nullable: true })
+    @Property()
     description?: string
 
-    @Property({ nullable: true })
+    @Property()
     icon?: string
 
-    @Property({ nullable: true })
+    @Property()
     banner?: string
 
     @OneToOne('User')
     owner!: User
 
-    @ManyToMany('Role')
+    @ManyToMany()
     roles = new Collection<Role>(this)
+
+    @ManyToMany(() => Channel)
+    channels = new Collection<Channel>(this)
 
     @Property()
     permissions = DEFAULT_PERMISSION_EVERYONE

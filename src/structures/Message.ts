@@ -1,5 +1,5 @@
 import { Base, User, Channel } from '.'
-import { Property, Entity, wrap, FilterQuery, FindOptions, OneToOne } from 'mikro-orm'
+import { Property, Entity, wrap, FilterQuery, FindOptions, OneToOne } from '@mikro-orm/core'
 import { validator } from '../utils'
 import db from '../database'
 import config from '../../config'
@@ -55,7 +55,7 @@ export class Message extends Base {
     }
 
     static from(options: CreateMessageOptions): Message {
-        return wrap(new Message().setID()).assign(options, { em: db.db.em })
+        return wrap(new Message().setID()).assign(options)
     }
 
     static find(query: FilterQuery<Message>, options?: FindOptions<Message>): Promise<Message[]> {
