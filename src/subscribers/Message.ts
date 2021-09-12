@@ -1,4 +1,4 @@
-import { EventArgs, EventSubscriber, Subscriber } from '@mikro-orm/core'
+import { EventArgs, EventSubscriber, Subscriber, EntityName } from '@mikro-orm/core'
 import { Message as T } from '../structures'
 import { getaway } from '../server'
 
@@ -14,8 +14,11 @@ export class MessageSubscriber implements EventSubscriber<T> {
 
 	async afterDelete({ entity: message }: EventArgs<T>): Promise<void> {
 		await getaway.publish(message.channel._id, 'MESSAGE_DELETE', {
-			_id: message._id,
-			channel: message.channel
+			_id: message._id
 		})
+	}
+
+	getSubscribedEntities(): Array<EntityName<T>> {
+		return [T]
 	}
 }
