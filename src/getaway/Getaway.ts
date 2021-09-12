@@ -34,7 +34,7 @@ export class Getaway {
         try {
             socket.ws
                 .once('close', this.onClose.bind(this, socket))
-                .on('message', (buffer) => this.onMessage(socket, buffer))
+                .on('message', this.onMessage.bind(this, socket))
                 .on('error', this.onError.bind(this))
 
             await socket.send({
