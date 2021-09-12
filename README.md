@@ -7,7 +7,7 @@ Core Backend API
 - [NodeJS](https://nodejs.org/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [Mikro-orm](https://mikro-orm.io/) ([**orm**](https://wikipedia.org/wiki/Object%E2%80%93relational_mapping) Database)
-- [TinyHTTP](https://tinyhttp.v1rtl.site/) (HTTP Server)
+- [TinyHTTP](https://tinyhttp.v1rtl.site/) (REST)
 - [ioredis](https://github.com/luin/ioredis) (Redis Client)
 - [ws](https://github.com/websockets/ws) (WebSocket)
 
