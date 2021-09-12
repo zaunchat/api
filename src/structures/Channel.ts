@@ -92,6 +92,7 @@ export const CreateCategorySchema = validator.compile({
 @Entity({ tableName: 'channels' })
 export class Channel extends Base implements DMChannel, Group, TextChannel, Category {
     @Enum(() => ChannelTypes)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     type = ChannelTypes.UNKNOWN as any
 
     @Property()
