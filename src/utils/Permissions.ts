@@ -1,43 +1,52 @@
 import { ChannelTypes, DMChannel, Group, Member, Server, TextChannel, User, Category } from '../structures'
+import { BitField } from './BitField'
+
+export type PermissionString = keyof typeof FLAGS
+export type PermissionsResolvable = number | Permissions | PermissionString | PermissionsResolvable[]
+
+const FLAGS = {
+    // Admin
+    ADMINISTRATOR: 1 << 0,
 
 
-export type PermissionString = keyof typeof Permissions.FLAGS
-export type PermissionsResolvable = number | PermissionString | Permissions | PermissionsResolvable[]
+    // Channel
+    VIEW_CHANNEL: 1 << 1,
+    SEND_MESSAGES: 1 << 2,
+    READ_MESSAGE_HISTORY: 1 << 3,
+    EMBED_LINKS: 1 << 4,
+    UPLOAD_FILES: 1 << 5,
 
 
-export class Permissions {
-    static readonly DEFAULT_BIT = 0
-    static readonly FLAGS = {
-        // Admin
-        ADMINISTRATOR: 1 << 0,
+    // Manage
+    MANAGE_SERVER: 1 << 6,
+    MANAGE_CHANNELS: 1 << 7,
+    MANAGE_MESSAGES: 1 << 8,
+    MANAGE_ROLES: 1 << 9,
+    MANAGE_NICKNAMES: 1 << 10,
+    BAN_MEMBERS: 1 << 11,
+    KICK_MEMBERS: 1 << 12,
 
 
-        // Channel
-        VIEW_CHANNEL: 1 << 1,
-        SEND_MESSAGES: 1 << 2,
-        READ_MESSAGE_HISTORY: 1 << 3,
-        EMBED_LINKS: 1 << 4,
-        UPLOAD_FILES: 1 << 5,
+    // Member
+    CHANGE_NICKNAME: 1 << 13,
+    INVITE_OTHERS: 1 << 14
+}
 
+export declare interface Permissions {
+    serialize(): Record<PermissionString, boolean>
+    any(bit: PermissionsResolvable): boolean
+    add(...bits: PermissionsResolvable[]): this
+    missing(bits: PermissionsResolvable): PermissionString[]
+    remove(...bits: PermissionsResolvable[]): this
+    has(bit: PermissionsResolvable): boolean
+    toArray(): PermissionString[]
+    equals(bit: PermissionsResolvable): boolean
+}
 
-        // Manage
-        MANAGE_SERVER: 1 << 6,
-        MANAGE_CHANNELS: 1 << 7,
-        MANAGE_MESSAGES: 1 << 8,
-        MANAGE_ROLES: 1 << 9,
-        MANAGE_NICKNAMES: 1 << 10,
-        BAN_MEMBERS: 1 << 11,
-        KICK_MEMBERS: 1 << 12,
-
-
-        // Member
-        CHANGE_NICKNAME: 1 << 13
-    }
-
-    bitfield = Permissions.DEFAULT_BIT
-
+export class Permissions extends BitField {
+    static FLAGS: typeof FLAGS
     constructor(...bits: PermissionsResolvable[]) {
-        this.bitfield = Permissions.resolve(bits)
+        super(bits)
     }
 
     static async fetch(user: User | string, server?: Server | string | null, channel?: DMChannel | Group | TextChannel | Category): Promise<Permissions> {
@@ -92,87 +101,22 @@ export class Permissions {
     }
 
     missing(bits: PermissionsResolvable, checkAdmin = true): PermissionString[] {
-        if (checkAdmin && this.has(Permissions.FLAGS.ADMINISTRATOR, false)) return []
-        return new Permissions(bits).remove(this).toArray()
+        if (checkAdmin && super.has(Permissions.FLAGS.ADMINISTRATOR)) return []
+        return super.missing(bits) as PermissionString[]
     }
 
     any(bit: PermissionsResolvable, checkAdmin = true): boolean {
-        if (checkAdmin && this.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true
-        bit = Permissions.resolve(bit)
-        return (this.bitfield & bit) !== Permissions.DEFAULT_BIT
+        if (checkAdmin && super.has(Permissions.FLAGS.ADMINISTRATOR)) return true
+        return super.any(bit)
     }
-
 
     has(bit: PermissionsResolvable, checkAdmin = true): boolean {
-        if (checkAdmin && this.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true
-        bit = Permissions.resolve(bit)
-        return (this.bitfield & bit) === bit
-    }
-
-
-    add(...bits: PermissionsResolvable[]): Permissions {
-        let total = 0
-
-        for (const bit of bits) {
-            total |= Permissions.resolve(bit)
-        }
-
-        if (Object.isFrozen(this)) return new Permissions(this.bitfield | total)
-
-        this.bitfield |= total
-
-        return this
-    }
-
-    remove(...bits: PermissionsResolvable[]): Permissions {
-        let total = 0
-
-        for (const bit of bits) {
-            total |= Permissions.resolve(bit)
-        }
-
-        if (Object.isFrozen(this)) return new Permissions(this.bitfield & ~total)
-
-        this.bitfield &= ~total
-
-        return this
-    }
-
-    freeze(): Readonly<this> {
-        return Object.freeze(this)
-    }
-
-    valueOf(): number {
-        return this.bitfield
-    }
-
-    serialize(): Record<string, boolean> {
-        const serialized: Record<string, boolean> = {}
-        for (const [flag, bit] of Object.entries(Permissions.FLAGS)) serialized[flag] = this.has(bit)
-        return serialized
-    }
-
-    toArray(): PermissionString[] {
-        const flags = Object.keys(Permissions.FLAGS) as PermissionString[]
-        return flags.filter(bit => this.has(bit))
-    }
-
-    equals(bit: PermissionsResolvable): boolean {
-        return this.bitfield === Permissions.resolve(bit)
-    }
-
-    *[Symbol.iterator](): Iterable<PermissionString> {
-        yield* this.toArray()
-    }
-
-    static resolve(bit: PermissionsResolvable): number {
-        if (typeof bit === 'number') return bit
-        if (Array.isArray(bit)) return bit.map(p => this.resolve(p)).reduce((prev, p) => prev | p, Permissions.DEFAULT_BIT)
-        if (bit instanceof Permissions) return bit.bitfield
-        if (typeof Permissions.FLAGS[bit] !== 'undefined') return Permissions.FLAGS[bit]
-        throw new Error('Invalid Bit')
+        if (checkAdmin && super.has(Permissions.FLAGS.ADMINISTRATOR)) return true
+        return super.has(bit)
     }
 }
+
+Permissions.FLAGS = FLAGS
 
 
 export const DEFAULT_PERMISSION_DM = new Permissions([
