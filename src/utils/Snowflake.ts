@@ -6,7 +6,7 @@ export class Snowflake extends null {
   static processId = BigInt(process.pid % 31)
   static workerId = BigInt((cluster.worker?.id || 0) % 31)
 
-  static is(id: string): id is ID {
+  static is(id: unknown): id is ID {
     if (typeof id !== 'string') return false
     return /^\d{17,19}$/.test(id)
   }
