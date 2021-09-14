@@ -9,14 +9,12 @@ export const auth = (unauthorizedRoutes: string[]) => async (req: Request, _res:
     }
 
     const token = req.headers['x-session-token']
-    const user_id = req.headers['x-session-id']
-
-    const user = token && user_id ? await User.findOne({
-        _id: user_id,
+    const user = token ? await User.findOne({
+        sessions: { token },
         verified: true
     }) : null
 
-    if (!user?.sessions.some(session => session.token === token)) {
+    if (!user) {
         throw new HTTPError('UNAUTHORIZED')
     }
 
