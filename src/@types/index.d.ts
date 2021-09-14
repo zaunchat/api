@@ -12,7 +12,7 @@ declare module '@tinyhttp/app' {
     }
 
     interface Response {
-        ok(): void
+        ok(status?: number): void
     }
 }
 
