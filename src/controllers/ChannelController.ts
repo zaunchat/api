@@ -54,14 +54,14 @@ export class ChannelController {
         res.json(group)
     }
 
-    @web.post('/:groupId/:user_id')
+    @web.post('/:group_id/:user_id')
     async add(req: Request, res: Response): Promise<void> {
         const user_id = req.params.user_id as ID
 
         const [group, target] = await Promise.all([
             Channel.findOne({
                 type: ChannelTypes.GROUP,
-                _id: req.params.groupId,
+                _id: req.params.group_id,
                 recipients: req.user._id
             }),
             User.findOne({
@@ -92,14 +92,14 @@ export class ChannelController {
         res.json(group)
     }
 
-    @web.route('delete', '/:groupId/:user_id')
+    @web.route('delete', '/:group_id/:user_id')
     async kick(req: Request, res: Response): Promise<void> {
-        const user_id = req.params.user_id as ID
+        const { user_id, group_id } = req.params
 
         const [group, target] = await Promise.all([
             Channel.findOne({
                 type: ChannelTypes.GROUP,
-                _id: req.params.groupId,
+                _id: group_id,
                 recipients: req.user._id
             }),
             User.findOne({

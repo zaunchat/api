@@ -42,9 +42,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
             _id: {
                 $in: Array.from(user.relations.keys())
             }
-        }, {
-            fields: ['_id', 'avatar', 'username', 'badges']
-        }),
+        }, { public: true }),
         Channel.find({
             $or: [{
                 type: ChannelTypes.DM,

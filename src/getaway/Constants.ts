@@ -6,6 +6,10 @@ export interface Payload {
     data?: unknown
 }
 
+export type WithID<T = unknown, Partially extends boolean = true> = Partially extends true
+    ? Partial<T> & { _id: ID }
+    : T & { _id: ID }
+
 
 export interface WSEvents {
     READY: {
@@ -14,24 +18,24 @@ export interface WSEvents {
         servers: Server[]
         users: User[]
     }
-    
+
     MESSAGE_CREATE: Message
-    MESSAGE_DELETE: Pick<Message, '_id' | 'channel'>
-    MESSAGE_UPDATE: Partial<Message> & { _id: ID }
-    
+    MESSAGE_DELETE: WithID
+    MESSAGE_UPDATE: WithID<Message>
+
     CHANNEL_CREATE: Channel
-    CHANNEL_UPDATE: Partial<Channel> & { _id: ID }
-    CHANNEL_DELETE: { _id: ID } & { server_id?: ID }
+    CHANNEL_UPDATE: WithID<Channel>
+    CHANNEL_DELETE: WithID<{ server_id?: ID }>
 
     SERVER_CREATE: Server
-    SERVER_DELETE: { _id: ID }
-    SERVER_UPDATE: Partial<Server> & { _id: ID }
-    
-    MEMBER_JOIN_SERVER: Member
-    MEMBER_LEAVE_SERVER: { _id: ID } & { server_id: ID }
-    MEMBER_UPDATE: Partial<Member>
+    SERVER_DELETE: WithID
+    SERVER_UPDATE: WithID<Server>
 
-    USER_UPDATE: Partial<User> & { _id: ID }
+    MEMBER_JOIN_SERVER: Member
+    MEMBER_LEAVE_SERVER: WithID<{ server_id: ID }>
+    MEMBER_UPDATE: WithID<Member>
+
+    USER_UPDATE: WithID<User>
 }
 
 export enum WSCodes {

@@ -12,9 +12,7 @@ export class UserController {
 
         const user = await User.findOne({
             _id: user_id === '@me' ? req.user._id : user_id
-        }, {
-            fields: ['_id', 'avatar', 'username', 'badges']
-        })
+        }, { public: true })
 
         if (!user) {
             throw new HTTPError('UNKNOWN_USER')
@@ -30,7 +28,7 @@ export class UserController {
                 $in: Array.from(req.user.relations.keys())
             }
         }, {
-            fields: ['_id', 'avatar', 'username', 'badges']
+            public: true
         })
 
         res.json(relationships)
@@ -57,10 +55,13 @@ export class UserController {
             return void res.json(exists)
         }
 
-        const dm = await Channel.from({
-            type: ChannelTypes.DM,
-            recipients: [req.user, target]
-        }).save()
+        const dm = Channel.from({
+            type: ChannelTypes.DM
+        })
+
+        dm.recipients.add(req.user, target)
+
+        await dm.save()
 
         res.json(dm)
     }
@@ -76,31 +77,28 @@ export class UserController {
 
         const target = await User.findOne({
             _id: user_id
-        })
+        }), user = req.user
 
         if (!target) {
             throw new HTTPError('UNKNOWN_USER')
         }
 
-        const panding = target.relations.get(req.user._id) === RelationshipStatus.IN_COMING && req.user.relations.get(target._id) === RelationshipStatus.OUTGOING
+        const panding = target.relations.get(user._id) === RelationshipStatus.IN_COMING && user.relations.get(target._id) === RelationshipStatus.OUTGOING
         let status: RelationshipStatus
 
         if (panding) {
             status = RelationshipStatus.FRIEND
             target.relations.set(req.user._id, RelationshipStatus.FRIEND)
-            req.user.relations.set(target._id, RelationshipStatus.FRIEND)
+            user.relations.set(target._id, RelationshipStatus.FRIEND)
         } else {
             status = RelationshipStatus.IN_COMING
             target.relations.set(req.user._id, RelationshipStatus.OUTGOING)
-            req.user.relations.set(target._id, RelationshipStatus.IN_COMING)
+            user.relations.set(target._id, RelationshipStatus.IN_COMING)
         }
 
-        await Promise.all([
-            target.save(),
-            req.user.save()
-        ])
+        await Promise.all([target.save(), user.save()])
 
-        res.send({ status })
+        res.json({ status })
     }
 
     @web.route('delete', '/:user_id/friend')

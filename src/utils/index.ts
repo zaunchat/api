@@ -1,4 +1,6 @@
 export * from './validator'
 export * from './mail'
+export * from './BitField'
 export * from './Permissions'
+export * from './Badges'
 export * from './Snowflake'

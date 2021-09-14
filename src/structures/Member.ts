@@ -1,11 +1,11 @@
 import { Base, Role, Server } from '.'
-import { Property, Entity, wrap, FilterQuery, FindOptions, ManyToMany, Collection, OneToOne } from 'mikro-orm'
+import { Property, Entity, wrap, FilterQuery, FindOptions, ManyToMany, Collection, OneToOne } from '@mikro-orm/core'
 import { validator } from '../utils'
 import db from '../database'
 import config from '../../config'
 
 export interface CreateMemberOptions extends Partial<Member> {
-    _id: ID,
+    _id: ID
     server: Server
 }
 
@@ -29,13 +29,13 @@ export class Member extends Base {
     @Property({ nullable: true })
     nickname?: string
 
-    @Property({ onCreate: () => Date.now() })
-    joined_timestamp!: number
+    @Property()
+    joined_timestamp: number =  Date.now()
 
-    @ManyToMany('Role')
+    @ManyToMany({ entity: () => Role })
     roles = new Collection<Role>(this)
 
-    @OneToOne('Server')
+    @OneToOne({ entity: () => Server })
     server!: Server
 
     static from(options: CreateMemberOptions): Member {

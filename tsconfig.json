@@ -11,7 +11,7 @@
     "emitDecoratorMetadata": true,
     "skipLibCheck": true,
     "outDir": "dist",
-    "forceConsistentCasingInFileNames": true,
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "src/**/*.ts"

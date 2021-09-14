@@ -15,14 +15,8 @@ export class ServerController {
 
     @web.get('/:server_id')
     async fetchOne(req: Request, res: Response): Promise<void> {
-        const { server_id } = req.params as { server_id: ID }
-
-        if (!req.user.servers.getItems().some(server => server._id === server_id)) {
-            throw new HTTPError('MISSING_ACCESS')
-        }
-
-        const server = await Server.findOne({
-            _id: server_id
+        const server = req.user.servers.getItems().find((s) => {
+            return s._id === req.params.server_id
         })
 
         if (!server) {
@@ -31,6 +25,26 @@ export class ServerController {
 
         res.json(server)
     }
+
+    @web.route('delete', '/:server_id')
+    async delete(req: Request, res: Response): Promise<void> {
+        const server = req.user.servers.getItems().find((s) => {
+            return s._id === req.params.server_id
+        })
+
+        if (!server) {
+            throw new HTTPError('UNKNOWN_SERVER')
+        }
+
+        if (req.user._id !== server.owner._id) {
+            throw new HTTPError('MISSING_ACCESS')
+        }
+
+        await server.delete()
+
+        res.ok()
+    }
+
 
     @web.post('/')
     async create(req: Request, res: Response): Promise<void> {
@@ -47,20 +61,20 @@ export class ServerController {
 
         const chat = Channel.from({
             type: ChannelTypes.TEXT,
-            server_id: server._id,
+            server,
             name: 'general'
         })
 
         const category = Channel.from({
             type: ChannelTypes.CATEGORY,
             name: 'General',
-            server_id: server._id,
+            server,
             channels: [chat._id]
         })
 
         const member = Member.from({
             _id: req.user._id,
-            server: server
+            server
         })
 
         const user = req.user

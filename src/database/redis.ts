@@ -1,4 +1,4 @@
-import { CacheAdapter } from 'mikro-orm'
+import { CacheAdapter } from '@mikro-orm/core'
 import Redis from 'ioredis'
 import config from '../../config'
 

@@ -1,4 +1,4 @@
-import { Entity, Property, wrap, FindOptions, FilterQuery, FindOneOptions, Enum, ManyToMany, Collection } from 'mikro-orm'
+import { Entity, Property, wrap, FindOptions, FilterQuery, FindOneOptions, ManyToMany, Collection } from '@mikro-orm/core'
 import { Base, Presence, Session, Server } from '.'
 import { validator } from '../utils'
 import db from '../database'
@@ -10,12 +10,6 @@ export enum RelationshipStatus {
     IN_COMING,
     BLOCKED,
     BLOCKED_OTHER
-}
-
-export enum UserBadges {
-    DEVELOPER,
-    TRANSLATOR,
-    SUPPORTER
 }
 
 
@@ -53,6 +47,13 @@ export const LogoutUserSchema = validator.compile({
     user_id: { type: 'string' }
 })
 
+export const PUBLIC_USER_ITEMS: (keyof User)[] = [
+    '_id',
+    'username',
+    'avatar',
+    'badges'
+]
+
 @Entity({ tableName: 'users' })
 export class User extends Base {
     @Property({ unique: true })
@@ -65,35 +66,37 @@ export class User extends Base {
     email!: string
 
     @Property()
-    presence = Presence.from({})
+    presence: Presence = Presence.from({})
 
-    @Enum(() => UserBadges)
-    badges = 0
+    @Property()
+    badges: number = 0
 
     @Property()
     relations = new Map<ID, RelationshipStatus>()
 
-    @ManyToMany({ lazy: true, entity: 'Server' })
+    @ManyToMany({ entity: () => Server, lazy: true })
     servers = new Collection<Server>(this)
 
-    @Property()
+    @Property({ nullable: true })
     avatar?: string
 
-    @Property()
-    sessions: Session[] = []
+    @ManyToMany({ entity: () => Session })
+    sessions = new Collection<Session>(this)
 
-    @Property()
-    verified = false
+    @Property({ hidden: true })
+    verified: boolean = false
 
     static from(options: CreateUserOptions): User {
         return wrap(new User().setID()).assign(options)
     }
 
-    static find(query: FilterQuery<User>, options?: FindOptions<User>): Promise<User[]> {
+    static find(query: FilterQuery<User>, options?: FindOptions<User> & { public?: boolean }): Promise<User[]> {
+        if (options?.public) options.fields = PUBLIC_USER_ITEMS
         return db.get(User).find(query, options)
     }
 
-    static findOne(query: FilterQuery<User>, options?: FindOneOptions<User>): Promise<User | null> {
+    static findOne(query: FilterQuery<User>, options?: FindOneOptions<User> & { public?: boolean }): Promise<User | null> {
+        if (options?.public) options.fields = PUBLIC_USER_ITEMS
         return db.get(User).findOne(query, options)
     }
 

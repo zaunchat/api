@@ -12,6 +12,7 @@ export const APIErrors = {
     EMPTY_MESSAGE: [400, 'Cannot send an empty message'],
     TOO_MANY_ATTACHMENTS: [400],
     TOO_MANY_REPLIES: [400],
+    INVALID_ID: [400, 'Invalid ID'],
 
     // Unknown - 404
     UNKNOWN_ACCOUNT: [404, 'Unknown account'],
@@ -24,6 +25,7 @@ export const APIErrors = {
     UNKNOWN_MEMBER: [404, 'Unknown member'],
     UNKNOWN_ROLE: [404, 'Unknown role'],
     UNKNOWN_GROUP: [404, 'Unknown group'],
+    UNKNON_INVITE: [404, 'Unknown invite'],
 
     // Maximum
     MAXIMUM_FRIENDS: [400, 'Maximum number of freinds reached'],

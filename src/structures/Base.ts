@@ -1,12 +1,15 @@
-import { PrimaryKey } from 'mikro-orm'
+import { PrimaryKey, SerializedPrimaryKey } from '@mikro-orm/core'
 import { Snowflake } from '../utils'
 
 export abstract class Base {
   @PrimaryKey({ unique: true })
   _id!: ID
 
-  setID(): this {
-    this._id = Snowflake.generate()
+  @SerializedPrimaryKey()
+  id!: string
+
+  setID(id?: ID): this {
+    this._id = id ?? Snowflake.generate()
     return this
   }
 }

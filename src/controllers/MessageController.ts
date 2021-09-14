@@ -1,9 +1,9 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { FilterQuery } from 'mikro-orm'
+import { FilterQuery } from '@mikro-orm/core'
 import { HTTPError } from '../errors'
 import { CreateMessageSchema, Channel, Message } from '../structures'
-import { Permissions } from '../utils'
+import { Permissions, Snowflake } from '../utils'
 import config from '../../config'
 
 
@@ -39,15 +39,7 @@ export class MessageController {
 
     @web.post('/')
     async send(req: Request, res: Response): Promise<void> {
-        const {
-            permissions,
-            channel
-        } = (req as unknown as {
-            permissions: Permissions
-            channel: Channel
-        })
-
-        if (!permissions.has(Permissions.FLAGS.SEND_MESSAGES)) {
+        if (!req.permissions.has(Permissions.FLAGS.SEND_MESSAGES)) {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 
@@ -56,7 +48,7 @@ export class MessageController {
         const message = Message.from({
             ...req.body,
             author: req.user,
-            channel
+            channel: req.channel
         })
 
         if (message.isEmpty()) {
@@ -82,9 +74,7 @@ export class MessageController {
 
     @web.get('/')
     async fetchMany(req: Request, res: Response): Promise<void> {
-        const permissions = (req as unknown as { permissions: Permissions }).permissions
-
-        if (!permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
+        if (!req.permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 
@@ -105,7 +95,7 @@ export class MessageController {
             }
         }
 
-        if (typeof around === 'string') options._id = {
+        if (Snowflake.is(around)) options._id = {
             $or: [{
                 $gte: around
             }, {
@@ -113,11 +103,11 @@ export class MessageController {
             }]
         }
 
-        if (typeof after === 'string') options._id = {
+        if (Snowflake.is(after)) options._id = {
             $gt: after
         }
 
-        if (typeof before === 'string') options._id = {
+        if (Snowflake.is(before)) options._id = {
             $lt: before
         }
 
@@ -129,9 +119,7 @@ export class MessageController {
 
     @web.get('/:message_id')
     async fetchOne(req: Request, res: Response): Promise<void> {
-        const permissions = (req as unknown as { permissions: Permissions }).permissions
-
-        if (!permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
+        if (!req.permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 
@@ -186,11 +174,8 @@ export class MessageController {
             throw new HTTPError('UNKNOWN_MESSAGE')
         }
 
-        if (message.author._id !== req.user._id) {
-            const permissions = (req as unknown as { permissions: Permissions }).permissions
-            if (!permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) {
-                throw new HTTPError('MISSING_PERMISSIONS')
-            }
+        if (message.author._id !== req.user._id && !req.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) {
+            throw new HTTPError('MISSING_PERMISSIONS')
         }
 
         await message.delete()
