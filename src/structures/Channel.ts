@@ -98,10 +98,10 @@ export class Channel extends Base implements DMChannel, Group, TextChannel, Cate
     @Property()
     name!: string
 
-    @Property()
+    @Property({ nullable: true })
     topic?: string
 
-    @OneToOne('Server')
+    @OneToOne({ entity: () => Server })
     server!: Server
 
     @Property()
@@ -109,17 +109,17 @@ export class Channel extends Base implements DMChannel, Group, TextChannel, Cate
 
     // Group/DM
 
-    @ManyToMany('User')
+    @ManyToMany({ entity: () => User })
     recipients!: Collection<User>
 
-    @OneToOne('User')
+    @OneToOne({ entity: () => User })
     owner!: User
 
-    @Property()
+    @Property({ nullable: true })
     icon?: string
 
     @Property()
-    permissions = DEFAULT_PERMISSION_DM
+    permissions: number = DEFAULT_PERMISSION_DM
 
     // Category
     @Property()

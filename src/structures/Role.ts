@@ -35,15 +35,15 @@ export class Role extends Base {
     name!: string
 
     @Property()
-    permissions = 0
+    permissions: number = 0
 
-    @Property()
+    @Property({ nullable: true })
     color?: number
 
     @Property()
-    hoist = false
+    hoist: boolean = false
 
-    @OneToOne('Server')
+    @OneToOne({ entity: () => Server })
     server!: Server
 
     static from(options: CreateRoleOptions): Role {

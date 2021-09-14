@@ -20,10 +20,10 @@ export const CreateMessageSchema = validator.compile({
 
 @Entity({ tableName: 'messages' })
 export class Message extends Base {
-    @Property({ onCreate: () => Date.now() })
-    created_timestamp!: number
+    @Property()
+    created_timestamp: number = Date.now()
 
-    @Property({ onUpdate: () => Date.now() })
+    @Property({ onUpdate: () => Date.now(), nullable: true })
     edited_timestamp?: number
 
     @Property()
@@ -32,7 +32,7 @@ export class Message extends Base {
     @Property()
     attachments: unknown[] = []
 
-    @Property()
+    @Property({ nullable: true })
     content?: string
 
     @Property()
@@ -44,10 +44,10 @@ export class Message extends Base {
         mention: boolean
     }[] = []
 
-    @OneToOne('Channel')
+    @OneToOne({ entity: () => Channel })
     channel!: Channel
 
-    @OneToOne('User')
+    @OneToOne({ entity: () => User })
     author!: User
 
     isEmpty(): boolean {

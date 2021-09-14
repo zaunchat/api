@@ -1,18 +1,20 @@
+import { Property, Entity, wrap } from '@mikro-orm/core'
 import { nanoid } from 'nanoid'
+import { Base } from './Base'
 
-export interface CreateSessionOptions {
+export interface CreateSessionOptions extends Partial<Session> {
     name?: string
 }
 
-export class Session {
-    token!: string
-    name?: string
-    static from({ name }: CreateSessionOptions): Session {
-        const session = new Session()
-        
-        session.name = name
-        session.token = nanoid(64)
+@Entity({ tableName: 'sessions' })
+export class Session extends Base {
+    @Property()
+    token: string = nanoid(64)
 
-        return session
-    } 
+    @Property({ nullable: true })
+    name?: string
+
+    static from(options: CreateSessionOptions): Session {
+        return wrap(new Session().setID()).assign(options)
+    }
 }

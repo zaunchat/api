@@ -26,16 +26,16 @@ export const CreateMemberSchema = validator.compile({
 
 @Entity({ tableName: 'members' })
 export class Member extends Base {
-    @Property()
+    @Property({ nullable: true })
     nickname?: string
 
-    @Property({ onCreate: () => Date.now() })
-    joined_timestamp!: number
+    @Property()
+    joined_timestamp: number =  Date.now()
 
-    @ManyToMany()
+    @ManyToMany({ entity: () => Role })
     roles = new Collection<Role>(this)
 
-    @OneToOne('Server')
+    @OneToOne({ entity: () => Server })
     server!: Server
 
     static from(options: CreateMemberOptions): Member {

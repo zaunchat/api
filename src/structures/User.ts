@@ -66,25 +66,25 @@ export class User extends Base {
     email!: string
 
     @Property()
-    presence = Presence.from({})
+    presence: Presence = Presence.from({})
 
     @Property()
-    badges = 0
+    badges: number = 0
 
     @Property()
     relations = new Map<ID, RelationshipStatus>()
 
-    @ManyToMany({ lazy: true })
+    @ManyToMany({ entity: () => Server, lazy: true })
     servers = new Collection<Server>(this)
 
-    @Property()
+    @Property({ nullable: true })
     avatar?: string
 
-    @Property()
-    sessions: Session[] = []
+    @ManyToMany({ entity: () => Session })
+    sessions = new Collection<Session>(this)
 
-    @Property()
-    verified = false
+    @Property({ hidden: true })
+    verified: boolean = false
 
     static from(options: CreateUserOptions): User {
         return wrap(new User().setID()).assign(options)

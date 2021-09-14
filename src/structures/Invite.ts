@@ -11,16 +11,16 @@ export interface CreateInviteOptions extends Partial<Invite> {
 
 @Entity({ tableName: 'invites' })
 export class Invite {
-	@PrimaryKey({ onCreate: () => nanoid(8), unique: true })
-	code!: string
+	@PrimaryKey({ unique: true })
+	code: string = nanoid(8)
 
 	@Property()
-	uses = 0
+	uses: number = 0
 
-	@OneToOne('User')
+	@OneToOne({ entity: () => User })
 	inviter!: User
 
-	@OneToOne('Channel')
+	@OneToOne({ entity: () => Channel })
 	channel!: Channel
 
 	static from(options: CreateInviteOptions): Invite {

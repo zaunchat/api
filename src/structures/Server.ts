@@ -38,26 +38,26 @@ export class Server extends Base {
     @Property()
     name!: string
 
-    @Property()
+    @Property({ nullable: true })
     description?: string
 
-    @Property()
+    @Property({ nullable: true })
     icon?: string
 
-    @Property()
+    @Property({ nullable: true })
     banner?: string
 
-    @OneToOne('User')
+    @OneToOne({ entity: () => User })
     owner!: User
 
-    @ManyToMany()
+    @ManyToMany({ entity: () => Role })
     roles = new Collection<Role>(this)
 
-    @ManyToMany(() => Channel)
+    @ManyToMany({ entity: () => Channel })
     channels = new Collection<Channel>(this)
 
     @Property()
-    permissions = DEFAULT_PERMISSION_EVERYONE
+    permissions: number = DEFAULT_PERMISSION_EVERYONE
 
     static from(options: CreateServerOptions): Server {
         return wrap(new Server().setID()).assign(options)
