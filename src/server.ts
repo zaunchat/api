@@ -1,5 +1,5 @@
 import { App as Server } from '@tinyhttp/app'
-import { IncomingMessage as Request, ServerResponse as Response } from 'http'
+import { IncomingMessage as Request, ServerResponse as Response, STATUS_CODES } from 'http'
 import { register } from 'express-decorators'
 import { Getaway } from './getaway'
 import { CheckError } from './errors'
@@ -46,9 +46,13 @@ for (const Controller of Object.values(Controllers)) {
 
 
 Object.defineProperty(Response.prototype, 'ok', {
-    value: function () {
-        this.sendStatus(202)
-    }
+    value: function (status = 202) {
+        const res = this as Response
+        res.statusCode = status
+        res.setHeader('Content-Type', 'text/plain')
+        res.end(STATUS_CODES[status], 'utf8')
+    },
+    configurable: true
 })
 
 Object.defineProperty(Request.prototype, 'check', {
@@ -60,7 +64,8 @@ Object.defineProperty(Request.prototype, 'check', {
         }
 
         return true
-    }
+    },
+    configurable: true
 })
 
 export default server
