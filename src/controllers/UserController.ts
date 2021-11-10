@@ -8,11 +8,7 @@ import { HTTPError } from '../errors'
 export class UserController {
     @web.get('/:user_id')
     async fetchOne(req: Request, res: Response): Promise<void> {
-        const { user_id } = req.params
-
-        const user = await User.findOne({
-            _id: user_id === '@me' ? req.user._id : user_id
-        }, { public: true })
+        const user = await User.findOne({ _id: req.params.user_id }, { public: true })
 
         if (!user) {
             throw new HTTPError('UNKNOWN_USER')
