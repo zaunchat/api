@@ -3,7 +3,7 @@ import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { FilterQuery } from '@mikro-orm/core'
 import { HTTPError } from '../errors'
 import { CreateMessageSchema, Channel, Message } from '../structures'
-import { Permissions, Snowflake } from '../utils'
+import { is, Permissions } from '../utils'
 import config from '../../config'
 
 
@@ -95,7 +95,7 @@ export class MessageController {
             }
         }
 
-        if (Snowflake.is(around)) options._id = {
+        if (is.snowflake(around)) options._id = {
             $or: [{
                 $gte: around
             }, {
@@ -103,11 +103,11 @@ export class MessageController {
             }]
         }
 
-        if (Snowflake.is(after)) options._id = {
+        if (is.snowflake(after)) options._id = {
             $gt: after
         }
 
-        if (Snowflake.is(before)) options._id = {
+        if (is.snowflake(before)) options._id = {
             $lt: before
         }
 
