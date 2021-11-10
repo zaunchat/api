@@ -2,8 +2,12 @@ import { Request, Response, NextFunction } from '@tinyhttp/app'
 import { HTTPError } from '../errors'
 import config from '../../config'
 
-export const captcha = (requiredRoutes: string[]) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
-    if (config.captcha.enabled && requiredRoutes.some((p) => req.path.includes(p))) {
+interface CatpchaOptions {
+    required: `/${string}`[]
+}
+
+export const captcha = (options: CatpchaOptions) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+    if (config.captcha.enabled && options.required.some((p) => req.path.includes(p))) {
         if (!req.body.captcha_key) {
             throw new HTTPError('FAILED_CAPTCHA')
         }

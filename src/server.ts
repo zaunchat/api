@@ -35,8 +35,8 @@ for (const [route, opts] of Object.entries(config.routes)) {
 server
     .use(middlewares.validID())
     .use(middlewares.json({ parser: JSON.parse }))
-    .use(middlewares.captcha(['/auth/login', '/auth/register']))
-    .use(middlewares.auth(['/auth/verify', '/gateway']))
+    .use(middlewares.captcha({ required: ['/auth/login', '/auth/register'] }))
+    .use(middlewares.auth({ ignore: ['/auth/verify', '/gateway', '/test'] }))
     .use('/gateway', middlewares.ws(getaway.server))
 
 
@@ -51,8 +51,7 @@ Object.defineProperty(Response.prototype, 'ok', {
         res.statusCode = status
         res.setHeader('Content-Type', 'text/plain')
         res.end(STATUS_CODES[status], 'utf8')
-    },
-    configurable: true
+    }
 })
 
 Object.defineProperty(Request.prototype, 'check', {
@@ -64,8 +63,7 @@ Object.defineProperty(Request.prototype, 'check', {
         }
 
         return true
-    },
-    configurable: true
+    }
 })
 
 export default server
