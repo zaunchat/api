@@ -21,8 +21,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         populate: ['servers']
     }) : null
 
-
-    if (!user?.sessions.some(session => session.token === auth.token)) {
+    if (!user?.sessions?.getItems().some(session => session.token === auth.token)) {
         return socket.close(WSCloseCodes.AUTHENTICATED_FAILED)
     }
 
