@@ -2,10 +2,9 @@ import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { User, Session, CreateUserSchema, LoginUserSchema } from '../../structures'
 import { HTTPError } from '../../errors'
-import { mail } from '../../utils'
+import { is, mail } from '../../utils'
 import config from '../../../config'
 import argon2 from 'argon2'
-
 
 
 @web.basePath('/auth/accounts')
@@ -16,7 +15,7 @@ export class AccountController {
 
 		const { email, password } = req.body
 
-		if (!mail.isEmail(email)) {
+		if (!is.email(email)) {
 			throw new HTTPError('INVALID_EMAIL')
 		}
 
@@ -54,7 +53,7 @@ export class AccountController {
 
 		const { username, email, password } = req.body
 
-		if (!mail.isEmail(email)) {
+		if (!is.email(email)) {
 			throw new HTTPError('INVALID_EMAIL')
 		}
 

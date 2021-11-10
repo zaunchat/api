@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from '@tinyhttp/app'
 import { HTTPError } from '../errors'
-import { Snowflake } from '../utils'
+import { is } from '../utils'
 
 
 const keys = [
@@ -17,7 +17,7 @@ export const validID = () => async (req: Request, _res: Response, next: NextFunc
 
     if (req.params) {
         for (const key of keys.filter(k => k in req.params)) {
-            if (!Snowflake.is(req.params[key])) {
+            if (!is.snowflake(req.params[key])) {
                 throw new HTTPError('INVALID_ID')
             }
         }

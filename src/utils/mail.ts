@@ -1,7 +1,6 @@
 import { createTransport } from 'nodemailer'
 import { nanoid } from 'nanoid'
 import { User } from '../structures'
-import isEmail from 'validator/lib/isEmail'
 import config from '../../config'
 
 
@@ -22,10 +21,6 @@ class Mail {
 
 	get enabled(): boolean  {
 		return !!this.transport
-	}
-
-	isEmail(address: string): boolean {
-		return isEmail(address)
 	}
 
 	async send({ user, title }: CreateMailOptions): Promise<string> {
