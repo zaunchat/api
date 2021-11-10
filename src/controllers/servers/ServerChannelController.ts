@@ -9,7 +9,7 @@ import config from '../../../config'
 @web.basePath('/channels/:server_id')
 export class ServerChannelController {
 	@web.use()
-	async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
+	async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
 		const server = req.user.servers.getItems().find((s) => {
 			return s._id === req.params.server_id
 		})

@@ -10,7 +10,7 @@ import config from '../../config'
 @web.basePath('/channels/:channel_id/messages')
 export class MessageController {
     @web.use()
-    async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
+    async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
         const channel = await Channel.findOne({
             _id: req.params.channel_id
         })

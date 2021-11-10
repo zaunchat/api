@@ -7,7 +7,7 @@ import { Permissions } from '../../utils'
 @web.basePath('/servers/:server_id/invites')
 export class ServerInviteController {
 	@web.use()
-	async hasAccess(req: Request, _res: Response, next: NextFunction): Promise<void> {
+	async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
 		const server = req.user.servers.getItems().find((s) => {
 			return s._id === req.params.server_id
 		})
