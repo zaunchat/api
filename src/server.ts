@@ -34,7 +34,7 @@ for (const [route, opts] of Object.entries(config.routes)) {
 
 server
     .use(middlewares.validID())
-    .use(middlewares.json({ parser: JSON.parse }))
+    .use(middlewares.json({ parser: JSON.parse, limit: 102400 /* 100KB  */ }))
     .use(middlewares.captcha({ required: ['/auth/login', '/auth/register'] }))
     .use(middlewares.auth({ ignore: ['/auth/verify', '/gateway', '/test'] }))
     .use('/gateway', middlewares.ws(getaway.server))

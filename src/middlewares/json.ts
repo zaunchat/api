@@ -1,12 +1,15 @@
 import { Request, Response, NextFunction } from '@tinyhttp/app'
 
-const LIMIT = 102400 // 100KB
+interface JSONOptions {
+    parser: typeof JSON.parse,
+    limit: number
+}
 
-export const json = ({ parser }: { parser: typeof JSON.parse }) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+export const json = ({ parser, limit }: JSONOptions) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     if (req.method && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
         const length = Number(req.headers['content-length']) || 0
 
-        if (length > LIMIT) {
+        if (length > limit) {
             return next('Request entity too large')
         }
 
