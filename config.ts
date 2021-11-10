@@ -64,9 +64,9 @@ const config = {
 	},
 	endpoints: {
 		main: env.get('DOMAIN').default('https://itchat.com').asUrlString(),
-		app: env.get('APP_DOMAIN').default('https://itchat.com/app').asUrlString(),
-		api: env.get('API_DOMAIN').default('https://api.itchat.com').asUrlString(),
-		cdn: env.get('CDN_DOMAIN').default('https://cdn.itchat.com').asUrlString()
+		app: env.get('APP_DOMAIN').default('https://app.itchat.world').asUrlString(),
+		api: env.get('API_DOMAIN').default('https://api.itchat.world').asUrlString(),
+		cdn: env.get('CDN_DOMAIN').default('https://cdn.itchat.world').asUrlString()
 	}
 } as const
 
