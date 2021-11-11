@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from '@tinyhttp/app'
 import { RedisRateLimiter } from 'rolling-rate-limiter'
-import Redis from 'ioredis'
-import config from '../../config'
+import { createRedisConnection } from '../database/redis'
 
-const client = new Redis(config.database.redis)
+const client = createRedisConnection()
 
 interface RateLimitOptions {
   max: number
