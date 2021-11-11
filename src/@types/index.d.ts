@@ -8,11 +8,7 @@ declare module '@tinyhttp/app' {
         server: Server
         channel: Channel
         permissions: Permissions
-        check(fn: SyncCheckFunction | AsyncCheckFunction): boolean
-    }
-
-    interface Response {
-        ok(status?: number): void
+        check(fn: SyncCheckFunction | AsyncCheckFunction): void
     }
 }
 

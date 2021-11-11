@@ -53,15 +53,6 @@ const config = {
 			topic: 1000
 		}
 	},
-	routes: {
-		global: '20/5s',
-		'auth/login': '3/24h --ip',
-		'auth/register': '3/24h --ip',
-		'auth/verify': '2/24h --ip',
-		servers: '5/5s',
-		channels: '5/5s',
-		users: '5/5s'
-	},
 	endpoints: {
 		main: env.get('DOMAIN').default('https://itchat.com').asUrlString(),
 		app: env.get('APP_DOMAIN').default('https://app.itchat.world').asUrlString(),

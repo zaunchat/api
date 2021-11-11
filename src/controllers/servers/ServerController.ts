@@ -42,7 +42,7 @@ export class ServerController {
 
         await server.delete()
 
-        res.ok()
+        res.sendStatus(202)
     }
 
 

@@ -133,7 +133,7 @@ export class ChannelController {
 
         await group.save()
 
-        res.ok()
+        res.sendStatus(202)
     }
 
     @web.route('delete', '/:channel_id')
@@ -153,6 +153,6 @@ export class ChannelController {
 
         await channel.delete()
 
-        res.ok()
+        res.sendStatus(202)
     }
 }

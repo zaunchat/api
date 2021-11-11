@@ -97,6 +97,6 @@ export class ServerChannelController {
 
 		await channel.delete()
 
-		res.ok()
+		res.sendStatus(202)
 	}
 }

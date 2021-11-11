@@ -41,6 +41,6 @@ export class SessionController {
 
 		await req.user.save()
 
-		res.ok()
+		res.sendStatus(202)
 	}
 }

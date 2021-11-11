@@ -180,6 +180,6 @@ export class MessageController {
 
         await message.delete()
 
-        res.ok()
+        res.sendStatus(202)
     }
 }

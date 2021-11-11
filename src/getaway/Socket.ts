@@ -1,16 +1,15 @@
 import WebSocket from 'ws'
-import Redis from 'ioredis'
 import { Payload, WSCloseCodes, WSEvents } from './Constants'
 import { Getaway } from './Getaway'
 import { Permissions } from '../utils'
-import config from '../../config'
+import { createRedisConnection } from '../database/redis'
 
 export const DEFAULT_HEARTBEAT_TIME = 1000 * 42
 
 export class Socket {
     heartbeatTimeout?: NodeJS.Timeout
     user_id!: ID
-    subscriptions = new Redis(config.database.redis)
+    subscriptions = createRedisConnection()
     constructor(public ws: WebSocket, public getaway: Getaway) {
         this.setHeartbeat()
 
@@ -65,19 +64,11 @@ export class Socket {
         this.ws.close(code)
     }
 
-    async subscribe(topics: ID | ID[] | ID[][]): Promise<void> {
-        if (Array.isArray(topics)) {
-            await this.subscriptions.subscribe(...topics.flat(4))
-        } else {
-            await this.subscriptions.subscribe(topics)
-        }
+    async subscribe(...topics: ID[]): Promise<void> {
+        await this.subscriptions.subscribe(...topics)
     }
 
-    async unsubscribe(topics: ID | ID[] | ID[][]): Promise<void> {
-        if (Array.isArray(topics)) {
-            await this.subscriptions.unsubscribe(...topics.flat(4))
-        } else {
-            await this.subscriptions.unsubscribe(topics)
-        }
+    async unsubscribe(...topics: ID[]): Promise<void> {
+        await this.subscriptions.subscribe(...topics)
     }
 }

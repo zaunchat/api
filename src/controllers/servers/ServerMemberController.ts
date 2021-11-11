@@ -125,6 +125,6 @@ export class ServerMemberController {
 
 		await member.delete()
 
-		res.ok()
+		res.sendStatus(202)
 	}
 }

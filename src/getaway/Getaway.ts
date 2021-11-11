@@ -1,17 +1,17 @@
-import WebSocket from 'ws'
-import Redis from 'ioredis'
+import WebSocket, { Server as WebSocketServer, ServerOptions } from 'ws'
 import events from './events'
 import { Socket } from './Socket'
 import { WSCodes, WSCloseCodes, WSEvents, Payload } from './Constants'
 import { PresenceStatus, User } from '../structures'
-import config from '../../config'
+import { createRedisConnection } from '../database/redis'
+
 
 export class Getaway {
-    server: WebSocket.Server
-    redis = new Redis(config.database.redis)
+    redis = createRedisConnection()
+    server: WebSocketServer
     connections = new Map<ID, Socket>()
-    constructor(options: WebSocket.ServerOptions = { noServer: true, maxPayload: 4096 }) {
-        this.server = new WebSocket.Server(options)
+    constructor(options: ServerOptions = { noServer: true, maxPayload: 4096 }) {
+        this.server = new WebSocketServer(options)
         this.server.on('connection', this.onConnection.bind(this))
         this.server.on('error', this.onError.bind(this))
     }
@@ -20,16 +20,16 @@ export class Getaway {
         await this.redis.publish(channel, JSON.stringify({ event, data }))
     }
 
-    async subscribe(targetId: ID, ...topics: ID[]): Promise<void> {
-        await this.connections.get(targetId)?.subscribe(topics)
+    async subscribe(targetId: ID, topics: ID[]): Promise<void> {
+        await this.connections.get(targetId)?.subscribe(...topics)
     }
 
-    async unsubscribe(targetId: ID, ...topics: ID[]): Promise<void> {
-        await this.connections.get(targetId)?.unsubscribe(topics)
+    async unsubscribe(targetId: ID, topics: ID[]): Promise<void> {
+        await this.connections.get(targetId)?.unsubscribe(...topics)
     }
 
-    private async onConnection(_socket: WebSocket): Promise<void> {
-        const socket = new Socket(_socket, this)
+    private async onConnection(ws: WebSocket): Promise<void> {
+        const socket = new Socket(ws, this)
 
         try {
             socket.ws

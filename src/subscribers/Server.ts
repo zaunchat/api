@@ -1,10 +1,10 @@
 import { EventArgs, EventSubscriber, EntityName } from '@mikro-orm/core'
 import { Server as T } from '../structures'
-import { getaway } from '../server'
+import { getaway } from '../getaway'
 
 export class ServerSubscriber implements EventSubscriber<T> {
 	async afterCreate({ entity: server }: EventArgs<T>): Promise<void> {
-		await getaway.subscribe(server.owner._id, server._id)
+		await getaway.subscribe(server.owner._id, [server._id])
 		await getaway.publish(server._id, 'SERVER_CREATE', server)
 	}
 

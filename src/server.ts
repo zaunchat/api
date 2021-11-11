@@ -1,69 +1,65 @@
-import { App as Server } from '@tinyhttp/app'
-import { IncomingMessage as Request, ServerResponse as Response, STATUS_CODES } from 'http'
+import { App as HttpServer, extendMiddleware, Request, Response } from '@tinyhttp/app'
+import { getaway } from './getaway'
 import { register } from 'express-decorators'
-import { Getaway } from './getaway'
-import { CheckError } from './errors'
 import * as middlewares from './middlewares'
-import * as Controllers from './controllers'
-import config from '../config'
+import * as controllers from './controllers'
 import ms from 'ms'
 
-
-export const getaway = new Getaway()
-export const server = new Server({
-    onError: middlewares.error()
-}).use(middlewares.helmet())
-
-
-for (const [route, opts] of Object.entries(config.routes)) {
-    const [max, interval, onlyIP] = opts.split(/\/|--/).map(s => s.trim())
-
-    const options = {
-        max: Number(max),
-        interval: ms(interval),
-        onlyIP: Boolean(onlyIP)
-    }
-
-    if (route === 'global') {
-        server.use(middlewares.rateLimit(options, 'global'))
-    } else {
-        server.use(`/${route}`, middlewares.rateLimit(options, route))
-    }
+interface ServerOptions {
+    port: number
+    limits: Record<string, string>
+    extensions: (req: Request, res: Response) => void
 }
 
+class Server {
+    readonly http = new HttpServer({
+        onError: middlewares.error(),
+        applyExtensions: (req, res, next) => {
+            extendMiddleware(this.http)(req, res, next)
+            this.options.extensions(req, res)
+        }
+    })
 
-server
-    .use(middlewares.validID())
-    .use(middlewares.json({ parser: JSON.parse, limit: 102400 /* 100KB  */ }))
-    .use(middlewares.captcha({ required: ['/auth/login', '/auth/register'] }))
-    .use(middlewares.auth({ ignore: ['/auth/verify', '/gateway', '/test'] }))
-    .use('/gateway', middlewares.ws(getaway.server))
+    constructor(public readonly options: ServerOptions) { }
 
+    async init() {
+        this.http.use(middlewares.helmet())
 
-for (const Controller of Object.values(Controllers)) {
-    register(server, new Controller())
-}
+        // Setup rate limiter
+        for (const [route, opts] of Object.entries(this.options.limits)) {
+            const [max, interval, onlyIP] = opts.split(/\/|--/).map(s => s.trim())
 
+            const options = {
+                max: Number(max),
+                interval: ms(interval),
+                onlyIP: Boolean(onlyIP)
+            }
 
-Object.defineProperty(Response.prototype, 'ok', {
-    value: function (status = 202) {
-        const res = this as Response
-        res.statusCode = status
-        res.setHeader('Content-Type', 'text/plain')
-        res.end(STATUS_CODES[status], 'utf8')
-    }
-})
-
-Object.defineProperty(Request.prototype, 'check', {
-    value: function (check: (x: unknown) => boolean) {
-        const valid = check(this.body)
-
-        if (valid !== true) {
-            throw new CheckError(valid)
+            if (route === 'global') {
+                this.http.use(middlewares.rateLimit(options, 'global'))
+            } else {
+                this.http.use(`/${route}`, middlewares.rateLimit(options, route))
+            }
         }
 
-        return true
-    }
-})
+        // Register Controllers
+        for (const Controller of Object.values(controllers)) {
+            register(this.http, new Controller())
+        }
 
-export default server
+        // Add other middlewares
+        this.http
+            .use(middlewares.validID())
+            .use(middlewares.json({ parser: JSON.parse, limit: 102400 /* 100KB */ }))
+            .use(middlewares.captcha({ required: ['/auth/login', '/auth/register'] }))
+            .use(middlewares.auth({ ignore: ['/auth/verify', '/gateway', '/test'] }))
+            .use('/gateway', middlewares.ws(getaway.server))
+    }
+
+    async listen(): Promise<void> {
+        return new Promise((resolve) => this.http.listen(this.options.port, resolve))
+    }
+}
+
+
+export default Server

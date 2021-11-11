@@ -3,7 +3,7 @@ import Redis from 'ioredis'
 import config from '../../config'
 
 export class RedisCacheAdapter implements CacheAdapter {
-	db = new Redis(config.database.redis)
+	db = createRedisConnection()
 
 	async set(key: string, value: unknown, _origin: string, expiration?: number): Promise<void> {
 		const data = JSON.stringify(value)
@@ -22,4 +22,9 @@ export class RedisCacheAdapter implements CacheAdapter {
 	async clear(): Promise<void> {
 		await this.db.flushdb()
 	}
+}
+
+
+export const createRedisConnection = () => {
+	return new Redis(config.database.redis)
 }

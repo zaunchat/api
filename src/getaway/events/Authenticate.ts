@@ -77,12 +77,12 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
     })
 
 
-    await socket.subscribe([
+    await socket.subscribe(...[
         [user._id],
         [...user.relations.keys()],
         serverIDs,
         channels.map(c => c._id)
-    ])
+    ].flat(4))
 
     if (!user.presence.ghost_mode) await user.save({
         presence: {

@@ -1,38 +1,45 @@
-import { cpus } from 'os'
-import cluster from 'cluster'
-import config from '../config'
-import server from './server'
+import Server from './server'
 import db from './database'
+import config from '../config'
+import * as extensions from './extensions'
 
-
-if (cluster.isPrimary) {
-	const totalCPUs = cpus().length
-
-	for (let i = 0; i < totalCPUs; i++) {
-		cluster.fork()
+export const server = new Server({
+	port: config.port,
+	limits: {
+		global: '20/5s',
+		'auth/login': '3/24h --ip',
+		'auth/register': '3/24h --ip',
+		'auth/verify': '2/24h --ip',
+		servers: '5/5s',
+		channels: '5/5s',
+		users: '5/5s'
+	},
+	extensions: (req, res) => {
+		extensions.check(req, res)
 	}
+});
 
-	cluster.on('exit', (worker) => {
-		console.log(`worker ${worker.process.pid} died`)
-		cluster.fork()
-	})
-} else {
-	(async () => {
-		console.log('Connecting to database...')
+(async () => {
+	console.log('Initialling the server...')
 
-		await db.connect()
+	await server.init()
 
-		console.log('Connected to Database')
+	console.log('Connecting to database...')
 
-		server.listen(config.port, () => console.log(`Server running on port: ${config.port}`))
-	})().catch(err => {
-		console.error(err)
-		process.exit(-1)
-	})
-}
+	await db.connect()
 
+	console.log('Connected to Database')
+
+	await server.listen()
+
+	console.log(`Server running on port: ${config.port}`)
+})().catch(err => {
+	console.error('Failed to init the server...', err)
+	console.error('Exiting..')
+	process.exit(-1)
+})
 
 
 process
-	.on('unhandledRejection', err => err && console.error(err))
+	.on('unhandledRejection', err => console.error(err))
 	.on('uncaughtException', console.error)

@@ -1,6 +1,6 @@
 import { EventArgs, EventSubscriber, EntityName } from '@mikro-orm/core'
 import { User as T } from '../structures'
-import { getaway } from '../server'
+import { getaway } from '../getaway'
 
 export class UserSubscriber implements EventSubscriber<T> {
 	async afterUpdate({ entity: user }: EventArgs<T>): Promise<void> {

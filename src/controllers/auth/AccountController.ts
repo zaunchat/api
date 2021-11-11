@@ -2,7 +2,7 @@ import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { User, Session, CreateUserSchema, LoginUserSchema } from '../../structures'
 import { HTTPError } from '../../errors'
-import { is, mail } from '../../utils'
+import { is, email } from '../../utils'
 import config from '../../../config'
 import argon2 from 'argon2'
 
@@ -51,9 +51,9 @@ export class AccountController {
 	async register(req: Request, res: Response): Promise<void> {
 		req.check(CreateUserSchema)
 
-		const { username, email, password } = req.body
+		const { username, password } = req.body
 
-		if (!is.email(email)) {
+		if (!is.email(req.body.email)) {
 			throw new HTTPError('INVALID_EMAIL')
 		}
 
@@ -73,33 +73,32 @@ export class AccountController {
 
 		const user = await User.from({
 			username,
-			email,
+			email: req.body.email,
 			password: await argon2.hash(password)
-		}).save({ verified: !mail.enabled })
+		}).save({ verified: !email.enabled })
 
-		if (!mail.enabled) {
+		if (!email.enabled) {
 			return void res.redirect(`https://${config.endpoints.main}/auth/login`)
 		}
 
 		try {
-			res.json({
-				url: await mail.send({ title: 'Verify your Itchat account.‏‏', user })
-			})
+			await email.send(user)
+			res.json({ message: 'Check your email' })
 		} catch (err) {
 			await User.remove(user)
 			throw err
 		}
 	}
 
-	@web.get('/verify/:user_id/:token')
+	@web.get('/verify/:user_id/:code')
 	async verify(req: Request, res: Response): Promise<void> {
-		const { user_id, token } = req.params as { user_id: ID; token: string }
+		const { user_id, code } = req.params as { user_id: ID; code: string }
 
-		if (!mail.valid(user_id, token)) {
+		const verified = await email.verify(user_id, code)
+
+		if (!verified) {
 			throw new HTTPError('UNKNOWN_TOKEN')
 		}
-
-		mail.queue.delete(user_id)
 
 		const user = await User.findOne({ _id: user_id })
 
