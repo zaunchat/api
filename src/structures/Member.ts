@@ -4,7 +4,7 @@ import db from '../database'
 import config from '../config'
 
 export interface CreateMemberOptions extends Partial<Member> {
-    _id: ID
+    id: ID
     server: Server
 }
 

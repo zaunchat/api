@@ -1,20 +1,25 @@
 
+import { Base } from './Base'
 import { nanoid } from 'nanoid'
-import { User, Channel } from '.'
 import db from '../database'
 
 
 export interface CreateInviteOptions extends Partial<Invite> {
-	inviter: User
-	channel: Channel
+	inviter_id: ID
+	channel_id: ID
 }
 
 
-export class Invite {
+export class Invite extends Base {
 	code = nanoid(8)
 	uses = 0
 	inviter_id!: ID
 	channel_id!: ID
+
+	static from(opts: CreateInviteOptions): Invite {
+        return Object.assign(opts, new Invite())
+    }
+
 	static toSQL(): string {
 		return `CREATE TABLE invites IF NOT EXISTS (
 			id BIGINT NOT NULL,

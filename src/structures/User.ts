@@ -43,7 +43,7 @@ export const LoginUserSchema = validator.compile({
 
 export const LogoutUserSchema = validator.compile({
     token: { type: 'string' },
-    user_id: { type: 'string' }
+    userid: { type: 'string' }
 })
 
 export const PUBLIC_USER_ITEMS: (keyof User)[] = [
@@ -62,7 +62,11 @@ export class User extends Base {
     badges = 0
     avatar?: string
     verified = false
-    
+
+    static from(opts: CreateUserOptions): User {
+        return Object.assign(opts, new User())
+    }
+
     static toSQL() {
         return `CREATE TABLE users IF NOT EXISTS (
             id BIGINT NOT NULL DEFAULT id_generator(),

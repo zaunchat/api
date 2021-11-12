@@ -1,11 +1,11 @@
-import { Base, User, Channel } from '.'
+import { Base } from './Base'
 import { validator } from '../utils'
 import db from '../database'
 import config from '../config'
 
 export interface CreateMessageOptions extends Partial<Message> {
-    author: User
-    channel: Channel
+    author_id: ID
+    channel_id: ID
 }
 
 export const CreateMessageSchema = validator.compile({
@@ -18,19 +18,39 @@ export const CreateMessageSchema = validator.compile({
 })
 
 
+export interface Embed {
+    title: string
+    description: string
+    footer: string
+}
+
+export interface Attachment {
+    name: string
+    id: string
+}
+
+export interface Reply {
+    id: ID
+    mention: boolean
+}
+
 export class Message extends Base {
     created_at = Date.now()
     edited_at?: number
-    embeds: unknown[] = []
-    attachments: unknown[] = []
+    embeds: Embed[] = []
+    attachments: Attachment[] = []
     content?: string    
     mentions: ID[] = []
-    replies: { id: ID, mention: boolean }[] = []
+    replies: Reply[] = []
     channel_id!: ID    
     author_id!: ID
 
     isEmpty(): boolean {
         return !this.content?.length && !this.attachments.length
+    }
+
+    static from(opts: CreateMessageOptions): Message {
+        return Object.assign(opts, new Message())
     }
 
     static toSQL(): string {

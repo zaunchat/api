@@ -1,11 +1,11 @@
-import { Base, Role, User, Channel } from '.'
+import { Base, Role, User } from '.'
 import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
 import db from '../database'
 import config from '../config'
 
 export interface CreateServerOptions extends Partial<Server> {
     name: string
-    owner: User
+    owner_id: ID
 }
 
 export const CreateServerSchema = validator.compile({
@@ -42,4 +42,8 @@ export class Server extends Base {
     // roles = new Collection<Role>(this)
     // channels = new Collection<Channel>(this)
     permissions = DEFAULT_PERMISSION_EVERYONE
+
+    static from(opts: CreateServerOptions): Server {
+        return Object.assign(opts, new Server())
+    }
 }

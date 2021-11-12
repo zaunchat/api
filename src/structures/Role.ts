@@ -1,11 +1,11 @@
-import { Base, Server } from '.'
+import { Base } from './Base'
 import { validator } from '../utils'
 import db from '../database'
 
 
 export interface CreateRoleOptions extends Partial<Role> {
     name: string
-    server: Server
+    server_id: ID
 }
 
 export const CreateRoleSchema = validator.compile({
@@ -35,9 +35,14 @@ export class Role extends Base {
     color?: number
     hoist = false
     server_id!: ID
+
+    static from(opts: CreateRoleOptions): Role {
+        return Object.assign(opts, new Role())
+    }
     
     static toSQL(): string {
         return `CREATE TABLE roles IF NOT EXISTS (
+            id BIGINT NOT NULL,
             name VARCHAR(32) NOT NULL,
             permissions BIGINT NOT NULL DEFAULT 0,
             hoist BOOLEAN NOT NULL DEFAULT FALSE,
