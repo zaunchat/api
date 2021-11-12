@@ -1,6 +1,5 @@
 import Server from './server'
-import db from './database'
-import config from '../config'
+import config from './config'
 import * as extensions from './extensions'
 
 export const server = new Server({
@@ -23,12 +22,6 @@ export const server = new Server({
 	console.log('Initialling the server...')
 
 	await server.init()
-
-	console.log('Connecting to database...')
-
-	await db.connect()
-
-	console.log('Connected to Database')
 
 	await server.listen()
 

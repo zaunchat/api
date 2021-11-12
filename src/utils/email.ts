@@ -1,7 +1,7 @@
 import { createTransport } from 'nodemailer'
 import { nanoid } from 'nanoid'
 import { User } from '../structures'
-import config from '../../config'
+import config from '../config'
 import { createRedisConnection } from '../database/redis'
 
 const THREE_HOURS = 10_800_000

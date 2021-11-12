@@ -1,6 +1,6 @@
-import { CacheAdapter } from '@mikro-orm/core'
+
 import Redis from 'ioredis'
-import config from '../../config'
+import config from '../config'
 
 export class RedisCacheAdapter implements CacheAdapter {
 	db = createRedisConnection()

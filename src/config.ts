@@ -4,9 +4,7 @@ import env from 'env-var'
 const config = {
 	port: env.get('PORT').default(8080).asPortNumber(),
 	database: {
-		name: env.get('DATABASE_NAME').asString(),
 		uri: env.get('DATABASE_URI').required().asUrlString(),
-		type: env.get('DATABASE_TYPE').default('mongo').asString(), // mongo | mysql | mariadb | postgresql | sqlite
 		redis: env.get('REDIS_URI').asString()
 	},
 	smtp: {
@@ -14,7 +12,7 @@ const config = {
 		uri: env.get('SMTP_URI').required().asUrlString()
 	},
 	captcha: {
-		enabled: env.get('CATPCHA_ENABLED').default('true').asBool(),
+		enabled: env.get('CAPTCHA_ENABLED').default('true').asBool(),
 		key: env.get('CAPTCHA_KEY').asString(),
 		token: env.get('CAPTCHA_TOKEN').asString()
 	},

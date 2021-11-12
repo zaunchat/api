@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from '@tinyhttp/app'
 import { HTTPError } from '../errors'
-import config from '../../config'
+import config from '../config'
 
 interface CaptchaOptions {
     required: `/${string}`[]
