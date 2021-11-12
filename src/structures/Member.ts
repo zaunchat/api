@@ -1,11 +1,11 @@
 import { Base, Role, Server } from '.'
 import { validator } from '../utils'
-import db from '../database'
+import sql from '../database'
 import config from '../config'
 
 export interface CreateMemberOptions extends Partial<Member> {
     id: ID
-    server: Server
+    server_id: ID
 }
 
 export const CreateMemberSchema = validator.compile({
@@ -27,7 +27,7 @@ export const CreateMemberSchema = validator.compile({
 export class Member extends Base {
     nickname?: string
     joined_timestamp = Date.now()
-    server_id!: Server
+    server_id!: ID
     static toSQL(): string {
         return `CREATE TABLE members IF NOT EXISTS (
             id BIGINT NOT NULL,

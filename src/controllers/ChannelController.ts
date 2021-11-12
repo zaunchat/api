@@ -3,22 +3,22 @@ import { Response, Request } from '@tinyhttp/app'
 import { Channel, ChannelTypes, CreateGroupSchema, User } from '../structures'
 import { HTTPError } from '../errors'
 import { Permissions } from '../utils'
-import config from '../../config'
+import config from '../config'
 
 
 @web.basePath('/channels/@me')
 export class ChannelController {
     @web.get('/')
     async fetchMany(req: Request, res: Response): Promise<void> {
-        const channels = await Channel.find({ recipients: req.user._id })
+        const channels = await Channel.find({ recipients: req.user.id })
         res.json(channels)
     }
 
     @web.get('/:channel_id')
     async fetchOne(req: Request, res: Response): Promise<void> {
         const channel = await Channel.findOne({
-            _id: req.params.channel_id,
-            recipients: req.user._id
+            id: req.params.channel_id,
+            recipients: req.user.id
         })
 
         if (!channel) {
@@ -34,7 +34,7 @@ export class ChannelController {
 
         const groupCount = await Channel.count({
             type: ChannelTypes.GROUP,
-            recipients: req.user._id
+            recipients: req.user.id
         })
 
         if (groupCount >= config.limits.user.groups) {
@@ -61,11 +61,11 @@ export class ChannelController {
         const [group, target] = await Promise.all([
             Channel.findOne({
                 type: ChannelTypes.GROUP,
-                _id: req.params.group_id,
-                recipients: req.user._id
+                id: req.params.group_id,
+                recipients: req.user.id
             }),
             User.findOne({
-                _id: user_id
+                id: user_id
             })
         ])
 
@@ -99,11 +99,11 @@ export class ChannelController {
         const [group, target] = await Promise.all([
             Channel.findOne({
                 type: ChannelTypes.GROUP,
-                _id: group_id,
-                recipients: req.user._id
+                id: group_id,
+                recipients: req.user.id
             }),
             User.findOne({
-                _id: user_id
+                id: user_id
             })
         ])
 
@@ -115,7 +115,7 @@ export class ChannelController {
             throw new HTTPError('UNKNOWN_USER')
         }
 
-        if (req.user._id === group.owner._id && req.user._id === target._id) {
+        if (req.user.id === group.owner.id && req.user.id === target.id) {
             throw new HTTPError('MISSING_ACCESS')
         }
 
@@ -139,15 +139,15 @@ export class ChannelController {
     @web.route('delete', '/:channel_id')
     async delete(req: Request, res: Response): Promise<void> {
         const channel = await Channel.findOne({
-            _id: req.params.channel_id,
-            recipients: req.user._id
+            id: req.params.channel_id,
+            recipients: req.user.id
         })
 
         if (!channel) {
             throw new HTTPError('UNKNOWN_CHANNEL')
         }
 
-        if (channel.type === ChannelTypes.GROUP && channel.owner._id !== req.user._id) {
+        if (channel.type === ChannelTypes.GROUP && channel.owner.id !== req.user.id) {
             throw new HTTPError('MISSING_ACCESS')
         }
 

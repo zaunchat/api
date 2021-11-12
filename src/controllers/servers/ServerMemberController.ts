@@ -10,7 +10,7 @@ export class ServerMemberController {
 	@web.use()
 	async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
 		const server = req.user.servers.getItems().find((s) => {
-			return s._id === req.params.server_id
+			return s.id === req.params.server_id
 		})
 
 		if (!server) {
@@ -30,7 +30,7 @@ export class ServerMemberController {
 
 		const members = await Member.find({
 			server: {
-				_id: req.params.server_id
+				id: req.params.server_id
 			}
 		}, { limit })
 
@@ -40,9 +40,9 @@ export class ServerMemberController {
 	@web.get('/:member_id')
 	async fetchOne(req: Request, res: Response): Promise<void> {
 		const member = await Member.findOne({
-			_id: req.params.member_id,
+			id: req.params.member_id,
 			server: {
-				_id: req.params.server_id
+				id: req.params.server_id
 			}
 		})
 
@@ -59,9 +59,9 @@ export class ServerMemberController {
 
 		const { server_id, member_id } = req.params as Record<string, ID>
 		const member = await Member.findOne({
-			_id: member_id,
+			id: member_id,
 			server: {
-				_id: server_id
+				id: server_id
 			}
 		})
 
@@ -74,7 +74,7 @@ export class ServerMemberController {
 
 
 		if ('nickname' in req.body) {
-			if (req.user._id === member._id) {
+			if (req.user.id === member.id) {
 				if (!permissions.has(Permissions.FLAGS.CHANGE_NICKNAME)) throw new HTTPError('MISSING_PERMISSIONS')
 			} else {
 				if (!permissions.has(Permissions.FLAGS.MANAGE_NICKNAMES)) throw new HTTPError('MISSING_PERMISSIONS')
@@ -90,7 +90,7 @@ export class ServerMemberController {
 			member.roles.removeAll()
 
 			for (const role_id of req.body.roles) {
-				const role = roles.find(r => r._id === role_id)
+				const role = roles.find(r => r.id === role_id)
 				if (!role) throw new HTTPError('UNKNOWN_ROLE')
 				member.roles.add(role)
 			}
@@ -105,7 +105,7 @@ export class ServerMemberController {
 	async kick(req: Request, res: Response): Promise<void> {
 		const { server_id, member_id } = req.params as Record<string, ID>
 
-		if (member_id !== req.user._id) {
+		if (member_id !== req.user.id) {
 			const permissions = await Permissions.fetch(req.user, server_id)
 			if (!permissions.has(Permissions.FLAGS.KICK_MEMBERS)) {
 				throw new HTTPError('MISSING_PERMISSIONS')
@@ -113,9 +113,9 @@ export class ServerMemberController {
 		}
 
 		const member = await Member.findOne({
-			_id: member_id,
+			id: member_id,
 			server: {
-				_id: server_id
+				id: server_id
 			}
 		})
 

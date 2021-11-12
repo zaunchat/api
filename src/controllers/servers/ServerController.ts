@@ -2,7 +2,7 @@ import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { Server, Channel, CreateServerSchema, Member, ChannelTypes } from '../../structures'
 import { HTTPError } from '../../errors'
-import config from '../../../config'
+import config from '../../config'
 import db from '../../database'
 
 
@@ -16,7 +16,7 @@ export class ServerController {
     @web.get('/:server_id')
     async fetchOne(req: Request, res: Response): Promise<void> {
         const server = req.user.servers.getItems().find((s) => {
-            return s._id === req.params.server_id
+            return s.id === req.params.server_id
         })
 
         if (!server) {
@@ -29,14 +29,14 @@ export class ServerController {
     @web.route('delete', '/:server_id')
     async delete(req: Request, res: Response): Promise<void> {
         const server = req.user.servers.getItems().find((s) => {
-            return s._id === req.params.server_id
+            return s.id === req.params.server_id
         })
 
         if (!server) {
             throw new HTTPError('UNKNOWN_SERVER')
         }
 
-        if (req.user._id !== server.owner._id) {
+        if (req.user.id !== server.owner.id) {
             throw new HTTPError('MISSING_ACCESS')
         }
 
@@ -69,11 +69,11 @@ export class ServerController {
             type: ChannelTypes.CATEGORY,
             name: 'General',
             server,
-            channels: [chat._id]
+            channels: [chat.id]
         })
 
         const member = Member.from({
-            _id: req.user._id,
+            id: req.user.id,
             server
         })
 

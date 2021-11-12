@@ -1,6 +1,6 @@
 import { Base } from './Base'
 import { validator } from '../utils'
-import db from '../database'
+import sql from '../database'
 import config from '../config'
 
 export interface CreateMessageOptions extends Partial<Message> {

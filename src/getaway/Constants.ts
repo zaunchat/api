@@ -7,8 +7,8 @@ export interface Payload {
 }
 
 export type WithID<T = unknown, Partially extends boolean = true> = Partially extends true
-    ? Partial<T> & { _id: ID }
-    : T & { _id: ID }
+    ? Partial<T> & { id: ID }
+    : T & { id: ID }
 
 
 export interface WSEvents {
@@ -32,7 +32,7 @@ export interface WSEvents {
     SERVER_UPDATE: WithID<Server>
 
     MEMBER_JOIN_SERVER: Member
-    MEMBER_LEAVE_SERVER: WithID<{ server_id: ID }>
+    MEMBER_LEAVE_SERVER: WithID<{ serverid: ID }>
     MEMBER_UPDATE: WithID<Member>
 
     USER_UPDATE: WithID<User>

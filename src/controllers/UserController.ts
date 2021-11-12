@@ -8,7 +8,7 @@ import { HTTPError } from '../errors'
 export class UserController {
     @web.get('/:user_id')
     async fetchOne(req: Request, res: Response): Promise<void> {
-        const user = await User.findOne({ _id: req.params.user_id }, { public: true })
+        const user = await User.findOne({ id: req.params.user_id }, { public: true })
 
         if (!user) {
             throw new HTTPError('UNKNOWN_USER')
@@ -20,7 +20,7 @@ export class UserController {
     @web.get('/@me/relationships')
     async fetchRelationships(req: Request, res: Response): Promise<void> {
         const relationships = await User.find({
-            _id: {
+            id: {
                 $in: Array.from(req.user.relations.keys())
             }
         }, {
@@ -35,7 +35,7 @@ export class UserController {
         const { user_id } = req.params as Record<string, ID>
 
         const target = await User.findOne({
-            _id: user_id
+            id: user_id
         })
 
         if (!target) {
@@ -67,29 +67,29 @@ export class UserController {
     async friend(req: Request, res: Response): Promise<void> {
         const { user_id } = req.params
 
-        if (user_id === req.user._id || user_id === '@me') {
+        if (user_id === req.user.id || user_id === '@me') {
             throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
-            _id: user_id
+            id: user_id
         }), user = req.user
 
         if (!target) {
             throw new HTTPError('UNKNOWN_USER')
         }
 
-        const panding = target.relations.get(user._id) === RelationshipStatus.IN_COMING && user.relations.get(target._id) === RelationshipStatus.OUTGOING
+        const panding = target.relations.get(user.id) === RelationshipStatus.IN_COMING && user.relations.get(target.id) === RelationshipStatus.OUTGOING
         let status: RelationshipStatus
 
         if (panding) {
             status = RelationshipStatus.FRIEND
-            target.relations.set(req.user._id, RelationshipStatus.FRIEND)
-            user.relations.set(target._id, RelationshipStatus.FRIEND)
+            target.relations.set(req.user.id, RelationshipStatus.FRIEND)
+            user.relations.set(target.id, RelationshipStatus.FRIEND)
         } else {
             status = RelationshipStatus.IN_COMING
-            target.relations.set(req.user._id, RelationshipStatus.OUTGOING)
-            user.relations.set(target._id, RelationshipStatus.IN_COMING)
+            target.relations.set(req.user.id, RelationshipStatus.OUTGOING)
+            user.relations.set(target.id, RelationshipStatus.IN_COMING)
         }
 
         await Promise.all([target.save(), user.save()])
@@ -101,24 +101,24 @@ export class UserController {
     async unfriend(req: Request, res: Response): Promise<void> {
         const { user_id } = req.params
 
-        if (user_id === req.user._id || user_id === '@me') {
+        if (user_id === req.user.id || user_id === '@me') {
             throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
-            _id: user_id
+            id: user_id
         })
 
         if (!target) {
             throw new HTTPError('UNKNOWN_USER')
         }
 
-        if (!req.user.relations.has(target._id)) {
+        if (!req.user.relations.has(target.id)) {
             return void res.json({ status: null })
         }
 
-        req.user.relations.delete(target._id)
-        target.relations.delete(req.user._id)
+        req.user.relations.delete(target.id)
+        target.relations.delete(req.user.id)
 
         await Promise.all([
             target.save(),
@@ -132,19 +132,19 @@ export class UserController {
     async block(req: Request, res: Response): Promise<void> {
         const { user_id } = req.params
 
-        if (user_id === req.user._id || user_id === '@me') {
+        if (user_id === req.user.id || user_id === '@me') {
             throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
-            _id: user_id
+            id: user_id
         })
 
         if (!target) {
             throw new HTTPError('UNKNOWN_USER')
         }
 
-        const alreadyBlocked = req.user.relations.get(target._id) === RelationshipStatus.BLOCKED
+        const alreadyBlocked = req.user.relations.get(target.id) === RelationshipStatus.BLOCKED
 
         if (alreadyBlocked) {
             return void res.json({ status: RelationshipStatus.BLOCKED })
@@ -152,10 +152,10 @@ export class UserController {
 
         await Promise.all([
             req.user.save({
-                relations: req.user.relations.set(target._id, RelationshipStatus.BLOCKED)
+                relations: req.user.relations.set(target.id, RelationshipStatus.BLOCKED)
             }),
             target.save({
-                relations: target.relations.set(req.user._id, RelationshipStatus.BLOCKED_OTHER)
+                relations: target.relations.set(req.user.id, RelationshipStatus.BLOCKED_OTHER)
             })
         ])
 
@@ -166,19 +166,19 @@ export class UserController {
     async unblock(req: Request, res: Response): Promise<void> {
         const { user_id } = req.params
 
-        if (user_id === req.user._id || user_id === '@me') {
+        if (user_id === req.user.id || user_id === '@me') {
             throw new HTTPError('MISSING_ACCESS')
         }
 
         const target = await User.findOne({
-            _id: user_id
+            id: user_id
         })
 
         if (!target) {
             throw new HTTPError('UNKNOWN_USER')
         }
 
-        req.user.relations.delete(target._id)
+        req.user.relations.delete(target.id)
 
         await req.user.save()
 

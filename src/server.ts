@@ -31,7 +31,7 @@ class Server {
 
             const options = {
                 max: Number(max),
-                interval: ms(interval),
+                interval: ms(interval as '1s'),
                 onlyIP: Boolean(onlyIP)
             }
 
@@ -56,7 +56,7 @@ class Server {
             .use('/gateway', middlewares.ws(getaway.server))
     }
 
-    async listen(): Promise<void> {
+    listen(): Promise<void> {
         return new Promise((resolve) => this.http.listen(this.options.port, resolve))
     }
 }

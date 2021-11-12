@@ -36,7 +36,7 @@ export class InviteController {
 		}
 
 		await Member.from({
-			_id: req.user._id,
+			id: req.user.id,
 			server
 		}).save()
 

@@ -1,6 +1,6 @@
-import { Base, Presence, Session, Server } from '.'
+import { Base, Session, Server } from '.'
 import { validator } from '../utils'
-import db from '../database'
+import sql from '../database'
 import config from '../config'
 
 export enum RelationshipStatus {
@@ -46,22 +46,43 @@ export const LogoutUserSchema = validator.compile({
     userid: { type: 'string' }
 })
 
-export const PUBLIC_USER_ITEMS: (keyof User)[] = [
-    'id',
-    'username',
-    'avatar',
-    'badges'
-]
+export interface Presence {
+    text?: string
+    status: PresenceStatus
+}
+
+export enum PresenceStatus {
+	ONLINE,
+	OFFLINE,
+	IDLE,
+	DND
+}
 
 
 export class User extends Base {
     username!: string
     password!: string
     email!: string
-    presence = Presence.from({})
+    presence = { status: PresenceStatus.OFFLINE } as Presence
     badges = 0
     avatar?: string
-    verified = false
+    async fetchServers(): Promise<Server[]> {
+        sql`SELECT * FROM SERVERS `
+        return []
+    }
+
+    async fetchSessions(): Promise<Session[]> {
+        return []
+    }
+
+    async fetchRelations(): Promise<unknown[]> {
+        return []
+    }
+
+    static async fetchOne(id: ID): Promise<User> {
+       const res = await sql<User[]>`SELECT * FROM users WHERE id = ${id}`
+       return res[0]
+    }
 
     static from(opts: CreateUserOptions): User {
         return Object.assign(opts, new User())
@@ -69,15 +90,13 @@ export class User extends Base {
 
     static toSQL() {
         return `CREATE TABLE users IF NOT EXISTS (
-            id BIGINT NOT NULL DEFAULT id_generator(),
+            id BIGINT NOT NULL,
             username VARCHAR(${config.limits.user.username}) NOT NULL,
             password VARCHAR(32) NOT NULL,
             email VARCHAR(255) NOT NULL,
-            relations,
-            servers,
-            avatar VARCHAR(32),
+            avatar VARCHAR(64),
             badges INTEGER DEFAULT 0,
-            sessions,
+            presence JSON NOT NULL,
             verified BOOLEAN DEFAULT FALSE
         )`
     }

@@ -12,7 +12,7 @@ export const APIErrors = {
     EMPTY_MESSAGE: [400, 'Cannot send an empty message'],
     TOO_MANY_ATTACHMENTS: [400],
     TOO_MANY_REPLIES: [400],
-    INVALID_ID: [400, 'Invalid ID'],
+    INVALIDid: [400, 'Invalid ID'],
 
     // Unknown - 404
     UNKNOWN_ACCOUNT: [404, 'Unknown account'],

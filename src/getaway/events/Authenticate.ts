@@ -9,12 +9,12 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
     }
 
     const auth = (data.data ?? {}) as {
-        user_id: string,
+        userid: string,
         token: string
     }
 
     const user = auth.user_id && auth.token ? await User.findOne({
-        _id: auth.user_id,
+        id: auth.user_id,
         verified: true
     }, {
         fields: ['_id', 'avatar', 'username', 'badges', 'email', 'relations', 'servers', 'sessions'],
@@ -25,32 +25,32 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
         return socket.close(WSCloseCodes.AUTHENTICATED_FAILED)
     }
 
-    socket.user_id = user._id
-    socket.getaway.connections.set(user._id, socket)
+    socket.user_id = user.id
+    socket.getaway.connections.set(user.id, socket)
 
     await socket.send({ code: WSCodes.AUTHENTICATED })
 
     const servers = user.servers.getItems()
-    const serverIDs = servers.map(s => s._id)
+    const serverIDs = servers.map(s => s.id)
 
     const [
         users,
         channels
     ] = await Promise.all([
         User.find({
-            _id: {
+            id: {
                 $in: Array.from(user.relations.keys())
             }
         }, { public: true }),
         Channel.find({
             $or: [{
                 type: ChannelTypes.DM,
-                recipients: user._id
+                recipients: user.id
             }, {
                 type: ChannelTypes.GROUP,
-                recipients: user._id
+                recipients: user.id
             }, {
-                server_id: {
+                serverid: {
                     $in: serverIDs
                 }
             }]
@@ -58,7 +58,7 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
     ])
 
     const clientUser = {
-        _id: user._id,
+        id: user.id,
         username: user.username,
         avatar: user.avatar,
         badges: user.badges
@@ -78,10 +78,10 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
 
 
     await socket.subscribe(...[
-        [user._id],
+        [user.id],
         [...user.relations.keys()],
         serverIDs,
-        channels.map(c => c._id)
+        channels.map(c => c.id)
     ].flat(4))
 
     if (!user.presence.ghost_mode) await user.save({

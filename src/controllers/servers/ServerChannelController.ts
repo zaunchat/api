@@ -3,7 +3,7 @@ import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { HTTPError } from '../../errors'
 import { Channel, CreateTextChannelSchema, ChannelTypes } from '../../structures'
 import { Permissions } from '../../utils'
-import config from '../../../config'
+import config from '../../config'
 
 
 @web.basePath('/channels/:server_id')
@@ -11,7 +11,7 @@ export class ServerChannelController {
 	@web.use()
 	async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
 		const server = req.user.servers.getItems().find((s) => {
-			return s._id === req.params.server_id
+			return s.id === req.params.server_id
 		})
 
 		if (!server) {
@@ -29,7 +29,7 @@ export class ServerChannelController {
 	async fetchMany(req: Request, res: Response): Promise<void> {
 		const channels = await Channel.find({
 			server: {
-				_id: req.params.server_id
+				id: req.params.server_id
 			}
 		})
 		res.json(channels)
@@ -38,9 +38,9 @@ export class ServerChannelController {
 	@web.get('/:channel_id')
 	async fetchOne(req: Request, res: Response): Promise<void> {
 		const channel = await Channel.findOne({
-			_id: req.params.channel_id,
+			id: req.params.channel_id,
 			server: {
-				_id: req.params.server_id
+				id: req.params.server_id
 			}
 		})
 
@@ -79,9 +79,9 @@ export class ServerChannelController {
 	@web.route('delete', '/:channel_id')
 	async delete(req: Request, res: Response): Promise<void> {
 		const channel = await Channel.findOne({
-			_id: req.params.channel_id,
+			id: req.params.channel_id,
 			server: {
-				_id: req.params.server_id
+				id: req.params.server_id
 			}
 		})
 

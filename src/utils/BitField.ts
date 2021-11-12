@@ -1,6 +1,6 @@
-import { Constructor } from '@mikro-orm/core'
-
 const DEFAULT_BIT = 0
+
+type Constructor<T> = new (...args: unknown[]) => T
 
 export type BitFieldResolvable = number | BitField | string | BitFieldResolvable[]
 

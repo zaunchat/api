@@ -84,7 +84,7 @@ export class Getaway {
         this.connections.delete(socket.user_id)
 
         const user = await User.findOne({
-            _id: socket.user_id,
+            id: socket.user_id,
             verified: true
         })
 

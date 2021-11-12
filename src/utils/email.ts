@@ -1,8 +1,9 @@
-import { createTransport } from 'nodemailer'
 import { nanoid } from 'nanoid'
 import { User } from '../structures'
-import config from '../config'
 import { createRedisConnection } from '../database/redis'
+import { SMTPClient, Message } from 'emailjs';
+import config from '../config'
+
 
 const THREE_HOURS = 10_800_000
 const EMAIL_MESSAGE_TEMPLATE = `Hello @%%USERNAME%%,
@@ -13,36 +14,28 @@ Please verify your account here: %%LINK%%`
 
 class Email {
 	redis = createRedisConnection()
-	readonly client = config.smtp.enabled && config.smtp.uri ? createTransport(config.smtp.uri) : null
-
-	get enabled(): boolean  {
-		return !!this.client
-	}
-
-	static generateCode(): string {
-		return nanoid(64)
-	}
-
+	client = new SMTPClient({
+		host: config.smtp.host,
+		user: config.smtp.username,
+		password: config.smtp.password
+	})
+	
 	async send(user: User): Promise<string> {
-		if (!this.client) {
-			throw new Error('Email not enabled')
-		}
-
-		const code = Email.generateCode()
-		const link = `${config.endpoints.main}/auth/verify/${user._id}/${code}`
-
-		await this.client.sendMail({
-			from: 'noreply@itchat.com',
-			subject: 'Verify your email',
+		const code = nanoid(64)
+		const link = `${config.endpoints.main}/auth/verify/${user.id}/${code}`
+		const message = new Message({
+			from: 'noreply@itchat.world',
 			to: user.email,
+			subject: 'Verify your account',
 			text: EMAIL_MESSAGE_TEMPLATE
-				.replace('%%USERNAME%%', user.username)
-				.replace('%%LINK%%', link)
+			.replace('%%USERNAME%%', user.username)
+			.replace('%%LINK%%', link),
 		})
 
+		await this.client.sendAsync(message)
 
 		// Expires after three hours.
-		await this.redis.set(user._id, code, 'PX', THREE_HOURS)
+		await this.redis.set(user.id, code, 'PX', THREE_HOURS)
 
 		return link
 	}

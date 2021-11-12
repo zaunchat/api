@@ -1,6 +1,6 @@
 import { Base, User, Server } from '.'
 import { DEFAULT_PERMISSION_DM, validator } from '../utils'
-import db from '../database'
+import sql from '../database'
 import config from '../config'
 
 export enum ChannelTypes {
@@ -88,7 +88,7 @@ export const CreateCategorySchema = validator.compile({
 
 
 export class Channel extends Base implements DMChannel, Group, TextChannel, Category {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // deno-lint-ignore no-explicit-any]
     type = ChannelTypes.UNKNOWN as any
     name!: string
     topic?: string

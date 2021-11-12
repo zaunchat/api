@@ -3,7 +3,7 @@ import { Response, Request } from '@tinyhttp/app'
 import { User, Session, CreateUserSchema, LoginUserSchema } from '../../structures'
 import { HTTPError } from '../../errors'
 import { is, email } from '../../utils'
-import config from '../../../config'
+import config from '../../config'
 import argon2 from 'argon2'
 
 
@@ -43,7 +43,7 @@ export class AccountController {
 
 		res.json({
 			token: session.token,
-			id: user._id
+			id: user.id
 		})
 	}
 
@@ -92,7 +92,7 @@ export class AccountController {
 
 	@web.get('/verify/:user_id/:code')
 	async verify(req: Request, res: Response): Promise<void> {
-		const { user_id, code } = req.params as { user_id: ID; code: string }
+		const { user_id, code } = req.params as { userid: ID; code: string }
 
 		const verified = await email.verify(user_id, code)
 
@@ -100,7 +100,7 @@ export class AccountController {
 			throw new HTTPError('UNKNOWN_TOKEN')
 		}
 
-		const user = await User.findOne({ _id: user_id })
+		const user = await User.findOne({ id: user_id })
 
 		if (!user) {
 			throw new HTTPError('UNKNOWN_USER')

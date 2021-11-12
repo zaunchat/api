@@ -18,7 +18,7 @@ export class Socket {
 
             switch (data.event as keyof WSEvents) {
                 case 'MEMBER_LEAVE_SERVER':
-                    if (this.user_id === data?.data?._id) {
+                    if (this.user_id === data?.data?.id) {
                         this.subscriptions.unsubscribe(data.data.server_id)
                     }
                     break

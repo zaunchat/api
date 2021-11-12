@@ -9,7 +9,7 @@ export class ServerInviteController {
 	@web.use()
 	async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
 		const server = req.user.servers.getItems().find((s) => {
-			return s._id === req.params.server_id
+			return s.id === req.params.server_id
 		})
 
 		if (!server) {
@@ -30,7 +30,7 @@ export class ServerInviteController {
 		const invites = await Invite.find({
 			channel: {
 				server: {
-					_id: req.server._id
+					id: req.server.id
 				}
 			}
 		}, { limit })
@@ -44,7 +44,7 @@ export class ServerInviteController {
 			code: req.params.invite_code,
 			channel: {
 				server: {
-					_id: req.server._id
+					id: req.server.id
 				}
 			}
 		})
@@ -60,7 +60,7 @@ export class ServerInviteController {
 	async create(req: Request, res: Response): Promise<void> {
 		const channel = await req.server.channels.matching({
 			where: {
-				_id: req.params.channel_id
+				id: req.params.channel_id
 			}
 		}).then(([_]) => _)
 

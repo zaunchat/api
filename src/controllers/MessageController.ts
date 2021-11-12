@@ -1,10 +1,10 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { FilterQuery } from '@mikro-orm/core'
+
 import { HTTPError } from '../errors'
 import { CreateMessageSchema, Channel, Message } from '../structures'
 import { is, Permissions } from '../utils'
-import config from '../../config'
+import config from '../config'
 
 
 @web.basePath('/channels/:channel_id/messages')
@@ -12,7 +12,7 @@ export class MessageController {
     @web.use()
     async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
         const channel = await Channel.findOne({
-            _id: req.params.channel_id
+            id: req.params.channel_id
         })
 
         if (!channel) {
@@ -91,11 +91,11 @@ export class MessageController {
 
         const options: FilterQuery<Message> = {
             channel: {
-                _id: req.params.channel_id
+                id: req.params.channel_id
             }
         }
 
-        if (is.snowflake(around)) options._id = {
+        if (is.snowflake(around)) options.id = {
             $or: [{
                 $gte: around
             }, {
@@ -103,11 +103,11 @@ export class MessageController {
             }]
         }
 
-        if (is.snowflake(after)) options._id = {
+        if (is.snowflake(after)) options.id = {
             $gt: after
         }
 
-        if (is.snowflake(before)) options._id = {
+        if (is.snowflake(before)) options.id = {
             $lt: before
         }
 
@@ -124,9 +124,9 @@ export class MessageController {
         }
 
         const message = await Message.findOne({
-            _id: req.params.message_id,
+            id: req.params.message_id,
             channel: {
-                _id: req.params.channel_id
+                id: req.params.channel_id
             }
         })
 
@@ -142,9 +142,9 @@ export class MessageController {
         req.check(CreateMessageSchema)
 
         const message = await Message.findOne({
-            _id: req.params.message_id,
+            id: req.params.message_id,
             channel: {
-                _id: req.params.channel_id
+                id: req.params.channel_id
             }
         })
 
@@ -152,7 +152,7 @@ export class MessageController {
             throw new HTTPError('UNKNOWN_MESSAGE')
         }
 
-        if (message.author._id !== req.user._id) {
+        if (message.author.id !== req.user.id) {
             throw new HTTPError('CANNOT_EDIT_MESSAGE_BY_OTHER')
         }
 
@@ -164,9 +164,9 @@ export class MessageController {
     @web.route('delete', '/:message_id')
     async delete(req: Request, res: Response): Promise<void> {
         const message = await Message.findOne({
-            _id: req.params.message_id,
+            id: req.params.message_id,
             channel: {
-                _id: req.params.channel_id
+                id: req.params.channel_id
             }
         })
 
@@ -174,7 +174,7 @@ export class MessageController {
             throw new HTTPError('UNKNOWN_MESSAGE')
         }
 
-        if (message.author._id !== req.user._id && !req.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) {
+        if (message.author.id !== req.user.id && !req.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 

@@ -50,7 +50,7 @@ export class Permissions extends BitField {
     }
 
     static async fetch(user: User | string, server?: Server | string | null, channel?: DMChannel | Group | TextChannel | Category): Promise<Permissions> {
-        user = typeof user === 'string' ? await User.findOne({ _id: user as ID }) as User : user
+        user = typeof user === 'string' ? await User.findOne({ id: user as ID }) as User : user
 
         const permissions = new Permissions()
 
@@ -59,11 +59,11 @@ export class Permissions extends BitField {
             let member: Member
 
             [member, server] = await Promise.all([
-                Member.findOne({ _id: typeof user === 'string' ? user : user._id }),
-                typeof server === 'string' ? Server.findOne({ _id: server }) : server,
+                Member.findOne({ id: typeof user === 'string' ? user : user.id }),
+                typeof server === 'string' ? Server.findOne({ id: server }) : server,
             ]) as [Member, Server]
 
-            if (member._id === server.owner._id) {
+            if (member.id === server.owner.id) {
                 return permissions.add(Permissions.FLAGS.ADMINISTRATOR)
             } else {
                 permissions.add(server.permissions)
@@ -80,7 +80,7 @@ export class Permissions extends BitField {
         if (channel) {
             switch (channel.type) {
                 case ChannelTypes.GROUP:
-                    if (channel.owner._id === user._id) {
+                    if (channel.owner.id === user.id) {
                         permissions.add(Permissions.FLAGS.ADMINISTRATOR)
                     } else if (channel.recipients.contains(user)) {
                         permissions.add(channel.permissions)

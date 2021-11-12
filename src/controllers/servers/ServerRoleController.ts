@@ -3,7 +3,7 @@ import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { Role, CreateRoleSchema } from '../../structures'
 import { HTTPError } from '../../errors'
 import { Permissions } from '../../utils'
-import config from '../../../config'
+import config from '../../config'
 
 
 @web.basePath('/servers/:server_id/roles')
@@ -11,7 +11,7 @@ export class ServerRoleController {
 	@web.use()
 	async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
 		const server = req.user.servers.getItems().find((s) => {
-			return s._id === req.params.server_id
+			return s.id === req.params.server_id
 		})
 
 		if (!server) {
@@ -29,7 +29,7 @@ export class ServerRoleController {
 	async fetchMany(req: Request, res: Response): Promise<void> {
 		const roles = await Role.find({
 			server: {
-				_id: req.params.server_id
+				id: req.params.server_id
 			}
 		})
 		res.json(roles)
@@ -38,9 +38,9 @@ export class ServerRoleController {
 	@web.get('/:role_id')
 	async fetchOne(req: Request, res: Response): Promise<void> {
 		const role = await Role.findOne({
-			_id: req.params.role_id,
+			id: req.params.role_id,
 			server: {
-				_id: req.params.server_id
+				id: req.params.server_id
 			}
 		})
 

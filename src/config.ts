@@ -9,7 +9,9 @@ const config = {
 	},
 	smtp: {
 		enabled: env.get('SMTP_ENABLED').default('true').asBool(),
-		uri: env.get('SMTP_URI').required().asUrlString()
+		host: env.get('SMTP_HOST').required().asUrlString(),
+		username: env.get('SMTP_USERNAME').asString(),
+		password: env.get('SMTP_PASSWORD').asString()
 	},
 	captcha: {
 		enabled: env.get('CAPTCHA_ENABLED').default('true').asBool(),

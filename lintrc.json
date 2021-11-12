@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "tags": ["recommended"],
+    "exclude": ["camelcase", "require-await"]
+  }
+}
