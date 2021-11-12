@@ -38,7 +38,7 @@ export class Message extends Base {
             id BIGINT NOT NULL,
             created_at TIMESTAMP DEFAULT current_timestamp,
             edited_at TIMESTAMP,
-            content TEXT,
+            content VARCHAR(${config.limits.message.length}),
             embeds JSON NOT NULL,
             attachments JSON NOT NULL,
             replies JSON NOT NULL,
