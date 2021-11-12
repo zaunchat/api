@@ -1,15 +1,14 @@
-import { PrimaryKey, SerializedPrimaryKey } from '@mikro-orm/core'
 import { Snowflake } from '../utils'
+import sql from '../database'
 
 export abstract class Base {
-  @PrimaryKey({ unique: true })
-  _id!: ID
+  id = Snowflake.generate()
 
-  @SerializedPrimaryKey()
-  id!: string
+  get tableName(): string {
+    return `${this.constructor.name.toLowerCase()}s`
+  }
 
-  setID(id?: ID): this {
-    this._id = id ?? Snowflake.generate()
-    return this
+  async delete(): Promise<void> {
+    await sql`DELETE FROM ${this.tableName} WHERE id = ${this.id}`
   }
 }

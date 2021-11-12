@@ -1,8 +1,7 @@
-import { Entity, Property, wrap, FindOptions, FilterQuery, FindOneOptions, ManyToMany, Collection } from '@mikro-orm/core'
 import { Base, Presence, Session, Server } from '.'
 import { validator } from '../utils'
 import db from '../database'
-import config from '../../config'
+import config from '../config'
 
 export enum RelationshipStatus {
     FRIEND,
@@ -48,76 +47,34 @@ export const LogoutUserSchema = validator.compile({
 })
 
 export const PUBLIC_USER_ITEMS: (keyof User)[] = [
-    '_id',
+    'id',
     'username',
     'avatar',
     'badges'
 ]
 
-@Entity({ tableName: 'users' })
+
 export class User extends Base {
-    @Property({ unique: true })
     username!: string
-
-    @Property()
     password!: string
-
-    @Property({ unique: true })
     email!: string
-
-    @Property()
-    presence: Presence = Presence.from({})
-
-    @Property()
-    badges: number = 0
-
-    @Property()
-    relations = new Map<ID, RelationshipStatus>()
-
-    @ManyToMany({ entity: () => Server, lazy: true })
-    servers = new Collection<Server>(this)
-
-    @Property({ nullable: true })
+    presence = Presence.from({})
+    badges = 0
     avatar?: string
-
-    @ManyToMany({ entity: () => Session })
-    sessions = new Collection<Session>(this)
-
-    @Property({ hidden: true })
-    verified: boolean = false
-
-    static from(options: CreateUserOptions): User {
-        return wrap(new User().setID()).assign(options)
-    }
-
-    static find(query: FilterQuery<User>, options?: FindOptions<User> & { public?: boolean }): Promise<User[]> {
-        if (options?.public) options.fields = PUBLIC_USER_ITEMS
-        return db.get(User).find(query, options)
-    }
-
-    static findOne(query: FilterQuery<User>, options?: FindOneOptions<User> & { public?: boolean }): Promise<User | null> {
-        if (options?.public) options.fields = PUBLIC_USER_ITEMS
-        return db.get(User).findOne(query, options)
-    }
-
-    static count(query: FilterQuery<User>): Promise<number> {
-        return db.get(User).count(query)
-    }
-
-    static remove(user: User): Promise<void> {
-        return db.get(User).removeAndFlush(user)
-    }
-
-    static async save(...users: User[]): Promise<void> {
-        await db.get(User).persistAndFlush(users)
-    }
-
-    async save(options?: Partial<User>): Promise<this> {
-        await User.save(options ? wrap(this).assign(options) : this)
-        return this
-    }
-
-    async delete(): Promise<void> {
-        await db.get(User).removeAndFlush(this)
+    verified = false
+    
+    static toSQL() {
+        return `CREATE TABLE users IF NOT EXISTS (
+            id BIGINT NOT NULL DEFAULT id_generator(),
+            username VARCHAR(${config.limits.user.username}) NOT NULL,
+            password VARCHAR(32) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            relations,
+            servers,
+            avatar VARCHAR(32),
+            badges INTEGER DEFAULT 0,
+            sessions,
+            verified BOOLEAN DEFAULT FALSE
+        )`
     }
 }

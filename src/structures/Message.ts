@@ -1,8 +1,7 @@
 import { Base, User, Channel } from '.'
-import { Property, Entity, wrap, FilterQuery, FindOptions, OneToOne } from '@mikro-orm/core'
 import { validator } from '../utils'
 import db from '../database'
-import config from '../../config'
+import config from '../config'
 
 export interface CreateMessageOptions extends Partial<Message> {
     author: User
@@ -18,64 +17,35 @@ export const CreateMessageSchema = validator.compile({
     $$strict: true
 })
 
-@Entity({ tableName: 'messages' })
+
 export class Message extends Base {
-    @Property()
-    created_timestamp: number = Date.now()
-
-    @Property({ onUpdate: () => Date.now(), nullable: true })
-    edited_timestamp?: number
-
-    @Property()
+    created_at = Date.now()
+    edited_at?: number
     embeds: unknown[] = []
-
-    @Property()
     attachments: unknown[] = []
-
-    @Property({ nullable: true })
-    content?: string
-
-    @Property()
+    content?: string    
     mentions: ID[] = []
-
-    @Property()
-    replies: {
-        id: ID
-        mention: boolean
-    }[] = []
-
-    @OneToOne({ entity: () => Channel })
-    channel!: Channel
-
-    @OneToOne({ entity: () => User })
-    author!: User
+    replies: { id: ID, mention: boolean }[] = []
+    channel_id!: ID    
+    author_id!: ID
 
     isEmpty(): boolean {
         return !this.content?.length && !this.attachments.length
     }
 
-    static from(options: CreateMessageOptions): Message {
-        return wrap(new Message().setID()).assign(options)
-    }
-
-    static find(query: FilterQuery<Message>, options?: FindOptions<Message>): Promise<Message[]> {
-        return db.get(Message).find(query, options)
-    }
-
-    static findOne(query: FilterQuery<Message>): Promise<Message | null> {
-        return db.get(Message).findOne(query)
-    }
-
-    static async save(...messages: Message[]): Promise<void> {
-        await db.get(Message).persistAndFlush(messages)
-    }
-
-    async save(options?: Partial<Message>): Promise<this> {
-        await Message.save(options ? wrap(this).assign(options) : this)
-        return this
-    }
-
-    async delete(): Promise<void> {
-        await db.get(Message).removeAndFlush(this)
+    static toSQL(): string {
+        return `CREATE TABLE messages IF NOT EXISTS (
+            id BIGINT NOT NULL,
+            created_at TIMESTAMP DEFAULT current_timestamp,
+            edited_at TIMESTAMP,
+            content TEXT,
+            embeds JSON NOT NULL,
+            attachments JSON NOT NULL,
+            replies JSON NOT NULL,
+            channel_id BIGINT NOT NULL,
+            author_id BIGINT NOT NULL,
+            FOREIGN KEY (channel_id) REFERENCES channels(id)
+            FOREIGN KEY (author_id) REFERENCES users(id)
+        )`
     }
 }

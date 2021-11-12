@@ -9,7 +9,6 @@ export enum PresenceStatus {
 
 export class Presence {
 	status = PresenceStatus.OFFLINE
-	ghost_mode = false
 	static from(options: CreatePresenceOptions): Presence {
 		const presence = new Presence()
 		Object.assign(presence, options)

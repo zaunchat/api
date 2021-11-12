@@ -1,8 +1,7 @@
 import { Base, Role, User, Channel } from '.'
-import { Property, Entity, wrap, FindOptions, FilterQuery, ManyToMany, Collection, OneToOne } from '@mikro-orm/core'
 import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
 import db from '../database'
-import config from '../../config'
+import config from '../config'
 
 export interface CreateServerOptions extends Partial<Server> {
     name: string
@@ -33,50 +32,14 @@ export const ModifyServerSchema = validator.compile({
 })
 
 
-@Entity({ tableName: 'servers' })
+
 export class Server extends Base {
-    @Property()
     name!: string
-
-    @Property({ nullable: true })
-    description?: string
-
-    @Property({ nullable: true })
+    description?: string    
     icon?: string
-
-    @Property({ nullable: true })
     banner?: string
-
-    @OneToOne({ entity: () => User })
     owner!: User
-
-    @ManyToMany({ entity: () => Role })
-    roles = new Collection<Role>(this)
-
-    @ManyToMany({ entity: () => Channel })
-    channels = new Collection<Channel>(this)
-
-    @Property()
-    permissions: number = DEFAULT_PERMISSION_EVERYONE
-
-    static from(options: CreateServerOptions): Server {
-        return wrap(new Server().setID()).assign(options)
-    }
-
-    static find(query: FilterQuery<Server>, options?: FindOptions<Server>): Promise<Server[]> {
-        return db.get(Server).find(query, options)
-    }
-
-    static findOne(query: FilterQuery<Server>): Promise<Server | null> {
-        return db.get(Server).findOne(query)
-    }
-
-    async save(options?: Partial<Server>): Promise<this> {
-        await db.get(Server).persistAndFlush(options ? wrap(this).assign(options) : this)
-        return this
-    }
-
-    async delete(): Promise<void> {
-        await db.get(Server).removeAndFlush(this)
-    }
+    // roles = new Collection<Role>(this)
+    // channels = new Collection<Channel>(this)
+    permissions = DEFAULT_PERMISSION_EVERYONE
 }

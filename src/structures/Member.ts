@@ -1,8 +1,7 @@
 import { Base, Role, Server } from '.'
-import { Property, Entity, wrap, FilterQuery, FindOptions, ManyToMany, Collection, OneToOne } from '@mikro-orm/core'
 import { validator } from '../utils'
 import db from '../database'
-import config from '../../config'
+import config from '../config'
 
 export interface CreateMemberOptions extends Partial<Member> {
     _id: ID
@@ -24,42 +23,19 @@ export const CreateMemberSchema = validator.compile({
 })
 
 
-@Entity({ tableName: 'members' })
+
 export class Member extends Base {
-    @Property({ nullable: true })
     nickname?: string
-
-    @Property()
-    joined_timestamp: number =  Date.now()
-
-    @ManyToMany({ entity: () => Role })
-    roles = new Collection<Role>(this)
-
-    @OneToOne({ entity: () => Server })
-    server!: Server
-
-    static from(options: CreateMemberOptions): Member {
-        return wrap(new Member()).assign(options)
-    }
-
-    static find(query: FilterQuery<Member>, options?: FindOptions<Member>): Promise<Member[]> {
-        return db.get(Member).find(query, options)
-    }
-
-    static findOne(query: FilterQuery<Member>): Promise<Member | null> {
-        return db.get(Member).findOne(query)
-    }
-
-    static async save(...members: Member[]): Promise<void> {
-        await db.get(Member).persistAndFlush(members)
-    }
-
-    async save(options?: Partial<Member>): Promise<this> {
-        await Member.save(options ? wrap(this).assign(options) : this)
-        return this
-    }
-
-    async delete(): Promise<void> {
-        await db.get(Member).removeAndFlush(this)
+    joined_timestamp = Date.now()
+    server_id!: Server
+    static toSQL(): string {
+        return `CREATE TABLE members IF NOT EXISTS (
+            id BIGINT NOT NULL,
+            joined_at TIMESTAMP DEFAULT current_timestamp,
+            nickname VARCHAR(32),
+            server_id BIGINT NOT NULL,
+            FOREIGN KEY (server_id) REFERENCES servers(id)
+            FOREIGN KEY (id) REFERENCES users(id)
+        )`
     }
 }

@@ -1,4 +1,4 @@
-import { Entity, Property, PrimaryKey, OneToOne, FindOptions, FilterQuery, wrap } from '@mikro-orm/core'
+
 import { nanoid } from 'nanoid'
 import { User, Channel } from '.'
 import db from '../database'
@@ -9,42 +9,21 @@ export interface CreateInviteOptions extends Partial<Invite> {
 	channel: Channel
 }
 
-@Entity({ tableName: 'invites' })
+
 export class Invite {
-	@PrimaryKey({ unique: true })
-	code: string = nanoid(8)
-
-	@Property()
-	uses: number = 0
-
-	@OneToOne({ entity: () => User })
-	inviter!: User
-
-	@OneToOne({ entity: () => Channel })
-	channel!: Channel
-
-	static from(options: CreateInviteOptions): Invite {
-		return wrap(new Invite()).assign(options)
-	}
-
-	static find(query: FilterQuery<Invite>, options?: FindOptions<Invite>): Promise<Invite[]> {
-		return db.get(Invite).find(query, options)
-	}
-
-	static findOne(query: FilterQuery<Invite>): Promise<Invite | null> {
-		return db.get(Invite).findOne(query)
-	}
-
-	static async save(...invites: Invite[]): Promise<void> {
-		await db.get(Invite).persistAndFlush(invites)
-	}
-
-	async save(options?: Partial<Invite>): Promise<this> {
-		await Invite.save(options ? wrap(this).assign(options) : this)
-		return this
-	}
-
-	async delete(): Promise<void> {
-		await db.get(Invite).removeAndFlush(this)
+	code = nanoid(8)
+	uses = 0
+	inviter_id!: ID
+	channel_id!: ID
+	static toSQL(): string {
+		return `CREATE TABLE invites IF NOT EXISTS (
+			id BIGINT NOT NULL,
+			code VARCHAR(8) NOT NULL,
+			uses INTEGER DEFAULT 0,
+			inviter_id BIGINT NOT NULL,
+			channel_id BIGINT NOT NULL,
+			FOREIGN KEY (inviter_id) REFERENCES users(id),
+			FOREIGN KEY (channel_id) REFERENCES channels(id),
+		)`
 	}
 }
