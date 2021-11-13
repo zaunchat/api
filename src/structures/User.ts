@@ -1,7 +1,8 @@
-import { Base, Session, Server } from '.'
+import { Base, Session, Server, Member } from '.'
 import { validator } from '../utils'
 import sql from '../database'
 import config from '../config'
+
 
 export enum RelationshipStatus {
     FRIEND,
@@ -43,7 +44,7 @@ export const LoginUserSchema = validator.compile({
 
 export const LogoutUserSchema = validator.compile({
     token: { type: 'string' },
-    userid: { type: 'string' }
+    user_id: { type: 'string' }
 })
 
 export interface Presence {
@@ -52,11 +53,11 @@ export interface Presence {
 }
 
 export enum PresenceStatus {
-	ONLINE,
-	OFFLINE,
-	IDLE,
-	DND
-}
+    ONLINE,
+    OFFLINE,
+    IDLE,
+    DND
+} Member
 
 
 export class User extends Base {
@@ -66,22 +67,34 @@ export class User extends Base {
     presence = { status: PresenceStatus.OFFLINE } as Presence
     badges = 0
     avatar?: string
-    async fetchServers(): Promise<Server[]> {
-        sql`SELECT * FROM SERVERS `
-        return []
+
+    async fetchServers(): Promise<ID[]> {
+        const res = await sql<Member[]>`SELECT * FROM members WHERE id = ${this.id} RETURNING server_id`
+        return res.map((m) => m.server_id)
     }
 
     async fetchSessions(): Promise<Session[]> {
-        return []
+        const res = await sql<Session[]>`SELECT * FROM sessions WHERE user_id = ${this.id}`
+        return res
     }
 
-    async fetchRelations(): Promise<unknown[]> {
-        return []
-    }
+    // TODO:
+    //  async fetchRelations(): Promise<unknown[]> {}
 
     static async fetchOne(id: ID): Promise<User> {
-       const res = await sql<User[]>`SELECT * FROM users WHERE id = ${id}`
-       return res[0]
+        const res = await sql<User[]>`SELECT * FROM users WHERE id = ${id}`
+        return User.from(res[0])
+    }
+
+    static async fetchByToken(token: string): Promise<User | null> {
+        const res = await sql<User[]>`SELECT * FROM users 
+         LEFT JOIN sessions
+         ON sessions.user_id = users.id
+         WHERE verified = TRUE AND sessions.token = ${token}`
+         
+        if (!res.length) return null
+
+        return User.from(res[0])
     }
 
     static from(opts: CreateUserOptions): User {
@@ -89,8 +102,8 @@ export class User extends Base {
     }
 
     static toSQL() {
-        return `CREATE TABLE users IF NOT EXISTS (
-            id BIGINT NOT NULL,
+        return `CREATE TABLE IF NOT EXISTS users (
+            id BIGINT PRIMARY KEY,
             username VARCHAR(${config.limits.user.username}) NOT NULL,
             password VARCHAR(32) NOT NULL,
             email VARCHAR(255) NOT NULL,

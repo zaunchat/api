@@ -25,8 +25,8 @@ export class Session extends Base {
     }
 
     static toSQL(): string {
-        return `CREATE TABLE sessions IF NOT EXISTS (
-            id BIGINT NOT NULL,
+        return `CREATE TABLE IF NOT EXISTS sessions (
+            id BIGINT PRIMARY KEY,
             token VARCHAR(64) NOT NULL,
             user_id BIGINT NOT NULL,
             info JSON,

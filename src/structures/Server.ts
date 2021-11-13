@@ -1,4 +1,4 @@
-import { Base, Role, Channel } from '.'
+import { Base, Role, Channel, Member } from '.'
 import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
 import sql from '../database'
 import config from '../config'
@@ -41,6 +41,11 @@ export class Server extends Base {
     owner_id!: ID
     permissions = DEFAULT_PERMISSION_EVERYONE
 
+    async fetchMembers(): Promise<Member[]> {
+        const res = await sql<Member[]>`SELECT * FROM members WHERE server_id = ${this.id}`
+        return res
+    }
+
     async fetchRoles(): Promise<Role[]> {
         const res = await sql<Role[]>`SELECT * FROM roles WHERE server_id = ${this.id}`
         return res
@@ -57,8 +62,8 @@ export class Server extends Base {
 
 
     static toSQL(): string {
-        return `CREATE TABLE servers IF NOT EXISTS (
-            id BIGINT NOT NULL,
+        return `CREATE TABLE IF NOT EXISTS servers (
+            id BIGINT PRIMARY KEY,
             name VARCHAR(${config.limits.server.name}) NOT NULL,
             description VARCHAR(${config.limits.server.description}),
             icon VARCHAR(64),

@@ -37,12 +37,12 @@ export interface Reply {
 export class Message extends Base {
     created_at = Date.now()
     edited_at?: number
+    content?: string
     embeds: Embed[] = []
     attachments: Attachment[] = []
-    content?: string    
     mentions: ID[] = []
     replies: Reply[] = []
-    channel_id!: ID    
+    channel_id!: ID
     author_id!: ID
 
     isEmpty(): boolean {
@@ -54,8 +54,8 @@ export class Message extends Base {
     }
 
     static toSQL(): string {
-        return `CREATE TABLE messages IF NOT EXISTS (
-            id BIGINT NOT NULL,
+        return `CREATE TABLE IF NOT EXISTS messages (
+            id BIGINT PRIMARY KEY,
             created_at TIMESTAMP DEFAULT current_timestamp,
             edited_at TIMESTAMP,
             content VARCHAR(${config.limits.message.length}),

@@ -29,8 +29,8 @@ export class Member extends Base {
     joined_timestamp = Date.now()
     server_id!: ID
     static toSQL(): string {
-        return `CREATE TABLE members IF NOT EXISTS (
-            id BIGINT NOT NULL,
+        return `CREATE TABLE IF NOT EXISTS members (
+            id BIGINT PRIMARY KEY,
             joined_at TIMESTAMP DEFAULT current_timestamp,
             nickname VARCHAR(32),
             server_id BIGINT NOT NULL,

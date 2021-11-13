@@ -20,8 +20,8 @@ export class Invite extends Base {
     }
 
 	static toSQL(): string {
-		return `CREATE TABLE invites IF NOT EXISTS (
-			id BIGINT NOT NULL,
+		return `CREATE TABLE IF NOT EXISTS invites (
+			id BIGINT PRIMARY KEY,
 			code VARCHAR(8) NOT NULL,
 			uses INTEGER DEFAULT 0,
 			inviter_id BIGINT NOT NULL,

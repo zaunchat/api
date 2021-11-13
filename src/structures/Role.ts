@@ -41,8 +41,8 @@ export class Role extends Base {
     }
     
     static toSQL(): string {
-        return `CREATE TABLE roles IF NOT EXISTS (
-            id BIGINT NOT NULL,
+        return `CREATE TABLE IF NOT EXISTS roles (
+            id BIGINT PRIMARY KEY,
             name VARCHAR(32) NOT NULL,
             permissions BIGINT NOT NULL DEFAULT 0,
             hoist BOOLEAN NOT NULL DEFAULT FALSE,

@@ -33,21 +33,21 @@ export interface DMChannel extends Channel {
 export interface Group extends Channel {
     type: ChannelTypes.GROUP
     name: string
-    owner: User
+    owner_id: ID
     permissions: number
 }
 
 export interface TextChannel extends Channel {
     type: ChannelTypes.TEXT
     name: string
-    server: Server
+    server_id: ID
     overwrites: ChannelOverwrites
 }
 
 export interface Category extends Channel {
     type: ChannelTypes.CATEGORY
     name: string
-    server: Server
+    server_id: ID
     parents: ID[]
     overwrites: ChannelOverwrites
 }
@@ -87,22 +87,29 @@ export const CreateCategorySchema = validator.compile({
 
 
 
-export class Channel extends Base implements DMChannel, Group, TextChannel, Category {
-    // deno-lint-ignore no-explicit-any]
-    type = ChannelTypes.UNKNOWN as any
-    name!: string
+export class Channel extends Base {
+    type = ChannelTypes.UNKNOWN
+    name?: string
     topic?: string
-    server!: Server
-    overwrites!: ChannelOverwrites
-    owner!: User
+    server_id?: ID
+    owner_id?: ID
+    overwrites?: ChannelOverwrites
     icon?: string
     permissions = DEFAULT_PERMISSION_DM
-    parents!: ID[]
-
+    parents?: ID[]
     static toSQL(): string {
-        return `CREATE TABLE channels IF NOT EXISTS (
-            id BIGINT NOT NULL,
+        return `CREATE TABLE IF NOT EXISTS channels (
+            id BIGINT PRIMARY KEY,
             type INTEGER NOT NULL,
+            name VARCHAR(${config.limits.channel.name}),
+            topic VARCHAR(${config.limits.channel.topic}),
+            permissions BIGINT DEFAULT 0,
+            overwrites JSON,
+            parents JSON,
+            owner_id BIGINT,
+            server_id BIGINT,
+            FOREIGN KEY (owner_id) REFERENCES users(id)
+            FOREIGN KEY (server_id) REFERENCES servers(id)
         )`
     }
 }
