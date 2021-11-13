@@ -1,4 +1,4 @@
-import { Base, Session, Server, Member } from '.'
+import { Base, Session, Member } from '.'
 import { validator } from '../utils'
 import sql from '../database'
 import config from '../config'
@@ -81,20 +81,23 @@ export class User extends Base {
     // TODO:
     //  async fetchRelations(): Promise<unknown[]> {}
 
-    static async fetchOne(id: ID): Promise<User> {
-        const res = await sql<User[]>`SELECT * FROM users WHERE id = ${id}`
-        return User.from(res[0])
+    static async fetchOne(id: ID): Promise<User | null> {
+        const [user]: [User?] = await sql`SELECT * FROM users WHERE id = ${id}`
+
+        if (!user) return null
+
+        return User.from(user)
     }
 
     static async fetchByToken(token: string): Promise<User | null> {
-        const res = await sql<User[]>`SELECT * FROM users 
+        const [user]: [User?] = await sql`SELECT * FROM users 
          LEFT JOIN sessions
          ON sessions.user_id = users.id
          WHERE verified = TRUE AND sessions.token = ${token}`
-         
-        if (!res.length) return null
 
-        return User.from(res[0])
+        if (!user) return null
+
+        return User.from(user)
     }
 
     static from(opts: CreateUserOptions): User {

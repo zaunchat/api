@@ -41,19 +41,16 @@ export class Server extends Base {
     owner_id!: ID
     permissions = DEFAULT_PERMISSION_EVERYONE
 
-    async fetchMembers(): Promise<Member[]> {
-        const res = await sql<Member[]>`SELECT * FROM members WHERE server_id = ${this.id}`
-        return res
+    fetchMembers(): Promise<Member[]> {
+        return sql<Member[]>`SELECT * FROM members WHERE server_id = ${this.id}`.then((m) => m.map(Member.from))
     }
 
-    async fetchRoles(): Promise<Role[]> {
-        const res = await sql<Role[]>`SELECT * FROM roles WHERE server_id = ${this.id}`
-        return res
+    fetchRoles(): Promise<Role[]> {
+        return sql<Role[]>`SELECT * FROM roles WHERE server_id = ${this.id}`.then((r) => r.map(Role.from))
     }
 
-    async fetchChannels(): Promise<Channel[]> {
-        const res = await sql<Channel[]>`SELECT * FROM channels WHERE server_id = ${this.id}`
-        return res
+    fetchChannels(): Promise<Channel[]> {
+        return sql<Channel[]>`SELECT * FROM channels WHERE server_id = ${this.id}`
     }
 
     static from(opts: CreateServerOptions): Server {

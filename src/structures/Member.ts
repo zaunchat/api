@@ -28,6 +28,11 @@ export class Member extends Base {
     nickname?: string
     joined_timestamp = Date.now()
     server_id!: ID
+
+    static from(opts: CreateMemberOptions): Member {
+        return Object.assign(opts, new Member())
+    }
+
     static toSQL(): string {
         return `CREATE TABLE IF NOT EXISTS members (
             id BIGINT PRIMARY KEY,
