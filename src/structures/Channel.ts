@@ -105,10 +105,10 @@ export class Channel extends Base {
 
     static async onCreate(self: Channel): Promise<void> {
         if (self.recipients) {
-			const recipients = self.recipients
-			await Promise.all(recipients.map((id) => getaway.subscribe(id, [self.id])))
-		}
-		await getaway.publish(self.id, 'CHANNEL_CREATE', self)
+            const recipients = self.recipients
+            await Promise.all(recipients.map((id) => getaway.subscribe(id, [self.id])))
+        }
+        await getaway.publish(self.id, 'CHANNEL_CREATE', self)
     }
 
     static async onUpdate(self: Channel): Promise<void> {
@@ -126,6 +126,8 @@ export class Channel extends Base {
     static from(opts: Partial<Channel>): Channel {
         return Object.assign(new Channel(), opts)
     }
+
+    static find: (statement: string, select?: (keyof Channel)[], limit?: number) => Promise<Channel[]>
 
     static async findOne(statement: string, select?: (keyof Channel)[]): Promise<Channel> {
         const result = await super.findOne(statement, select)
