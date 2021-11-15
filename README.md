@@ -1,22 +1,23 @@
-# Itchat API
+# ItChat API
 
 ### Description
 Core Backend API
 
-## Technologies Stack
-- [NodeJS](https://nodejs.org/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Mikro-orm](https://mikro-orm.io/) ([**orm**](https://wikipedia.org/wiki/Object%E2%80%93relational_mapping) Database)
-- [TinyHTTP](https://tinyhttp.v1rtl.site/) (REST)
-- [ioredis](https://github.com/luin/ioredis) (Redis Client)
-- [ws](https://github.com/websockets/ws) (WebSocket)
+## 🔗 Technologies Stack
+- [NodeJS](https://wikipedia.org/wiki/Node.js)
+- [TypeScript](https://wikipedia.org/wiki/TypeScript)
+- [PostgreSQL](https://wikipedia.org/wiki/PostgreSQL) ([Lib](https://github.com/porsager/postgres))
+- [Redis](https://wikipedia.org/wiki/Redis) ([Lib](https://github.com/luin/ioredis))
+- [WebSocket](https://wikipedia.org/wiki/WebSocket) ([Lib](https://github.com/websockets/ws))
+- [HTTP](https://wikipedia.org/wiki/Web_server) ([Lib](https://github.com/tinyhttp/tinyhttp))
 
-## Features
-- Mulit-database support
-- Rate limiter
-- Secure
-- Caching (Powered by [redis](https://youtube.com/watch?v=G1rOthIU-uo))
-- Pub/Sub or Notification system ([Read more](https://wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern))
+## 📌 Roadmap
 
-#### License
+- [X] Rate limit for routes
+- [ ] Rate limit for socket connections
+- [X] Pub/Sub Notification system
+- [X] Email verification
+- [X] Captcha Checker 
+
+#### 📝 License
 Refer to the [LICENSE](LICENSE) file.
