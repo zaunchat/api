@@ -8,7 +8,7 @@ import ms from 'ms'
 interface ServerOptions {
     port: number
     limits: Record<string, string>
-    extensions: (req: Request, res: Response) => void
+    extensions(req: Request, res: Response): void
 }
 
 class Server {
