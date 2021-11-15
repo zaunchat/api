@@ -1,10 +1,9 @@
-import { Base, Session, Member, Server } from '.'
+import { Base, Session, Server } from '.'
 import { validator } from '../utils'
-import sql from '../database'
-import config from '../config'
 import { HTTPError } from '../errors'
 import { getaway } from '../getaway'
-
+import sql from '../database'
+import config from '../config'
 
 export const PUBLIC_USER_PROPS = [
     'id',

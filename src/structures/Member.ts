@@ -1,10 +1,9 @@
-import { Base, Role, Server } from '.'
+import { Base, Role } from '.'
 import { validator } from '../utils'
-import sql from '../database'
-import config from '../config'
 import { HTTPError } from '../errors'
 import { getaway } from '../getaway'
-
+import sql from '../database'
+import config from '../config'
 
 export interface CreateMemberOptions extends Partial<Member> {
     id: ID

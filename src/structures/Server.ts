@@ -1,9 +1,9 @@
 import { Base, Role, Channel, Member } from '.'
 import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
-import sql from '../database'
-import config from '../config'
 import { HTTPError } from '../errors'
 import { getaway } from '../getaway'
+import sql from '../database'
+import config from '../config'
 
 
 export interface CreateServerOptions extends Partial<Server> {

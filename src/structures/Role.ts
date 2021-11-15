@@ -1,7 +1,7 @@
 import { Base } from './Base'
 import { validator } from '../utils'
-import sql from '../database'
 import { HTTPError } from '../errors'
+import sql from '../database'
 
 
 export interface CreateRoleOptions extends Partial<Role> {

@@ -1,5 +1,5 @@
 import { is } from '.'
-import { ChannelTypes, DMChannel, Group, Member, Server, TextChannel, User, Category, Channel } from '../structures'
+import { ChannelTypes, Member, Server, User, Channel } from '../structures'
 import { BitField } from './BitField'
 
 export type PermissionString = keyof typeof FLAGS

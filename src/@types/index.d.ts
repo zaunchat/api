@@ -1,5 +1,5 @@
 import { SyncCheckFunction, AsyncCheckFunction } from 'fastest-validator'
-import { User, Server, Channel } from '../structures'
+import { User } from '../structures'
 import { Permissions } from '../utils'
 
 declare module '@tinyhttp/app' {

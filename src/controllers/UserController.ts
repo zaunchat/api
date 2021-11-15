@@ -1,7 +1,6 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { Channel, ChannelTypes, RelationshipStatus, User } from '../structures'
-import { HTTPError } from '../errors'
+import { Channel, ChannelTypes, User } from '../structures'
 
 
 @web.basePath('/users')

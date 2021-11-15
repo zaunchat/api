@@ -23,7 +23,7 @@ export const rateLimit = (options: RateLimitOptions, prefix: string): typeof mid
     let key = (req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress) as string
     let blocked = true
 
-    if (!options.onlyIP && req.user) key = req.user.id
+    if (!options.onlyIP && req.user) key = prefix + req.user.id
 
     const info = await limiter.consume(key).then(() => blocked = false).catch(res => res)
 

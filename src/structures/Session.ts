@@ -1,7 +1,7 @@
 import { Base } from './Base'
 import { nanoid } from 'nanoid'
-import sql from '../database'
 import { HTTPError } from '../errors'
+import sql from '../database'
 
 export interface CreateSessionOptions extends Partial<Session> {
     user_id: ID

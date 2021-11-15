@@ -1,4 +1,3 @@
-import sql from '..'
 import {
     User,
     Session,

@@ -1,18 +1,19 @@
+// deno-lint-ignore-file no-explicit-any
 import { Snowflake } from '../utils'
 import sql from '../database'
 
 export abstract class Base {
   readonly id = Snowflake.generate()
 
-  static async onUpdate(self: unknown): Promise<void> {
+  static async onUpdate(_self: unknown): Promise<void> {
     console.warn(`Unhandled method at ${this.tableName}`)
   }
 
-  static async onCreate(self: unknown): Promise<void> {
+  static async onCreate(_self: unknown): Promise<void> {
     console.warn(`Unhandled method at ${this.tableName}`)
   }
 
-  static async onDelete(self: unknown): Promise<void> {
+  static async onDelete(_self: unknown): Promise<void> {
     console.warn(`Unhandled method at ${this.tableName}`)
   }
 
@@ -25,7 +26,7 @@ export abstract class Base {
   }
 
   static from(opts: unknown): unknown {
-    const Class = this as any
+    const Class = this as unknown as new () => unknown
     return Object.assign(new Class(), opts)
   }
 

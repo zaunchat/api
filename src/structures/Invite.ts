@@ -1,7 +1,8 @@
 import { Base } from './Base'
 import { nanoid } from 'nanoid'
-import sql from '../database'
 import { HTTPError } from '../errors'
+import sql from '../database'
+
 
 export interface CreateInviteOptions extends Partial<Invite> {
 	inviter_id: ID

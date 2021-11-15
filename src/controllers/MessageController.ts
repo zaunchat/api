@@ -1,7 +1,7 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { HTTPError } from '../errors'
-import { CreateMessageSchema, Channel, Message } from '../structures'
+import { CreateMessageSchema, Message } from '../structures'
 import { is, Permissions } from '../utils'
 import config from '../config'
 
