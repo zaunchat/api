@@ -29,8 +29,13 @@ export class Member extends Base {
     nickname?: string
     joined_at = Date.now()
     server_id!: ID
+    roles: ID[] = []
 
-	static find: (statement: string, select?: (keyof Member)[], limit?: number) => Promise<Member[]>
+    fetchRoles(): Promise<Role[]> {
+        return Role.find(`id IN (${this.roles})`)
+    }
+
+    static find: (statement: string, select?: (keyof Member)[], limit?: number) => Promise<Member[]>
     static from: (opts: CreateMemberOptions) => Member
 
     static async findOne(statement: string, select?: (keyof Member)[]): Promise<Member> {
@@ -41,12 +46,14 @@ export class Member extends Base {
         throw new HTTPError('UNKNOWN_MEMBER')
     }
 
+
     static async init(): Promise<void> {
         await sql`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             joined_at TIMESTAMP DEFAULT current_timestamp,
             nickname VARCHAR(32),
             server_id BIGINT NOT NULL,
+            roles JSON NOT NULL,
             FOREIGN KEY (server_id) REFERENCES servers(id)
             FOREIGN KEY (id) REFERENCES users(id)
         )`

@@ -36,13 +36,18 @@ export class ServerChannelController {
 	async create(req: Request, res: Response): Promise<void> {
 		req.check(CreateTextChannelSchema)
 
-		const channelCount = await Channel.count(`server_id = ${req.params.server_id}`)
+		const server_id = req.params.server_id as ID
+
+		const channelCount = await Channel.count(`server_id = ${server_id}`)
 
 		if (channelCount >= config.limits.server.channels) {
 			throw new HTTPError('MAXIMUM_CHANNELS')
 		}
 
-		const permissions = await Permissions.fetch(req.user, server)
+		const permissions = await Permissions.fetch({
+			user: req.user,
+			server: server_id
+		})
 
 		if (!permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)) {
 			throw new HTTPError('MISSING_PERMISSIONS')
@@ -50,7 +55,7 @@ export class ServerChannelController {
 
 		const channel = await Channel.from({
 			...req.body,
-			server: server,
+			server_id: server_id,
 			type: ChannelTypes.TEXT // TODO: Add category type
 		}).save()
 
@@ -60,8 +65,14 @@ export class ServerChannelController {
 	@web.route('delete', '/:channel_id')
 	async delete(req: Request, res: Response): Promise<void> {
 		const { server_id, channel_id } = req.params
+		
 		const channel = await Channel.findOne(`id = ${channel_id} AND server_id = ${server_id}`)
-		const permissions = await Permissions.fetch(req.user, req.server)
+		
+		const permissions = await Permissions.fetch({
+			user: req.user,
+			server: server_id as ID,
+			channel
+		})
 
 		if (!permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)) {
 			throw new HTTPError('MISSING_PERMISSIONS')

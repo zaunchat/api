@@ -83,7 +83,10 @@ export class ChannelController {
             throw new HTTPError('UNKNOWN_MEMBER')
         }
 
-        const permissions = await Permissions.fetch(req.user, null, group)
+        const permissions = await Permissions.fetch({
+            user: req.user,
+            channel: group
+        })
 
         if (!permissions.has('KICK_MEMBERS')) {
             throw new HTTPError('MISSING_PERMISSIONS')

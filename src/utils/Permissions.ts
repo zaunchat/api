@@ -1,8 +1,15 @@
-import { ChannelTypes, DMChannel, Group, Member, Server, TextChannel, User, Category } from '../structures'
+import { is } from '.'
+import { ChannelTypes, DMChannel, Group, Member, Server, TextChannel, User, Category, Channel } from '../structures'
 import { BitField } from './BitField'
 
 export type PermissionString = keyof typeof FLAGS
 export type PermissionsResolvable = number | Permissions | PermissionString | PermissionsResolvable[]
+
+export interface FetchPermissionsOptions {
+    user: User
+    channel?: Channel | ID
+    server?: Server | ID
+}
 
 const FLAGS = {
     // Admin
@@ -49,26 +56,25 @@ export class Permissions extends BitField {
         super(bits)
     }
 
-    static async fetch(user: User | string, server?: Server | string | null, channel?: DMChannel | Group | TextChannel | Category): Promise<Permissions> {
-        user = typeof user === 'string' ? await User.findOne(`id = ${user}`) as User : user
+    static async fetch({ user, server, channel }: FetchPermissionsOptions): Promise<Permissions> {
+        if (is.snowflake(user)) user = await User.findOne(`id = ${user}`)
+        if (is.snowflake(server)) server = await Server.findOne(`id = ${server}`)
+        if (is.snowflake(channel)) channel = await Channel.findOne(`id = ${channel}`)
 
         const permissions = new Permissions()
 
-
         if (server) {
-            let member: Member
+            const member = await Member.findOne(`id = ${user.id}`)
 
-            [member, server] = await Promise.all([
-                Member.findOne({ id: typeof user === 'string' ? user : user.id }),
-                typeof server === 'string' ? Server.findOne({ id: server }) : server,
-            ]) as [Member, Server]
-
-            if (member.id === server.owner.id) {
+            if (member.id === server.owner_id) {
                 return permissions.add(Permissions.FLAGS.ADMINISTRATOR)
             } else {
-                permissions.add(server.permissions)
-                for (const role of server.roles.getItems()) {
-                    if (member.roles.contains(role)) permissions.add(role.permissions)
+                permissions.add(server.permissions) // Add default @everyone permissions.
+                
+                const roles = await server.fetchRoles()
+
+                for (const role of roles) {
+                    if (member.roles.includes(role.id)) permissions.add(role.permissions)
                 }
             }
         }
@@ -80,14 +86,14 @@ export class Permissions extends BitField {
         if (channel) {
             switch (channel.type) {
                 case ChannelTypes.GROUP:
-                    if (channel.owner.id === user.id) {
+                    if (channel.owner_id === user.id) {
                         permissions.add(Permissions.FLAGS.ADMINISTRATOR)
-                    } else if (channel.recipients.contains(user)) {
+                    } else if (channel.recipients?.includes(user.id)) {
                         permissions.add(channel.permissions)
                     }
                     break
                 case ChannelTypes.DM:
-                    if (channel.recipients.contains(user)) permissions.add(DEFAULT_PERMISSION_DM)
+                    if (channel.recipients?.includes(user.id)) permissions.add(DEFAULT_PERMISSION_DM)
                     break
                 case ChannelTypes.TEXT:
                 case ChannelTypes.CATEGORY:

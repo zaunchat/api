@@ -10,8 +10,10 @@ import config from '../config'
 export class MessageController {
     @web.use()
     async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
-        const channel = await Channel.findOne(`id = ${req.params.channel_id}`)
-        const permissions = await Permissions.fetch(req.user, null, channel)
+        const permissions = await Permissions.fetch({
+            user: req.user,
+            channel: req.params.channel_id as ID
+        })
 
         if (!permissions.has(Permissions.FLAGS.VIEW_CHANNEL)) {
             throw new HTTPError('MISSING_PERMISSIONS')
@@ -20,9 +22,6 @@ export class MessageController {
         Object.defineProperties(req, {
             permissions: {
                 value: permissions
-            },
-            channel: {
-                value: channel
             }
         })
 

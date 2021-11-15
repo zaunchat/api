@@ -3,8 +3,6 @@ import { Response, Request } from '@tinyhttp/app'
 import { Server, Channel, CreateServerSchema, Member, ChannelTypes } from '../../structures'
 import { HTTPError } from '../../errors'
 import config from '../../config'
-import db from '../../database'
-
 
 @web.basePath('/servers')
 export class ServerController {
@@ -37,44 +35,39 @@ export class ServerController {
     async create(req: Request, res: Response): Promise<void> {
         req.check(CreateServerSchema)
 
-        if (req.user.servers.count() >= config.limits.user.servers) {
+        const serverCount = await Member.count(`id = ${req.user.id}`)
+
+        if (serverCount >= config.limits.user.servers) {
             throw new HTTPError('MAXIMUM_SERVERS')
         }
 
         const server = Server.from({
             ...req.body,
-            owner: req.user
-        })
-
-        const chat = Channel.from({
-            type: ChannelTypes.TEXT,
-            server,
-            name: 'general'
+            owner_id: req.user.id
         })
 
         const category = Channel.from({
             type: ChannelTypes.CATEGORY,
-            name: 'General',
-            server,
-            channels: [chat.id]
+            server_id: server.id,
+            name: 'General'
+        })
+
+        const chat = Channel.from({
+            type: ChannelTypes.TEXT,
+            server_id: server.id,
+            name: 'general',
+            parents: [category.id]
         })
 
         const member = Member.from({
             id: req.user.id,
-            server
+            server_id: server.id
         })
 
-        const user = req.user
-
-        user.servers.add(server)
-
-        await db.save([
-            server,
-            chat,
-            category,
-            member,
-            user
-        ])
+        await server.save()
+        await chat.save()
+        await category.save()
+        await member.save()
 
         res.json(server)
     }

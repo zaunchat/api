@@ -33,7 +33,7 @@ export class AccountController {
 			user_id: user.id
 		})
 
-		// TODO: Insert session to db
+		await session.save()
 
 		res.json({
 			token: session.token,

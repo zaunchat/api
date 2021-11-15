@@ -42,7 +42,10 @@ export class ServerRoleController {
 			throw new HTTPError('MAXIMUM_ROLES')
 		}
 
-		const permissions = await Permissions.fetch(req.user, server)
+		const permissions = await Permissions.fetch({
+			user: req.user,
+			server: req.params.server_id as ID
+		})
 
 		if (!permissions.has(Permissions.FLAGS.MANAGE_ROLES)) {
 			throw new HTTPError('MISSING_PERMISSIONS')

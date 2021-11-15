@@ -1,6 +1,6 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { Member, CreateMemberSchema } from '../../structures'
+import { Member, CreateMemberSchema, Role } from '../../structures'
 import { HTTPError } from '../../errors'
 import { Permissions } from '../../utils'
 
@@ -21,7 +21,7 @@ export class ServerMemberController {
 	@web.get('/')
 	async fetchMany(req: Request, res: Response): Promise<void> {
 		const limit = 1000 // TODO: Add Limit option
-		const members = await Member.find(`server_id = ${req.params.server_id}`, '*', limit)
+		const members = await Member.find(`server_id = ${req.params.server_id}`, undefined, limit)
 		res.json(members)
 	}
 
@@ -43,16 +43,13 @@ export class ServerMemberController {
 		req.check(CreateMemberSchema)
 
 		const { server_id, member_id } = req.params as Record<string, ID>
-
 		const member = await Member.findOne(`id = ${member_id} AND server_id = ${server_id}`)
+		const permissions = await Permissions.fetch({
+			user: req.user,
+			server: server_id
+		})
 
-		if (!member) {
-			throw new HTTPError('UNKNOWN_MEMBER')
-		}
-
-		const server = req.server
-		const permissions = await Permissions.fetch(req.user, server)
-
+		const updated: Record<string, unknown> = {}
 
 		if ('nickname' in req.body) {
 			if (req.user.id === member.id) {
@@ -60,24 +57,26 @@ export class ServerMemberController {
 			} else {
 				if (!permissions.has(Permissions.FLAGS.MANAGE_NICKNAMES)) throw new HTTPError('MISSING_PERMISSIONS')
 			}
-			member.nickname = req.body.nickname ? req.body.nickname : void 0
+			updated.nickname = req.body.nickname ? req.body.nickname : void 0
 		}
 
 		if (req.body.roles) {
 			if (!permissions.has(Permissions.FLAGS.MANAGE_ROLES)) throw new HTTPError('MISSING_PERMISSIONS')
 
-			const roles = server.roles.getItems()
+			const roles = await Role.find(`server_id = ${req.params.server_id}`)
 
-			member.roles.removeAll()
+			updated.roles = []
 
-			for (const role_id of req.body.roles) {
-				const role = roles.find(r => r.id === role_id)
-				if (!role) throw new HTTPError('UNKNOWN_ROLE')
-				member.roles.add(role)
+			for (const roleId of req.body.roles) {
+				const role = roles.find(r => r.id === roleId)
+				
+				if (!role) throw new HTTPError('UNKNOWN_ROLE');
+
+				(<string[]>updated.roles).push(role.id)
 			}
 		}
 
-		await member.save()
+		await member.update(updated)
 
 		res.json(member)
 	}
@@ -87,8 +86,11 @@ export class ServerMemberController {
 		const { server_id, member_id } = req.params as Record<string, ID>
 
 		if (member_id !== req.user.id) {
-			const permissions = await Permissions.fetch(req.user, server_id)
-			
+			const permissions = await Permissions.fetch({
+				user: req.user,
+				server: server_id
+			})
+
 			if (!permissions.has(Permissions.FLAGS.KICK_MEMBERS)) {
 				throw new HTTPError('MISSING_PERMISSIONS')
 			}

@@ -36,16 +36,23 @@ export class ServerInviteController {
 	@web.post('/:channel_id')
 	async create(req: Request, res: Response): Promise<void> {
 		const channel = await Channel.findOne(`id = ${req.params.channel_id}`)
-		const permissions = await Permissions.fetch(req.user, req.server, channel)
+		const permissions = await Permissions.fetch({
+			user: req.user,
+			server: req.params.server_id as ID,
+			channel
+		})
 
 		if (!permissions.has(Permissions.FLAGS.INVITE_OTHERS)) {
 			throw new HTTPError('MISSING_PERMISSIONS')
 		}
 
-		const invite = await Invite.from({
-			inviter: req.user,
-			channel
-		}).save()
+		const invite = Invite.from({
+			inviter_id: req.user.id,
+			channel_id: channel.id,
+			server_id: req.params.server_id as ID
+		})
+
+		await invite.save()
 
 		res.json({ code: invite.code })
 	}
