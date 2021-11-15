@@ -1,6 +1,5 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-
 import { HTTPError } from '../errors'
 import { CreateMessageSchema, Channel, Message } from '../structures'
 import { is, Permissions } from '../utils'
@@ -11,14 +10,7 @@ import config from '../config'
 export class MessageController {
     @web.use()
     async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
-        const channel = await Channel.findOne({
-            id: req.params.channel_id
-        })
-
-        if (!channel) {
-            throw new HTTPError('UNKNOWN_CHANNEL')
-        }
-
+        const channel = await Channel.findOne(`id = ${req.params.channel_id}`)
         const permissions = await Permissions.fetch(req.user, null, channel)
 
         if (!permissions.has(Permissions.FLAGS.VIEW_CHANNEL)) {
@@ -47,8 +39,8 @@ export class MessageController {
 
         const message = Message.from({
             ...req.body,
-            author: req.user,
-            channel: req.channel
+            author_id: req.user.id,
+            channel_id: req.params.channel_id
         })
 
         if (message.isEmpty()) {
@@ -79,39 +71,28 @@ export class MessageController {
         }
 
         const {
-            limit = 50,
             before,
             after,
             around
         } = req.query
 
-        if (isNaN(Number(limit)) || limit > 100) {
+        const limit = Number(req.query.limit ?? 50)
+
+        if (isNaN(limit) || limit > 100 || limit < 0) {
             throw new HTTPError('MISSING_ACCESS')
         }
 
-        const options: FilterQuery<Message> = {
-            channel: {
-                id: req.params.channel_id
-            }
+        const filter = [`channel_id = ${req.params.id}`]
+
+        if (is.snowflake(around)) {
+            filter.push(`id >= ${around}`)
+            filter.push(`id <= ${around}`)
+        } else {
+            if (is.snowflake(after)) filter.push(`id > ${after}`)
+            if (is.snowflake(before)) filter.push(`id < ${before}`)
         }
 
-        if (is.snowflake(around)) options.id = {
-            $or: [{
-                $gte: around
-            }, {
-                $lt: around
-            }]
-        }
-
-        if (is.snowflake(after)) options.id = {
-            $gt: after
-        }
-
-        if (is.snowflake(before)) options.id = {
-            $lt: before
-        }
-
-        const messages = await Message.find(options, { limit: Number(limit) })
+        const messages = await Message.find(filter.join(' AND '), undefined, limit)
 
         res.json(messages)
     }
@@ -123,16 +104,8 @@ export class MessageController {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 
-        const message = await Message.findOne({
-            id: req.params.message_id,
-            channel: {
-                id: req.params.channel_id
-            }
-        })
-
-        if (!message) {
-            throw new HTTPError('UNKNOWN_MESSAGE')
-        }
+        const { message_id, channel_id } = req.params
+        const message = await Message.findOne(`id = ${message_id} AND channel_id = ${channel_id}`)
 
         res.json(message)
     }
@@ -141,40 +114,24 @@ export class MessageController {
     async edit(req: Request, res: Response): Promise<void> {
         req.check(CreateMessageSchema)
 
-        const message = await Message.findOne({
-            id: req.params.message_id,
-            channel: {
-                id: req.params.channel_id
-            }
-        })
+        const { message_id, channel_id } = req.params
+        const message = await Message.findOne(`id = ${message_id} AND channel_id = ${channel_id}`)
 
-        if (!message) {
-            throw new HTTPError('UNKNOWN_MESSAGE')
-        }
-
-        if (message.author.id !== req.user.id) {
+        if (message.author_id !== req.user.id) {
             throw new HTTPError('CANNOT_EDIT_MESSAGE_BY_OTHER')
         }
 
-        await message.save(req.body)
+        await message.update(req.body)
 
         res.json(message)
     }
 
     @web.route('delete', '/:message_id')
     async delete(req: Request, res: Response): Promise<void> {
-        const message = await Message.findOne({
-            id: req.params.message_id,
-            channel: {
-                id: req.params.channel_id
-            }
-        })
+        const { message_id, channel_id } = req.params
+        const message = await Message.findOne(`id = ${message_id} AND channel_id = ${channel_id}`)
 
-        if (!message) {
-            throw new HTTPError('UNKNOWN_MESSAGE')
-        }
-
-        if (message.author.id !== req.user.id && !req.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) {
+        if (message.author_id !== req.user.id && !req.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) {
             throw new HTTPError('MISSING_PERMISSIONS')
         }
 

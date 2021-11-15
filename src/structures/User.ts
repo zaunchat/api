@@ -1,17 +1,16 @@
-import { Base, Session, Member } from '.'
+import { Base, Session, Member, Server } from '.'
 import { validator } from '../utils'
 import sql from '../database'
 import config from '../config'
+import { HTTPError } from '../errors'
 
-
-export enum RelationshipStatus {
-    FRIEND,
-    OUTGOING,
-    IN_COMING,
-    BLOCKED,
-    BLOCKED_OTHER
-}
-
+export const PUBLIC_USER_PROPS = [
+    'id',
+    'username',
+    'presence',
+    'badges',
+    'avatar'
+]
 
 export interface CreateUserOptions extends Partial<User> {
     username: string
@@ -52,12 +51,25 @@ export interface Presence {
     status: PresenceStatus
 }
 
+export interface Relationship {
+    id: ID,
+    status: RelationshipStatus
+}
+
 export enum PresenceStatus {
     ONLINE,
     OFFLINE,
     IDLE,
     DND
-} Member
+}
+
+export enum RelationshipStatus {
+    FRIEND,
+    OUTGOING,
+    IN_COMING,
+    BLOCKED,
+    BLOCKED_OTHER
+}
 
 
 export class User extends Base {
@@ -65,28 +77,33 @@ export class User extends Base {
     password!: string
     email!: string
     presence = { status: PresenceStatus.OFFLINE } as Presence
+    relations: Relationship[] = []
     badges = 0
     avatar?: string
+    verified = false
 
-    async fetchServers(): Promise<ID[]> {
-        const res = await sql<Member[]>`SELECT * FROM members WHERE id = ${this.id} RETURNING server_id`
-        return res.map((m) => m.server_id)
+    static find: (statement: string, select?: (keyof User)[], limit?: number) => Promise<User[]>
+    static from: (opts: CreateUserOptions) => User
+    static async findOne(statement: string, select?: (keyof User)[]): Promise<User> {
+        const result = await super.findOne(statement, select)
+
+        if (result) return result as User
+
+        throw new HTTPError('UNKNOWN_USER')
     }
 
-    async fetchSessions(): Promise<Session[]> {
-        const res = await sql<Session[]>`SELECT * FROM sessions WHERE user_id = ${this.id}`
-        return res
+    fetchServers(): Promise<Server[]> {
+        return sql`SELECT * FROM servers WHERE id IN (
+            SELECT server_id FROM members WHERE id = ${this.id}
+        )`.then(res => res.map((m) => m.server_id))
     }
 
-    // TODO:
-    //  async fetchRelations(): Promise<unknown[]> {}
+    fetchSessions(): Promise<Session[]> {
+        return sql<Session[]>`SELECT * FROM sessions WHERE user_id = ${this.id}`.then(res => res.map(Session.from))
+    }
 
-    static async fetchOne(id: ID): Promise<User | null> {
-        const [user]: [User?] = await sql`SELECT * FROM users WHERE id = ${id}`
-
-        if (!user) return null
-
-        return User.from(user)
+    fetchRelations(): Promise<User[]> {
+        return sql<User[]>`SELECT * FROM users WHERE id IN (${[...this.relations.keys()]})`.then(res => res.map(User.from))
     }
 
     static async fetchByToken(token: string): Promise<User | null> {
@@ -100,12 +117,8 @@ export class User extends Base {
         return User.from(user)
     }
 
-    static from(opts: CreateUserOptions): User {
-        return Object.assign(opts, new User())
-    }
-
-    static toSQL() {
-        return `CREATE TABLE IF NOT EXISTS users (
+    static async init(): Promise<void> {
+        await sql`CREATE TABLE IF NOT EXISTS users (
             id BIGINT PRIMARY KEY,
             username VARCHAR(${config.limits.user.username}) NOT NULL,
             password VARCHAR(32) NOT NULL,
@@ -113,6 +126,7 @@ export class User extends Base {
             avatar VARCHAR(64),
             badges INTEGER DEFAULT 0,
             presence JSON NOT NULL,
+            relations JSON NOT NULL,
             verified BOOLEAN DEFAULT FALSE
         )`
     }

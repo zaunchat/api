@@ -2,6 +2,7 @@ import { Base, Role, Server } from '.'
 import { validator } from '../utils'
 import sql from '../database'
 import config from '../config'
+import { HTTPError } from '../errors'
 
 export interface CreateMemberOptions extends Partial<Member> {
     id: ID
@@ -26,15 +27,22 @@ export const CreateMemberSchema = validator.compile({
 
 export class Member extends Base {
     nickname?: string
-    joined_timestamp = Date.now()
+    joined_at = Date.now()
     server_id!: ID
 
-    static from(opts: CreateMemberOptions): Member {
-        return Object.assign(opts, new Member())
+	static find: (statement: string, select?: (keyof Member)[], limit?: number) => Promise<Member[]>
+    static from: (opts: CreateMemberOptions) => Member
+
+    static async findOne(statement: string, select?: (keyof Member)[]): Promise<Member> {
+        const result = await super.findOne(statement, select)
+
+        if (result) return result as Member
+
+        throw new HTTPError('UNKNOWN_MEMBER')
     }
 
-    static toSQL(): string {
-        return `CREATE TABLE IF NOT EXISTS members (
+    static async init(): Promise<void> {
+        await sql`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             joined_at TIMESTAMP DEFAULT current_timestamp,
             nickname VARCHAR(32),

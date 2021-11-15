@@ -50,7 +50,7 @@ export class Permissions extends BitField {
     }
 
     static async fetch(user: User | string, server?: Server | string | null, channel?: DMChannel | Group | TextChannel | Category): Promise<Permissions> {
-        user = typeof user === 'string' ? await User.findOne({ id: user as ID }) as User : user
+        user = typeof user === 'string' ? await User.findOne(`id = ${user}`) as User : user
 
         const permissions = new Permissions()
 

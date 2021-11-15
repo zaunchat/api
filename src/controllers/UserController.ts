@@ -1,6 +1,6 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { Channel, ChannelTypes, RelationshipStatus, User } from '../structures'
+import { Channel, ChannelTypes, PUBLIC_USER_PROPS, RelationshipStatus, User } from '../structures'
 import { HTTPError } from '../errors'
 
 
@@ -8,54 +8,30 @@ import { HTTPError } from '../errors'
 export class UserController {
     @web.get('/:user_id')
     async fetchOne(req: Request, res: Response): Promise<void> {
-        const user = await User.findOne({ id: req.params.user_id }, { public: true })
-
-        if (!user) {
-            throw new HTTPError('UNKNOWN_USER')
-        }
-
+        const user = await User.findOne(`id = ${req.params.user_id}`)
         res.json(user)
     }
 
     @web.get('/@me/relationships')
     async fetchRelationships(req: Request, res: Response): Promise<void> {
-        const relationships = await User.find({
-            id: {
-                $in: Array.from(req.user.relations.keys())
-            }
-        }, {
-            public: true
-        })
-
+        const relationships = await User.find(`id IN (${[...req.user.relations.keys()]})`, PUBLIC_USER_PROPS)
         res.json(relationships)
     }
 
     @web.get('/:user_id/dm')
     async openDM(req: Request, res: Response): Promise<void> {
         const { user_id } = req.params as Record<string, ID>
-
-        const target = await User.findOne({
-            id: user_id
-        })
-
-        if (!target) {
-            throw new HTTPError('UNKNOWN_USER')
-        }
-
-        const exists = await Channel.findOne({
-            type: ChannelTypes.DM,
-            recipients: user_id
-        })
+        const target = await User.findOne(`id = ${user_id}`)
+        const exists = await Channel.findOne(`type = ${ChannelTypes.DM} AND recipients::jsonb ? ${user_id}`).catch(() => null)
 
         if (exists) {
             return void res.json(exists)
         }
 
         const dm = Channel.from({
-            type: ChannelTypes.DM
+            type: ChannelTypes.DM,
+            recipients: [req.user.id, target.id]
         })
-
-        dm.recipients.add(req.user, target)
 
         await dm.save()
 
@@ -67,62 +43,60 @@ export class UserController {
     async friend(req: Request, res: Response): Promise<void> {
         const { user_id } = req.params
 
-        if (user_id === req.user.id || user_id === '@me') {
+        if (user_id === req.user.id) {
             throw new HTTPError('MISSING_ACCESS')
         }
 
-        const target = await User.findOne({
-            id: user_id
-        }), user = req.user
+        const target = await User.findOne(`id = ${user_id}`)
+        const user = req.user
 
-        if (!target) {
-            throw new HTTPError('UNKNOWN_USER')
+        switch (user.relations.find((r) => r.id === target.id)?.status) {
+            case RelationshipStatus.FRIEND: throw new HTTPError('ALREADY_FRIENDS')
+            case RelationshipStatus.OUTGOING: throw new HTTPError('ALREADY_SENT_REQUEST')
+            case RelationshipStatus.BLOCKED: throw new HTTPError('BLOCKED')
+            case RelationshipStatus.BLOCKED_OTHER: throw new HTTPError('BLOCKED_BY_OTHER')
+            case RelationshipStatus.IN_COMING: {
+                // User = Friend
+                // Target = Friend
+                // TODO: Unknown
+                break
+            }
+            default: {
+                // User = Outgoing
+                // Target = IN_COMING
+                break
+            }
         }
 
-        const panding = target.relations.get(user.id) === RelationshipStatus.IN_COMING && user.relations.get(target.id) === RelationshipStatus.OUTGOING
-        let status: RelationshipStatus
+        await Promise.all([
+            target.update({}),
+            user.update({})
+        ])
 
-        if (panding) {
-            status = RelationshipStatus.FRIEND
-            target.relations.set(req.user.id, RelationshipStatus.FRIEND)
-            user.relations.set(target.id, RelationshipStatus.FRIEND)
-        } else {
-            status = RelationshipStatus.IN_COMING
-            target.relations.set(req.user.id, RelationshipStatus.OUTGOING)
-            user.relations.set(target.id, RelationshipStatus.IN_COMING)
-        }
-
-        await Promise.all([target.save(), user.save()])
-
-        res.json({ status })
+        res.json({ status: null })
     }
 
     @web.route('delete', '/:user_id/friend')
     async unfriend(req: Request, res: Response): Promise<void> {
         const { user_id } = req.params
 
-        if (user_id === req.user.id || user_id === '@me') {
+        if (user_id === req.user.id) {
             throw new HTTPError('MISSING_ACCESS')
         }
 
-        const target = await User.findOne({
-            id: user_id
-        })
+        const target = await User.findOne(`id = ${user_id}`)
 
-        if (!target) {
-            throw new HTTPError('UNKNOWN_USER')
-        }
-
-        if (!req.user.relations.has(target.id)) {
+        if (!req.user.relations.some(r => r.id === target.id)) {
             return void res.json({ status: null })
         }
 
-        req.user.relations.delete(target.id)
-        target.relations.delete(req.user.id)
-
         await Promise.all([
-            target.save(),
-            req.user.save()
+            target.update({
+                relations: target.relations.filter((c) => !(c.status === RelationshipStatus.BLOCKED && c.id === req.user.id))
+            }),
+            req.user.update({
+                relations: req.user.relations.filter((c) => !(c.status === RelationshipStatus.FRIEND && c.id === target.id))
+            })
         ])
 
         return void res.json({ status: null })
@@ -132,18 +106,11 @@ export class UserController {
     async block(req: Request, res: Response): Promise<void> {
         const { user_id } = req.params
 
-        if (user_id === req.user.id || user_id === '@me') {
+        if (user_id === req.user.id) {
             throw new HTTPError('MISSING_ACCESS')
         }
 
-        const target = await User.findOne({
-            id: user_id
-        })
-
-        if (!target) {
-            throw new HTTPError('UNKNOWN_USER')
-        }
-
+        const target = await User.findOne(`id = ${user_id}`)
         const alreadyBlocked = req.user.relations.get(target.id) === RelationshipStatus.BLOCKED
 
         if (alreadyBlocked) {
@@ -151,10 +118,10 @@ export class UserController {
         }
 
         await Promise.all([
-            req.user.save({
+            req.user.update({
                 relations: req.user.relations.set(target.id, RelationshipStatus.BLOCKED)
             }),
-            target.save({
+            target.update({
                 relations: target.relations.set(req.user.id, RelationshipStatus.BLOCKED_OTHER)
             })
         ])
@@ -166,21 +133,19 @@ export class UserController {
     async unblock(req: Request, res: Response): Promise<void> {
         const { user_id } = req.params
 
-        if (user_id === req.user.id || user_id === '@me') {
+        if (user_id === req.user.id) {
             throw new HTTPError('MISSING_ACCESS')
         }
 
-        const target = await User.findOne({
-            id: user_id
-        })
+        const target = await User.findOne(`id = ${user_id}`)
 
         if (!target) {
             throw new HTTPError('UNKNOWN_USER')
         }
 
-        req.user.relations.delete(target.id)
-
-        await req.user.save()
+        await req.user.update({
+            relations: req.user.relations.filter((c) => c.status === RelationshipStatus.BLOCKED && c.id === target.id)
+        })
 
         res.json({ status: null })
     }

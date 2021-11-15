@@ -1,6 +1,7 @@
 import { Base } from './Base'
 import { nanoid } from 'nanoid'
 import sql from '../database'
+import { HTTPError } from '../errors'
 
 export interface CreateSessionOptions extends Partial<Session> {
     user_id: ID
@@ -12,20 +13,22 @@ interface DeviceInfo {
 
 export class Session extends Base {
     token = nanoid(64)
-    user_id!: string
+    user_id!: ID
     info!: DeviceInfo
 
-    static from(opts: CreateSessionOptions): Session {
-        return Object.assign(opts, new Session())
+    static find: (statement: string, select?: (keyof Session)[], limit?: number) => Promise<Session[]>
+    static from: (opts: CreateSessionOptions) => Session
+
+    static async findOne(statement: string, select?: (keyof Session)[]): Promise<Session> {
+        const result = await super.findOne(statement, select)
+
+        if (result) return result as Session
+
+        throw new HTTPError('UNKNOWN_SESSION')
     }
 
-    static async fetchOneByToken(token: string): Promise<Session> {
-        const res = await sql<Session[]>`SELECT * FROM sessions WHERE token = ${token}`
-        return res[0]
-    }
-
-    static toSQL(): string {
-        return `CREATE TABLE IF NOT EXISTS sessions (
+    static async init(): Promise<void> {
+        await sql`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             token VARCHAR(64) NOT NULL,
             user_id BIGINT NOT NULL,

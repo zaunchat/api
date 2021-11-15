@@ -2,6 +2,7 @@ import { Base, User, Server } from '.'
 import { DEFAULT_PERMISSION_DM, validator } from '../utils'
 import sql from '../database'
 import config from '../config'
+import { HTTPError } from '../errors'
 
 export enum ChannelTypes {
     DM,
@@ -35,6 +36,7 @@ export interface Group extends Channel {
     name: string
     owner_id: ID
     permissions: number
+    recipients: ID[]
 }
 
 export interface TextChannel extends Channel {
@@ -97,14 +99,35 @@ export class Channel extends Base {
     icon?: string
     permissions = DEFAULT_PERMISSION_DM
     parents?: ID[]
-    static toSQL(): string {
-        return `CREATE TABLE IF NOT EXISTS channels (
+    recipients?: ID[]
+
+
+    static from(opts: { type: ChannelTypes.TEXT } & Partial<TextChannel>): TextChannel
+    static from(opts: { type: ChannelTypes.DM } & Partial<DMChannel>): DMChannel
+    static from(opts: { type: ChannelTypes.CATEGORY } & Partial<Category>): Category
+    static from(opts: { type: ChannelTypes.GROUP } & Partial<Group>): Group
+    static from(opts: Partial<Channel>): Channel {
+        return Object.assign(new Channel(), opts)
+    }
+
+    static async findOne(statement: string, select?: (keyof Channel)[]): Promise<Channel> {
+        const result = await super.findOne(statement, select)
+
+        if (result) return result as Channel
+
+        throw new HTTPError('UNKNOWN_CHANNEL')
+    }
+
+
+    static async init(): Promise<void> {
+        await sql`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             type INTEGER NOT NULL,
             name VARCHAR(${config.limits.channel.name}),
             topic VARCHAR(${config.limits.channel.topic}),
             permissions BIGINT DEFAULT 0,
             overwrites JSON,
+            recipients JSON,
             parents JSON,
             owner_id BIGINT,
             server_id BIGINT,

@@ -10,33 +10,20 @@ import db from '../../database'
 export class ServerController {
     @web.get('/')
     async fetchMany(req: Request, res: Response): Promise<void> {
-        res.json(req.user.servers.getItems())
+        res.json(await req.user.fetchServers())
     }
 
     @web.get('/:server_id')
     async fetchOne(req: Request, res: Response): Promise<void> {
-        const server = req.user.servers.getItems().find((s) => {
-            return s.id === req.params.server_id
-        })
-
-        if (!server) {
-            throw new HTTPError('UNKNOWN_SERVER')
-        }
-
+        const server = await Server.findOne(`id = ${req.params.server_id}`)
         res.json(server)
     }
 
     @web.route('delete', '/:server_id')
     async delete(req: Request, res: Response): Promise<void> {
-        const server = req.user.servers.getItems().find((s) => {
-            return s.id === req.params.server_id
-        })
+        const server = await Server.findOne(`id = ${req.params.server_id}`)
 
-        if (!server) {
-            throw new HTTPError('UNKNOWN_SERVER')
-        }
-
-        if (req.user.id !== server.owner.id) {
+        if (req.user.id !== server.owner_id) {
             throw new HTTPError('MISSING_ACCESS')
         }
 

@@ -1,6 +1,8 @@
 import Server from './server'
 import config from './config'
+import migrations from './database/migrations'
 import * as extensions from './extensions'
+
 
 export const server = new Server({
 	port: config.port,
@@ -13,7 +15,7 @@ export const server = new Server({
 		channels: '5/5s',
 		users: '5/5s'
 	},
-	extensions: (req, res) => {
+	extensions(req, res) {
 		extensions.check(req, res)
 	}
 });
@@ -22,6 +24,10 @@ export const server = new Server({
 	console.log('Initialling the server...')
 
 	await server.init()
+
+	console.log('Initialling the database...')
+
+	await migrations.run()
 
 	await server.listen()
 
@@ -34,5 +40,5 @@ export const server = new Server({
 
 
 process
-	.on('unhandledRejection', err => console.error(err))
+	.on('unhandledRejection', console.error)
 	.on('uncaughtException', console.error)

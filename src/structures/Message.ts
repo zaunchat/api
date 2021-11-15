@@ -2,6 +2,7 @@ import { Base } from './Base'
 import { validator } from '../utils'
 import sql from '../database'
 import config from '../config'
+import { HTTPError } from '../errors'
 
 export interface CreateMessageOptions extends Partial<Message> {
     author_id: ID
@@ -49,12 +50,19 @@ export class Message extends Base {
         return !this.content?.length && !this.attachments.length
     }
 
-    static from(opts: CreateMessageOptions): Message {
-        return Object.assign(opts, new Message())
+    static find: (statement: string, select?: (keyof Message)[], limit?: number) => Promise<Message[]>
+    static from: (opts: CreateMessageOptions) => Message
+
+    static async findOne(statement: string, select?: (keyof Message)[]): Promise<Message> {
+        const result = await super.findOne(statement, select)
+
+        if (result) return result as Message
+
+        throw new HTTPError('UNKNOWN_MESSAGE')
     }
 
-    static toSQL(): string {
-        return `CREATE TABLE IF NOT EXISTS messages (
+    static async init(): Promise<void> {
+        await sql`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             created_at TIMESTAMP DEFAULT current_timestamp,
             edited_at TIMESTAMP,

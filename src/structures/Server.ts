@@ -2,6 +2,7 @@ import { Base, Role, Channel, Member } from '.'
 import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
 import sql from '../database'
 import config from '../config'
+import { HTTPError } from '../errors'
 
 export interface CreateServerOptions extends Partial<Server> {
     name: string
@@ -41,6 +42,17 @@ export class Server extends Base {
     owner_id!: ID
     permissions = DEFAULT_PERMISSION_EVERYONE
 
+    static find: (statement: string, select?: (keyof Server)[], limit?: number) => Promise<Server[]>
+    static from: (opts: CreateServerOptions) => Server
+    static async findOne(statement: string, select?: (keyof Server)[]): Promise<Server> {
+        const result = await super.findOne(statement, select)
+
+        if (result) return result as Server
+
+        throw new HTTPError('UNKNOWN_SERVER')
+    }
+
+
     fetchMembers(): Promise<Member[]> {
         return sql<Member[]>`SELECT * FROM members WHERE server_id = ${this.id}`.then((m) => m.map(Member.from))
     }
@@ -53,13 +65,8 @@ export class Server extends Base {
         return sql<Channel[]>`SELECT * FROM channels WHERE server_id = ${this.id}`
     }
 
-    static from(opts: CreateServerOptions): Server {
-        return Object.assign(opts, new Server())
-    }
-
-
-    static toSQL(): string {
-        return `CREATE TABLE IF NOT EXISTS servers (
+    static async init(): Promise<void> {
+        await sql`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             name VARCHAR(${config.limits.server.name}) NOT NULL,
             description VARCHAR(${config.limits.server.description}),

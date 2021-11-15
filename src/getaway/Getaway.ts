@@ -83,10 +83,8 @@ export class Getaway {
 
         this.connections.delete(socket.user_id)
 
-        const user = await User.findOne({
-            id: socket.user_id,
-            verified: true
-        })
+
+        const user = await User.findOne(`id = ${socket.user_id} AND verified = TRUE`)
 
         if (!user) return
 
@@ -95,11 +93,10 @@ export class Getaway {
         if (!wasOnline) return
 
         const newPresence = {
-            ghost_mode: user.presence.ghost_mode,
             status: PresenceStatus.OFFLINE
         }
 
-        await user.save({ presence: newPresence })
+        await user.update({ presence: newPresence })
     }
 
     private onError(error: unknown): void {
