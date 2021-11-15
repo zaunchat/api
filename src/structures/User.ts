@@ -3,6 +3,8 @@ import { validator } from '../utils'
 import sql from '../database'
 import config from '../config'
 import { HTTPError } from '../errors'
+import { getaway } from '../getaway'
+
 
 export const PUBLIC_USER_PROPS = [
     'id',
@@ -81,6 +83,18 @@ export class User extends Base {
     badges = 0
     avatar?: string
     verified = false
+
+    static async onUpdate(self: User): Promise<void> {
+        // TODO: Better handling
+        await getaway.publish(self.id, 'USER_UPDATE', {
+			id: self.id,
+			avatar: self.avatar,
+			badges: self.badges,
+			username: self.username,
+			presence: self.presence
+		})
+    }
+    
 
     static find: (statement: string, select?: (keyof User)[], limit?: number) => Promise<User[]>
     static from: (opts: CreateUserOptions) => User

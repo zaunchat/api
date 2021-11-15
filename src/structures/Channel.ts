@@ -3,6 +3,7 @@ import { DEFAULT_PERMISSION_DM, validator } from '../utils'
 import sql from '../database'
 import config from '../config'
 import { HTTPError } from '../errors'
+import { getaway } from '../getaway'
 
 export enum ChannelTypes {
     DM,
@@ -101,6 +102,22 @@ export class Channel extends Base {
     parents?: ID[]
     recipients?: ID[]
 
+
+    static async onCreate(self: Channel): Promise<void> {
+        if (self.recipients) {
+			const recipients = self.recipients
+			await Promise.all(recipients.map((id) => getaway.subscribe(id, [self.id])))
+		}
+		await getaway.publish(self.id, 'CHANNEL_CREATE', self)
+    }
+
+    static async onUpdate(self: Channel): Promise<void> {
+        await getaway.publish(self.id, 'CHANNEL_UPDATE', self)
+    }
+
+    static async onDelete(self: Channel): Promise<void> {
+        await getaway.publish(self.id, 'CHANNEL_DELETE', { id: self.id })
+    }
 
     static from(opts: { type: ChannelTypes.TEXT } & Partial<TextChannel>): TextChannel
     static from(opts: { type: ChannelTypes.DM } & Partial<DMChannel>): DMChannel

@@ -4,6 +4,18 @@ import sql from '../database'
 export abstract class Base {
   readonly id = Snowflake.generate()
 
+  static async onUpdate(self: unknown): Promise<void> {
+    console.warn(`Unhandled method at ${this.tableName}`)
+  }
+
+  static async onCreate(self: unknown): Promise<void> {
+    console.warn(`Unhandled method at ${this.tableName}`)
+  }
+
+  static async onDelete(self: unknown): Promise<void> {
+    console.warn(`Unhandled method at ${this.tableName}`)
+  }
+
   get tableName(): string {
     return `${this.constructor.name.toLowerCase()}s`
   }
@@ -38,15 +50,20 @@ export abstract class Base {
   async save(): Promise<void> {
     // TODO: Insert all keys.
     await sql`INSERT INTO ${this.tableName}`
+    void (this.constructor as any).onCreate(this)
   }
 
   async update(props: Partial<this>): Promise<this> {
     const updated = Object.entries(props).map(([key, value]) => `${key} = ${value}`).join(',')
     const [data] = await sql<unknown[]>`UPDATE ${this.tableName} SET ${updated} WHERE id = ${this.id} RETURNING *`
+
+    void (this.constructor as any).onUpdate(this)
+
     return Object.assign(this, data)
   }
 
   async delete(): Promise<void> {
     await sql`DELETE FROM ${this.tableName} WHERE id = ${this.id}`
+    void (this.constructor as any).onDelete(this)
   }
 }

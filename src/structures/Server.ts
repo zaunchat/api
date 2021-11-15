@@ -3,6 +3,8 @@ import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
 import sql from '../database'
 import config from '../config'
 import { HTTPError } from '../errors'
+import { getaway } from '../getaway'
+
 
 export interface CreateServerOptions extends Partial<Server> {
     name: string
@@ -36,11 +38,29 @@ export const ModifyServerSchema = validator.compile({
 
 export class Server extends Base {
     name!: string
-    description?: string    
+    description?: string
     icon?: string
     banner?: string
     owner_id!: ID
     permissions = DEFAULT_PERMISSION_EVERYONE
+
+    static async onCreate(self: Server): Promise<void> {
+        await getaway.subscribe(self.owner_id, [self.id])
+        await getaway.publish(self.id, 'SERVER_CREATE', self)
+    }
+
+    static async onUpdate(self: Server): Promise<void> {
+        await getaway.publish(self.id, 'SERVER_UPDATE', self)
+    }
+
+    static async onDelete(self: Server): Promise<void> {
+        await getaway.publish(self.id, 'SERVER_DELETE', { id: self.id })
+        await Promise.all([
+            sql`DELETE FROM roles WHERE server_id = ${self.id}`,
+            sql`DELETE FROM channels WHERE server_id = ${self.id}`,
+            sql`DELETE FROM members WHERE server_id = ${self.id}`
+        ])
+    }
 
     static find: (statement: string, select?: (keyof Server)[], limit?: number) => Promise<Server[]>
     static from: (opts: CreateServerOptions) => Server

@@ -3,6 +3,8 @@ import { validator } from '../utils'
 import sql from '../database'
 import config from '../config'
 import { HTTPError } from '../errors'
+import { getaway } from '../getaway'
+
 
 export interface CreateMessageOptions extends Partial<Message> {
     author_id: ID
@@ -45,6 +47,19 @@ export class Message extends Base {
     replies: Reply[] = []
     channel_id!: ID
     author_id!: ID
+
+    static async onCreate(self: Message): Promise<void> {
+		await getaway.publish(self.channel_id, 'MESSAGE_CREATE', self)
+    }
+
+    static async onUpdate(self: Message): Promise<void> {
+        await getaway.publish(self.channel_id, 'MESSAGE_UPDATE', self)
+    }
+
+    static async onDelete(self: Message): Promise<void> {
+        await getaway.publish(self.channel_id, 'MESSAGE_DELETE', { id: self.id })
+    }
+
 
     isEmpty(): boolean {
         return !this.content?.length && !this.attachments.length

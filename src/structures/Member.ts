@@ -3,6 +3,8 @@ import { validator } from '../utils'
 import sql from '../database'
 import config from '../config'
 import { HTTPError } from '../errors'
+import { getaway } from '../getaway'
+
 
 export interface CreateMemberOptions extends Partial<Member> {
     id: ID
@@ -30,6 +32,19 @@ export class Member extends Base {
     joined_at = Date.now()
     server_id!: ID
     roles: ID[] = []
+
+    static async onCreate(self: Member): Promise<void> {
+        await getaway.subscribe(self.id, [self.server_id])
+        await getaway.publish(self.server_id, 'MEMBER_JOIN_SERVER', self)
+    }
+
+    static async onUpdate(self: Member): Promise<void> {
+        await getaway.publish(self.server_id, 'MEMBER_UPDATE', self)
+    }
+
+    static async onDelete(self: Member): Promise<void> {
+        await getaway.publish(self.server_id, 'MEMBER_LEAVE_SERVER', { id: self.id })
+    }
 
     fetchRoles(): Promise<Role[]> {
         return Role.find(`id IN (${this.roles})`)
