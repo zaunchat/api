@@ -29,7 +29,7 @@ export class Invite extends Base {
     }
 
 	static async init(): Promise<void> {
-		await sql`CREATE TABLE IF NOT EXISTS ${this.tableName} (
+		await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
 			id BIGINT PRIMARY KEY,
 			code VARCHAR(8) NOT NULL,
 			uses INTEGER DEFAULT 0,

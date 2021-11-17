@@ -131,9 +131,9 @@ export class User extends Base {
     }
 
     static async init(): Promise<void> {
-        await sql`CREATE TABLE IF NOT EXISTS users (
+        await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
             id BIGINT PRIMARY KEY,
-            username VARCHAR(${config.limits.user.username}) NOT NULL,
+            username VARCHAR(32) NOT NULL,
             password VARCHAR(32) NOT NULL,
             email VARCHAR(255) NOT NULL,
             avatar VARCHAR(64),

@@ -31,32 +31,30 @@ export abstract class Base {
   }
 
   static async count(statement: string): Promise<number> {
-    const result = await sql`SELECT * FROM ${statement} LIMIT = 1000`
+    const result = await sql`SELECT * FROM ${sql(this.tableName)} WHERE ${statement} LIMIT = 1000`
     return result.count
   }
 
-  static async findOne(statement: string, select?: string[]): Promise<unknown | null> {
-    const [data]: [unknown?] = await sql`SELECT ${select ?? '*'} FROM ${this.tableName} WHERE ${statement}`
+  static async findOne(statement: string, select: string[] = ['*']): Promise<unknown | null> {
+    const [data]: [unknown?] = await sql`SELECT ${sql(select)} FROM ${sql(this.tableName)} WHERE ${statement}`
 
     if (!data) return null
 
     return this.from(data)
   }
 
-  static async find(statement: string, select?: string[], limit = 100): Promise<unknown[]> {
-    const data = await sql<unknown[]>`SELECT ${select ?? '*'} FROM ${this.tableName} WHERE ${statement} LIMIT ${limit}`
+  static async find(statement: string, select: string[] = ['*'], limit = 100): Promise<unknown[]> {
+    const data = await sql<unknown[]>`SELECT ${sql(select)} FROM ${sql(this.tableName)} WHERE ${statement} LIMIT ${limit}`
     return data.map(this.from)
   }
 
   async save(): Promise<void> {
-    // TODO: Insert all keys.
-    await sql`INSERT INTO ${this.tableName}`
+    await sql`INSERT INTO ${sql(this.tableName)} ${sql(this)} RETURNING *`
     void (this.constructor as any).onCreate(this)
   }
 
   async update(props: Partial<this>): Promise<this> {
-    const updated = Object.entries(props).map(([key, value]) => `${key} = ${value}`).join(',')
-    const [data] = await sql<unknown[]>`UPDATE ${this.tableName} SET ${updated} WHERE id = ${this.id} RETURNING *`
+    const [data] = await sql<unknown[]>`UPDATE ${sql(this.tableName)} SET ${sql(props)} WHERE id = ${this.id} RETURNING *`
 
     void (this.constructor as any).onUpdate(this)
 
@@ -64,7 +62,7 @@ export abstract class Base {
   }
 
   async delete(): Promise<void> {
-    await sql`DELETE FROM ${this.tableName} WHERE id = ${this.id}`
+    await sql`DELETE FROM ${sql(this.tableName)} WHERE id = ${this.id}`
     void (this.constructor as any).onDelete(this)
   }
 }

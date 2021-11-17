@@ -76,7 +76,7 @@ export class Message extends Base {
     }
 
     static async init(): Promise<void> {
-        await sql`CREATE TABLE IF NOT EXISTS ${this.tableName} (
+        await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
             id BIGINT PRIMARY KEY,
             created_at TIMESTAMP DEFAULT current_timestamp,
             edited_at TIMESTAMP,

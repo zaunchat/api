@@ -62,7 +62,7 @@ export class Member extends Base {
 
 
     static async init(): Promise<void> {
-        await sql`CREATE TABLE IF NOT EXISTS ${this.tableName} (
+        await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
             id BIGINT PRIMARY KEY,
             joined_at TIMESTAMP DEFAULT current_timestamp,
             nickname VARCHAR(32),

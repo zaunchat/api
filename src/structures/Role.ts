@@ -49,7 +49,7 @@ export class Role extends Base {
     
     static async init(): Promise<void> {
 
-        await sql`CREATE TABLE IF NOT EXISTS ${this.tableName} (
+        await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
             id BIGINT PRIMARY KEY,
             name VARCHAR(32) NOT NULL,
             permissions BIGINT NOT NULL DEFAULT 0,

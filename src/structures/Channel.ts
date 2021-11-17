@@ -139,7 +139,7 @@ export class Channel extends Base {
 
 
     static async init(): Promise<void> {
-        await sql`CREATE TABLE IF NOT EXISTS ${this.tableName} (
+        await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
             id BIGINT PRIMARY KEY,
             type INTEGER NOT NULL,
             name VARCHAR(${config.limits.channel.name}),
