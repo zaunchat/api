@@ -48,7 +48,7 @@ export class Message extends Base {
     author_id!: ID
 
     static async onCreate(self: Message): Promise<void> {
-		await getaway.publish(self.channel_id, 'MESSAGE_CREATE', self)
+        await getaway.publish(self.channel_id, 'MESSAGE_CREATE', self)
     }
 
     static async onUpdate(self: Message): Promise<void> {
@@ -76,7 +76,7 @@ export class Message extends Base {
     }
 
     static async init(): Promise<void> {
-        await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
+        await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             created_at TIMESTAMP DEFAULT current_timestamp,
             edited_at TIMESTAMP,
@@ -86,8 +86,8 @@ export class Message extends Base {
             replies JSON NOT NULL,
             channel_id BIGINT NOT NULL,
             author_id BIGINT NOT NULL,
-            FOREIGN KEY (channel_id) REFERENCES channels(id)
+            FOREIGN KEY (channel_id) REFERENCES channels(id),
             FOREIGN KEY (author_id) REFERENCES users(id)
-        )`
+        )`)
     }
 }

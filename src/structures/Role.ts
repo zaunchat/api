@@ -3,7 +3,6 @@ import { validator } from '../utils'
 import { HTTPError } from '../errors'
 import sql from '../database'
 
-
 export interface CreateRoleOptions extends Partial<Role> {
     name: string
     server_id: ID
@@ -13,7 +12,7 @@ export const CreateRoleSchema = validator.compile({
     name: {
         type: 'string',
         min: 1,
-        max: 30
+        max: 32
     },
     color: {
         type: 'number',
@@ -48,14 +47,13 @@ export class Role extends Base {
     }
     
     static async init(): Promise<void> {
-
-        await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
+        await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             name VARCHAR(32) NOT NULL,
             permissions BIGINT NOT NULL DEFAULT 0,
             hoist BOOLEAN NOT NULL DEFAULT FALSE,
             server_id BIGINT NOT NULL,
             FOREIGN KEY (server_id) REFERENCES servers(id)
-        )`
+        )`)
     }
 }

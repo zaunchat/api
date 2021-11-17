@@ -139,7 +139,7 @@ export class Channel extends Base {
 
 
     static async init(): Promise<void> {
-        await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
+        await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             type INTEGER NOT NULL,
             name VARCHAR(${config.limits.channel.name}),
@@ -150,8 +150,8 @@ export class Channel extends Base {
             parents JSON,
             owner_id BIGINT,
             server_id BIGINT,
-            FOREIGN KEY (owner_id) REFERENCES users(id)
+            FOREIGN KEY (owner_id) REFERENCES users(id),
             FOREIGN KEY (server_id) REFERENCES servers(id)
-        )`
+        )`)
     }
 }

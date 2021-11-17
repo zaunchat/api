@@ -62,14 +62,14 @@ export class Member extends Base {
 
 
     static async init(): Promise<void> {
-        await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
+        await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             joined_at TIMESTAMP DEFAULT current_timestamp,
-            nickname VARCHAR(32),
+            nickname VARCHAR(${config.limits.member.nickname}),
             server_id BIGINT NOT NULL,
             roles JSON NOT NULL,
-            FOREIGN KEY (server_id) REFERENCES servers(id)
+            FOREIGN KEY (server_id) REFERENCES servers(id),
             FOREIGN KEY (id) REFERENCES users(id)
-        )`
+        )`)
     }
 }

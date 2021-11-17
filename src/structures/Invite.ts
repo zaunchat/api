@@ -29,7 +29,7 @@ export class Invite extends Base {
     }
 
 	static async init(): Promise<void> {
-		await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
+		await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
 			id BIGINT PRIMARY KEY,
 			code VARCHAR(8) NOT NULL,
 			uses INTEGER DEFAULT 0,
@@ -38,7 +38,7 @@ export class Invite extends Base {
 			server_id BIGINT NOT NULL,
 			FOREIGN KEY (inviter_id) REFERENCES users(id),
 			FOREIGN KEY (channel_id) REFERENCES channels(id),
-			FOREIGN KEY (server_id) REFERENCES servers(id),
-		)`
+			FOREIGN KEY (server_id) REFERENCES servers(id)
+		)`)
 	}
 }

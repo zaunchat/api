@@ -28,12 +28,12 @@ export class Session extends Base {
     }
 
     static async init(): Promise<void> {
-        await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
+        await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             token VARCHAR(64) NOT NULL,
             user_id BIGINT NOT NULL,
             info JSON,
             FOREIGN KEY (user_id) REFERENCES users(id)
-        )`
+        )`)
     }
 }

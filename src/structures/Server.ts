@@ -86,7 +86,7 @@ export class Server extends Base {
     }
 
     static async init(): Promise<void> {
-        await sql`CREATE TABLE IF NOT EXISTS ${sql(this.tableName)} (
+        await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             name VARCHAR(${config.limits.server.name}) NOT NULL,
             description VARCHAR(${config.limits.server.description}),
@@ -95,6 +95,6 @@ export class Server extends Base {
             owner_id BIGINT NOT NULL,
             permissions BIGINT NOT NULL,
             FOREIGN KEY (owner_id) REFERENCES users(id)
-        )`
+        )`)
     }
 }
