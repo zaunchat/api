@@ -21,7 +21,6 @@
     "kleur": "^4.1.4",
     "ms": "^3.0.0-canary.1",
     "nanoid": "^3.1.25",
-    "node-fetch": "^2.6.1",
     "postgres": "^2.0.0-beta.11",
     "rate-limiter-flexible": "^2.3.4",
     "ws": "^8.2.3"
@@ -32,7 +31,6 @@
     "@swc/core": "^1.2.111",
     "@types/ioredis": "^4.27.1",
     "@types/node": "^16.7.1",
-    "@types/node-fetch": "^2.5.12",
     "@types/ws": "^8.2.0"
   }
 }
