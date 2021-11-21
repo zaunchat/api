@@ -4,36 +4,42 @@ import { HTTPError } from '../errors'
 import sql from '../database'
 
 export interface CreateSessionOptions extends Partial<Session> {
-    user_id: ID
+  user_id: ID
 }
 
 interface DeviceInfo {
-    name?: string
+  name?: string
 }
 
 export class Session extends Base {
-    token = nanoid(64)
-    user_id!: ID
-    info!: DeviceInfo
+  token = nanoid(64)
+  user_id!: ID
+  info!: DeviceInfo
 
-    static find: (statement: string, select?: (keyof Session)[], limit?: number) => Promise<Session[]>
-    static from: (opts: CreateSessionOptions) => Session
+  static from(opts: CreateSessionOptions): Session {
+    return Object.assign(new Session(), opts)
+  }
 
-    static async findOne(statement: string, select?: (keyof Session)[]): Promise<Session> {
-        const result = await super.findOne(statement, select)
+  static async find(where: string, select: (keyof Session | '*')[] = ['*'], limit = 100): Promise<Session[]> {
+    const result: Session[] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where} LIMIT ${limit}`)
+    return result.map((row) => Session.from(row))
+  }
 
-        if (result) return result as Session
+  static async findOne(where: string, select: (keyof Session | '*')[] = ['*']): Promise<Session> {
+    const [session]: [Session?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
 
-        throw new HTTPError('UNKNOWN_SESSION')
-    }
+    if (session) return Session.from(session)
 
-    static async init(): Promise<void> {
-        await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
+    throw new HTTPError('UNKNOWN_SESSION')
+  }
+
+  static async init(): Promise<void> {
+    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             token VARCHAR(64) NOT NULL,
             user_id BIGINT NOT NULL,
             info JSON,
-            FOREIGN KEY (user_id) REFERENCES users(id)
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )`)
-    }
+  }
 }

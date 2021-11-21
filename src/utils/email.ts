@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid'
 import { User } from '../structures'
 import { createRedisConnection } from '../database/redis'
-import { SMTPClient, Message } from 'emailjs';
+import { SMTPClient, Message } from 'emailjs'
 import config from '../config'
 
 
@@ -13,46 +13,46 @@ Please verify your account here: %%LINK%%`
 
 
 class Email {
-	redis = createRedisConnection()
-	client = new SMTPClient({
-		host: config.smtp.host,
-		user: config.smtp.username,
-		password: config.smtp.password
-	})
-	
-	async send(user: User): Promise<string> {
-		const code = nanoid(64)
-		const link = `${config.endpoints.main}/auth/verify/${user.id}/${code}`
-		const message = new Message({
-			from: 'noreply@itchat.world',
-			to: user.email,
-			subject: 'Verify your account',
-			text: EMAIL_MESSAGE_TEMPLATE
-			.replace('%%USERNAME%%', user.username)
-			.replace('%%LINK%%', link),
-		})
+  redis = createRedisConnection()
+  client = new SMTPClient({
+    host: config.smtp.host,
+    user: config.smtp.username,
+    password: config.smtp.password
+  })
 
-		await this.client.sendAsync(message)
+  async send(user: User): Promise<string> {
+    const code = nanoid(64)
+    const link = `${config.endpoints.main}/auth/verify/${user.id}/${code}`
+    const message = new Message({
+      from: 'noreply@itchat.world',
+      to: user.email,
+      subject: 'Verify your account',
+      text: EMAIL_MESSAGE_TEMPLATE
+        .replace('%%USERNAME%%', user.username)
+        .replace('%%LINK%%', link),
+    })
 
-		// Expires after three hours.
-		await this.redis.set(user.id, code, 'PX', THREE_HOURS)
+    await this.client.sendAsync(message)
 
-		return link
-	}
+    // Expires after three hours.
+    await this.redis.set(user.id, code, 'PX', THREE_HOURS)
 
-	async verify(key: ID, code: string): Promise<boolean> {
-		const exists = await this.redis.get(key)
+    return link
+  }
 
-		if (exists && exists === code) {
-			
-			// Allow to use one time
-			await this.redis.del(key)
+  async verify(key: ID, code: string): Promise<boolean> {
+    const exists = await this.redis.get(key)
 
-			return true
-		}
+    if (exists && exists === code) {
 
-		return false
-	}
+      // Allow to use one time
+      await this.redis.del(key)
+
+      return true
+    }
+
+    return false
+  }
 }
 
 export const email = new Email()

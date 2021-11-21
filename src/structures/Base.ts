@@ -25,36 +25,27 @@ export abstract class Base {
     return `${this.name.toLowerCase()}s`
   }
 
-  static from(opts: unknown): unknown {
-    const Class = this as unknown as new () => unknown
-    return Object.assign(new Class(), opts)
-  }
-
-  static async count(statement: string): Promise<number> {
-    const result = await sql`SELECT * FROM ${sql(this.tableName)} WHERE ${statement} LIMIT = 1000`
+  static async count(where: string): Promise<number> {
+    const result = await sql.unsafe(`SELECT * FROM ${this.tableName} WHERE ${where} LIMIT = 1000`)
     return result.count
   }
 
-  static async findOne(statement: string, select: string[] = ['*']): Promise<unknown | null> {
-    const [data]: [unknown?] = await sql`SELECT ${sql(select)} FROM ${sql(this.tableName)} WHERE ${statement}`
-
-    if (!data) return null
-
-    return this.from(data)
-  }
-
-  static async find(statement: string, select: string[] = ['*'], limit = 100): Promise<unknown[]> {
-    const data = await sql<unknown[]>`SELECT ${sql(select)} FROM ${sql(this.tableName)} WHERE ${statement} LIMIT ${limit}`
-    return data.map(this.from)
-  }
-
   async save(): Promise<void> {
-    await sql`INSERT INTO ${sql(this.tableName)} ${sql(this)} RETURNING *`
+    // TODO: Better handling
+    const clone = {...this} as unknown as Record<string, string>
+
+    // Issue: https://github.com/porsager/postgres/issues/242
+    for (const [key, value] of Object.entries(clone)) {
+      if (value != null && typeof value === 'object') clone[key] = JSON.stringify(value)
+    }
+    
+    await sql`INSERT INTO ${sql(this.tableName)} ${sql(clone)}`
+
     void (this.constructor as any).onCreate(this)
   }
 
   async update(props: Partial<this>): Promise<this> {
-    const [data] = await sql<unknown[]>`UPDATE ${sql(this.tableName)} SET ${sql(props)} WHERE id = ${this.id} RETURNING *`
+    const [data] = await sql<unknown[]>`UPDATE ${this.tableName} SET ${sql(props)} WHERE id = ${this.id} RETURNING *`
 
     void (this.constructor as any).onUpdate(this)
 

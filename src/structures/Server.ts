@@ -7,86 +7,88 @@ import config from '../config'
 
 
 export interface CreateServerOptions extends Partial<Server> {
-    name: string
-    owner_id: ID
+  name: string
+  owner_id: ID
 }
 
 export const CreateServerSchema = validator.compile({
-    name: {
-        type: 'string',
-        min: 1,
-        max: config.limits.server.name
-    }
+  name: {
+    type: 'string',
+    min: 1,
+    max: config.limits.server.name
+  }
 })
 
 export const ModifyServerSchema = validator.compile({
-    name: {
-        type: 'string',
-        min: 1,
-        max: config.limits.server.name,
-        optional: true
-    },
-    description: {
-        type: 'string',
-        min: 0,
-        max: config.limits.server.description,
-        optional: true
-    }
+  name: {
+    type: 'string',
+    min: 1,
+    max: config.limits.server.name,
+    optional: true
+  },
+  description: {
+    type: 'string',
+    min: 0,
+    max: config.limits.server.description,
+    optional: true
+  }
 })
 
 
 
 export class Server extends Base {
-    name!: string
-    description?: string
-    icon?: string
-    banner?: string
-    owner_id!: ID
-    permissions = DEFAULT_PERMISSION_EVERYONE
+  name!: string
+  description: string | null = null
+  icon: string | null = null
+  banner: string | null = null
+  owner_id!: ID
+  permissions = DEFAULT_PERMISSION_EVERYONE
 
-    static async onCreate(self: Server): Promise<void> {
-        await getaway.subscribe(self.owner_id, [self.id])
-        await getaway.publish(self.id, 'SERVER_CREATE', self)
-    }
+  static async onCreate(self: Server): Promise<void> {
+    await getaway.subscribe(self.owner_id, [self.id])
+    await getaway.publish(self.id, 'SERVER_CREATE', self)
+  }
 
-    static async onUpdate(self: Server): Promise<void> {
-        await getaway.publish(self.id, 'SERVER_UPDATE', self)
-    }
+  static async onUpdate(self: Server): Promise<void> {
+    await getaway.publish(self.id, 'SERVER_UPDATE', self)
+  }
 
-    static async onDelete(self: Server): Promise<void> {
-        await getaway.publish(self.id, 'SERVER_DELETE', { id: self.id })
-        await Promise.all([
-            sql`DELETE FROM roles WHERE server_id = ${self.id}`,
-            sql`DELETE FROM channels WHERE server_id = ${self.id}`,
-            sql`DELETE FROM members WHERE server_id = ${self.id}`
-        ])
-    }
+  static async onDelete(self: Server): Promise<void> {
+    await getaway.publish(self.id, 'SERVER_DELETE', { id: self.id })
+  }
 
-    static find: (statement: string, select?: (keyof Server)[], limit?: number) => Promise<Server[]>
-    static from: (opts: CreateServerOptions) => Server
-    static async findOne(statement: string, select?: (keyof Server)[]): Promise<Server> {
-        const result = await super.findOne(statement, select)
+  static from(opts: CreateServerOptions): Server {
+    return Object.assign(new Server(), opts)
+  }
 
-        if (result) return result as Server
+  static async find(where: string, select: (keyof Server | '*')[] = ['*'], limit = 100): Promise<Server[]> {
+    const result: Server[] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where} LIMIT ${limit}`)
+    return result.map((row) => Server.from(row))
+  }
 
-        throw new HTTPError('UNKNOWN_SERVER')
-    }
+  static async findOne(where: string, select: (keyof Server | '*')[] = ['*']): Promise<Server> {
+    const [server]: [Server?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
+
+    if (server) return Server.from(server)
+
+    throw new HTTPError('UNKNOWN_SERVER')
+  }
 
 
-    fetchMembers(): Promise<Member[]> {
-        return sql<Member[]>`SELECT * FROM members WHERE server_id = ${this.id}`.then((m) => m.map(Member.from))
-    }
+  fetchMembers(): Promise<Member[]> {
+    return sql<Member[]>`SELECT * FROM members WHERE server_id = ${this.id}`.then((m) => m.map(Member.from))
+  }
 
-    fetchRoles(): Promise<Role[]> {
-        return sql<Role[]>`SELECT * FROM roles WHERE server_id = ${this.id}`.then((r) => r.map(Role.from))
-    }
+  fetchRoles(): Promise<Role[]> {
+    return sql<Role[]>`SELECT * FROM roles WHERE server_id = ${this.id}`.then((r) => r.map(Role.from))
+  }
 
-    fetchChannels(): Promise<Channel[]> {
-        return sql<Channel[]>`SELECT * FROM channels WHERE server_id = ${this.id}`
-    }
+  fetchChannels(): Promise<Channel[]> {
+    return sql<Channel[]>`SELECT * FROM channels WHERE server_id = ${this.id}`
+  }
 
-    static async init(): Promise<void> {
-        await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
+  static async init(): Promise<void> {
+    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             name VARCHAR(${config.limits.server.name}) NOT NULL,
             description VARCHAR(${config.limits.server.description}),
@@ -96,5 +98,5 @@ export class Server extends Base {
             permissions BIGINT NOT NULL,
             FOREIGN KEY (owner_id) REFERENCES users(id)
         )`)
-    }
+  }
 }

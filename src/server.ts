@@ -1,4 +1,4 @@
-import { App as HttpServer, extendMiddleware, Request, Response } from '@tinyhttp/app'
+import { App as HTTPServer, extendMiddleware, Request, Response } from '@tinyhttp/app'
 import { getaway } from './getaway'
 import { register } from 'express-decorators'
 import * as middlewares from './middlewares'
@@ -12,7 +12,7 @@ interface ServerOptions {
 }
 
 class Server {
-    readonly http = new HttpServer({
+    readonly http = new HTTPServer({
         onError: middlewares.error(),
         applyExtensions: (req, res, next) => {
             extendMiddleware(this.http)(req, res, next)
