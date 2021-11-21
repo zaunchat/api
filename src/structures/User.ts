@@ -11,7 +11,7 @@ export const PUBLIC_USER_PROPS = [
   'presence',
   'badges',
   'avatar'
-]
+] as (keyof User)[]
 
 export interface CreateUserOptions extends Partial<User> {
   username: string
@@ -126,13 +126,13 @@ export class User extends Base {
   }
 
   fetchRelations(): Promise<User[]> {
-    return sql<User[]>`SELECT * FROM users WHERE id IN (${[...this.relations.keys()]})`.then(res => res.map(User.from))
+    return sql<User[]>`SELECT ${sql(PUBLIC_USER_PROPS)} FROM ${sql(this.tableName)} WHERE id IN (${[...this.relations.keys()]})`.then(res => res.map(User.from))
   }
 
   static async fetchByToken(token: string): Promise<User | null> {
     const [user]: [User?] = await sql`
          SELECT *
-         FROM users 
+         FROM ${sql(this.tableName)}
          LEFT JOIN sessions
          ON sessions.user_id = users.id
          WHERE verified = TRUE 
