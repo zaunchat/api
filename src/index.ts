@@ -2,6 +2,8 @@ import Server from './server'
 import config from './config'
 import migrations from './database/migrations'
 import * as extensions from './extensions'
+import { logger } from './utils'
+
 
 export const server = new Server({
   port: config.port,
@@ -20,24 +22,26 @@ export const server = new Server({
 })
 
 try {
-  console.log('Initialling the server...')
+  logger.log('Initialling the server...')
 
   await server.init()
 
-  console.log('Initialling the database...')
+  logger.log('Initialling the database...')
 
   await migrations.run()
-
   await server.listen()
 
-  console.log(`Server running on port: ${config.port}`)
+  logger.log('Server running on port:', config.port)
 } catch (err) {
-  console.error('Failed to init the server...')
-  console.error(err)
-  console.error('Exiting..')
+
+  logger
+    .error('Failed to Init the server....')
+    .error(err)
+    .error('Exiting...')
+
   process.exit(-1)
 }
 
 process
-  .on('unhandledRejection', console.error)
-  .on('uncaughtException', console.error)
+  .on('unhandledRejection', logger.error)
+  .on('uncaughtException', logger.error)
