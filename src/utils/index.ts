@@ -1,5 +1,5 @@
-export * from './validator'
-export * from './email'
+export * from './Validator'
+export * from './Email'
 export * from './BitField'
 export * from './Permissions'
 export * from './Badges'
