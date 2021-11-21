@@ -1,69 +1,67 @@
-import { Property, wrap, Entity, FilterQuery, FindOptions, OneToOne } from '@mikro-orm/core'
-import { Base, Server } from '.'
+import { Base } from './Base'
 import { validator } from '../utils'
-import db from '../database'
-
+import { HTTPError } from '../errors'
+import sql from '../database'
 
 export interface CreateRoleOptions extends Partial<Role> {
-    name: string
-    server: Server
+  name: string
+  server_id: ID
 }
 
 export const CreateRoleSchema = validator.compile({
-    name: {
-        type: 'string',
-        min: 1,
-        max: 30
-    },
-    color: {
-        type: 'number',
-        optional: true
-    },
-    permissions: {
-        type: 'number',
-        optional: true
-    },
-    hoist: {
-        type: 'boolean',
-        optional: true
-    }
+  name: {
+    type: 'string',
+    min: 1,
+    max: 32
+  },
+  color: {
+    type: 'number',
+    optional: true
+  },
+  permissions: {
+    type: 'number',
+    optional: true
+  },
+  hoist: {
+    type: 'boolean',
+    optional: true
+  }
 })
 
-@Entity({ tableName: 'roles' })
+
 export class Role extends Base {
-    @Property()
-    name!: string
+  name!: string
+  permissions = 0
+  color = 0
+  hoist = false
+  server_id!: ID
 
-    @Property()
-    permissions: number = 0
+  static from(opts: CreateRoleOptions): Role {
+    return Object.assign(new Role(), opts)
+  }
 
-    @Property({ nullable: true })
-    color?: number
+  static async find(where: string, select: (keyof Role | '*')[] = ['*'], limit = 100): Promise<Role[]> {
+    const result: Role[] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where} LIMIT ${limit}`)
+    return result.map((row) => Role.from(row))
+  }
 
-    @Property()
-    hoist: boolean = false
+  static async findOne(where: string, select: (keyof Role | '*')[] = ['*']): Promise<Role> {
+    const [role]: [Role?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
 
-    @OneToOne({ entity: () => Server })
-    server!: Server
+    if (role) return Role.from(role)
 
-    static from(options: CreateRoleOptions): Role {
-        return wrap(new Role().setID()).assign(options)
-    }
+    throw new HTTPError('UNKNOWN_ROLE')
+  }
 
-    static find(query: FilterQuery<Role>, options?: FindOptions<Role>): Promise<Role[]> {
-        return db.get(Role).find(query, options)
-    }
 
-    static findOne(query: FilterQuery<Role>): Promise<Role | null> {
-        return db.get(Role).findOne(query)
-    }
-
-    async save(options?: Partial<Role>): Promise<this> {
-        await db.get(Role).persistAndFlush(options ? wrap(this).assign(options) : this)
-        return this
-    }
-
-    async delete(): Promise<void> {
-        await db.get(Role).removeAndFlush(this)
-    }
+  static async init(): Promise<void> {
+    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
+            id BIGINT PRIMARY KEY,
+            name VARCHAR(32) NOT NULL,
+            permissions BIGINT NOT NULL DEFAULT 0,
+            hoist BOOLEAN NOT NULL DEFAULT FALSE,
+            server_id BIGINT NOT NULL,
+            FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
+        )`)
+  }
 }

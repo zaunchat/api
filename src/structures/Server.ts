@@ -1,82 +1,102 @@
-import { Base, Role, User, Channel } from '.'
-import { Property, Entity, wrap, FindOptions, FilterQuery, ManyToMany, Collection, OneToOne } from '@mikro-orm/core'
+import { Base, Role, Channel, Member } from '.'
 import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
-import db from '../database'
-import config from '../../config'
+import { HTTPError } from '../errors'
+import { getaway } from '../getaway'
+import sql from '../database'
+import config from '../config'
+
 
 export interface CreateServerOptions extends Partial<Server> {
-    name: string
-    owner: User
+  name: string
+  owner_id: ID
 }
 
 export const CreateServerSchema = validator.compile({
-    name: {
-        type: 'string',
-        min: 1,
-        max: config.limits.server.name
-    }
+  name: {
+    type: 'string',
+    min: 1,
+    max: config.limits.server.name
+  }
 })
 
 export const ModifyServerSchema = validator.compile({
-    name: {
-        type: 'string',
-        min: 1,
-        max: config.limits.server.name,
-        optional: true
-    },
-    description: {
-        type: 'string',
-        min: 0,
-        max: config.limits.server.description,
-        optional: true
-    }
+  name: {
+    type: 'string',
+    min: 1,
+    max: config.limits.server.name,
+    optional: true
+  },
+  description: {
+    type: 'string',
+    min: 0,
+    max: config.limits.server.description,
+    optional: true
+  }
 })
 
 
-@Entity({ tableName: 'servers' })
+
 export class Server extends Base {
-    @Property()
-    name!: string
+  name!: string
+  description: string | null = null
+  icon: string | null = null
+  banner: string | null = null
+  owner_id!: ID
+  permissions = DEFAULT_PERMISSION_EVERYONE
 
-    @Property({ nullable: true })
-    description?: string
+  static async onCreate(self: Server): Promise<void> {
+    await getaway.subscribe(self.owner_id, [self.id])
+    await getaway.publish(self.id, 'SERVER_CREATE', self)
+  }
 
-    @Property({ nullable: true })
-    icon?: string
+  static async onUpdate(self: Server): Promise<void> {
+    await getaway.publish(self.id, 'SERVER_UPDATE', self)
+  }
 
-    @Property({ nullable: true })
-    banner?: string
+  static async onDelete(self: Server): Promise<void> {
+    await getaway.publish(self.id, 'SERVER_DELETE', { id: self.id })
+  }
 
-    @OneToOne({ entity: () => User })
-    owner!: User
+  static from(opts: CreateServerOptions): Server {
+    return Object.assign(new Server(), opts)
+  }
 
-    @ManyToMany({ entity: () => Role })
-    roles = new Collection<Role>(this)
+  static async find(where: string, select: (keyof Server | '*')[] = ['*'], limit = 100): Promise<Server[]> {
+    const result: Server[] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where} LIMIT ${limit}`)
+    return result.map((row) => Server.from(row))
+  }
 
-    @ManyToMany({ entity: () => Channel })
-    channels = new Collection<Channel>(this)
+  static async findOne(where: string, select: (keyof Server | '*')[] = ['*']): Promise<Server> {
+    const [server]: [Server?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
 
-    @Property()
-    permissions: number = DEFAULT_PERMISSION_EVERYONE
+    if (server) return Server.from(server)
 
-    static from(options: CreateServerOptions): Server {
-        return wrap(new Server().setID()).assign(options)
-    }
+    throw new HTTPError('UNKNOWN_SERVER')
+  }
 
-    static find(query: FilterQuery<Server>, options?: FindOptions<Server>): Promise<Server[]> {
-        return db.get(Server).find(query, options)
-    }
 
-    static findOne(query: FilterQuery<Server>): Promise<Server | null> {
-        return db.get(Server).findOne(query)
-    }
+  fetchMembers(): Promise<Member[]> {
+    return sql<Member[]>`SELECT * FROM members WHERE server_id = ${this.id}`.then((m) => m.map(Member.from))
+  }
 
-    async save(options?: Partial<Server>): Promise<this> {
-        await db.get(Server).persistAndFlush(options ? wrap(this).assign(options) : this)
-        return this
-    }
+  fetchRoles(): Promise<Role[]> {
+    return sql<Role[]>`SELECT * FROM roles WHERE server_id = ${this.id}`.then((r) => r.map(Role.from))
+  }
 
-    async delete(): Promise<void> {
-        await db.get(Server).removeAndFlush(this)
-    }
+  fetchChannels(): Promise<Channel[]> {
+    return sql<Channel[]>`SELECT * FROM channels WHERE server_id = ${this.id}`
+  }
+
+  static async init(): Promise<void> {
+    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
+            id BIGINT PRIMARY KEY,
+            name VARCHAR(${config.limits.server.name}) NOT NULL,
+            description VARCHAR(${config.limits.server.description}),
+            icon VARCHAR(64),
+            banner VARCHAR(64),
+            owner_id BIGINT NOT NULL,
+            permissions BIGINT NOT NULL,
+            FOREIGN KEY (owner_id) REFERENCES users(id)
+        )`)
+  }
 }

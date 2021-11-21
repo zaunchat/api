@@ -2,41 +2,26 @@ import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { Server, Channel, CreateServerSchema, Member, ChannelTypes } from '../../structures'
 import { HTTPError } from '../../errors'
-import config from '../../../config'
-import db from '../../database'
-
+import config from '../../config'
 
 @web.basePath('/servers')
 export class ServerController {
     @web.get('/')
     async fetchMany(req: Request, res: Response): Promise<void> {
-        res.json(req.user.servers.getItems())
+        res.json(await req.user.fetchServers())
     }
 
     @web.get('/:server_id')
     async fetchOne(req: Request, res: Response): Promise<void> {
-        const server = req.user.servers.getItems().find((s) => {
-            return s._id === req.params.server_id
-        })
-
-        if (!server) {
-            throw new HTTPError('UNKNOWN_SERVER')
-        }
-
+        const server = await Server.findOne(`id = ${req.params.server_id}`)
         res.json(server)
     }
 
     @web.route('delete', '/:server_id')
     async delete(req: Request, res: Response): Promise<void> {
-        const server = req.user.servers.getItems().find((s) => {
-            return s._id === req.params.server_id
-        })
+        const server = await Server.findOne(`id = ${req.params.server_id}`)
 
-        if (!server) {
-            throw new HTTPError('UNKNOWN_SERVER')
-        }
-
-        if (req.user._id !== server.owner._id) {
+        if (req.user.id !== server.owner_id) {
             throw new HTTPError('MISSING_ACCESS')
         }
 
@@ -50,44 +35,39 @@ export class ServerController {
     async create(req: Request, res: Response): Promise<void> {
         req.check(CreateServerSchema)
 
-        if (req.user.servers.count() >= config.limits.user.servers) {
+        const serverCount = await Member.count(`id = ${req.user.id}`)
+
+        if (serverCount >= config.limits.user.servers) {
             throw new HTTPError('MAXIMUM_SERVERS')
         }
 
         const server = Server.from({
             ...req.body,
-            owner: req.user
-        })
-
-        const chat = Channel.from({
-            type: ChannelTypes.TEXT,
-            server,
-            name: 'general'
+            owner_id: req.user.id
         })
 
         const category = Channel.from({
             type: ChannelTypes.CATEGORY,
-            name: 'General',
-            server,
-            channels: [chat._id]
+            server_id: server.id,
+            name: 'General'
+        })
+
+        const chat = Channel.from({
+            type: ChannelTypes.TEXT,
+            server_id: server.id,
+            name: 'general',
+            parents: [category.id]
         })
 
         const member = Member.from({
-            _id: req.user._id,
-            server
+            id: req.user.id,
+            server_id: server.id
         })
 
-        const user = req.user
-
-        user.servers.add(server)
-
-        await db.save([
-            server,
-            chat,
-            category,
-            member,
-            user
-        ])
+        await server.save()
+        await chat.save()
+        await category.save()
+        await member.save()
 
         res.json(server)
     }

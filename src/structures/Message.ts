@@ -1,81 +1,100 @@
-import { Base, User, Channel } from '.'
-import { Property, Entity, wrap, FilterQuery, FindOptions, OneToOne } from '@mikro-orm/core'
+import { Base } from './Base'
 import { validator } from '../utils'
-import db from '../database'
-import config from '../../config'
+import { HTTPError } from '../errors'
+import { getaway } from '../getaway'
+import sql from '../database'
+import config from '../config'
 
 export interface CreateMessageOptions extends Partial<Message> {
-    author: User
-    channel: Channel
+  author_id: ID
+  channel_id: ID
 }
 
 export const CreateMessageSchema = validator.compile({
-    content: {
-        type: 'string',
-        min: 1,
-        max: config.limits.message.length
-    },
-    $$strict: true
+  content: {
+    type: 'string',
+    min: 1,
+    max: config.limits.message.length
+  },
+  $$strict: true
 })
 
-@Entity({ tableName: 'messages' })
+
+export interface Embed {
+  title: string
+  description: string
+  footer: string
+}
+
+export interface Attachment {
+  name: string
+  id: string
+}
+
+export interface Reply {
+  id: ID
+  mention: boolean
+}
+
 export class Message extends Base {
-    @Property()
-    created_timestamp: number = Date.now()
+  created_at = Date.now()
+  edited_at: number | null = null
+  content: string | null = null
+  embeds: Embed[] = []
+  attachments: Attachment[] = []
+  mentions: ID[] = []
+  replies: Reply[] = []
+  channel_id!: ID
+  author_id!: ID
 
-    @Property({ onUpdate: () => Date.now(), nullable: true })
-    edited_timestamp?: number
+  static async onCreate(self: Message): Promise<void> {
+    await getaway.publish(self.channel_id, 'MESSAGE_CREATE', self)
+  }
 
-    @Property()
-    embeds: unknown[] = []
+  static async onUpdate(self: Message): Promise<void> {
+    await getaway.publish(self.channel_id, 'MESSAGE_UPDATE', self)
+  }
 
-    @Property()
-    attachments: unknown[] = []
+  static async onDelete(self: Message): Promise<void> {
+    await getaway.publish(self.channel_id, 'MESSAGE_DELETE', { id: self.id })
+  }
 
-    @Property({ nullable: true })
-    content?: string
 
-    @Property()
-    mentions: ID[] = []
+  isEmpty(): boolean {
+    return !this.content?.length && !this.attachments.length
+  }
 
-    @Property()
-    replies: {
-        id: ID
-        mention: boolean
-    }[] = []
+  static from(opts: CreateMessageOptions): Message {
+    return Object.assign(new Message(), opts)
+  }
 
-    @OneToOne({ entity: () => Channel })
-    channel!: Channel
+  static async find(where: string, select: (keyof Message | '*')[] = ['*'], limit = 100): Promise<Message[]> {
+    const result: Message[] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where} LIMIT ${limit}`)
+    return result.map((row) => Message.from(row))
+  }
 
-    @OneToOne({ entity: () => User })
-    author!: User
+  static async findOne(where: string, select: (keyof Message | '*')[] = ['*']): Promise<Message> {
+    const [message]: [Message?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
 
-    isEmpty(): boolean {
-        return !this.content?.length && !this.attachments.length
-    }
+    if (message) return Message.from(message)
 
-    static from(options: CreateMessageOptions): Message {
-        return wrap(new Message().setID()).assign(options)
-    }
+    throw new HTTPError('UNKNOWN_USER')
+  }
 
-    static find(query: FilterQuery<Message>, options?: FindOptions<Message>): Promise<Message[]> {
-        return db.get(Message).find(query, options)
-    }
 
-    static findOne(query: FilterQuery<Message>): Promise<Message | null> {
-        return db.get(Message).findOne(query)
-    }
-
-    static async save(...messages: Message[]): Promise<void> {
-        await db.get(Message).persistAndFlush(messages)
-    }
-
-    async save(options?: Partial<Message>): Promise<this> {
-        await Message.save(options ? wrap(this).assign(options) : this)
-        return this
-    }
-
-    async delete(): Promise<void> {
-        await db.get(Message).removeAndFlush(this)
-    }
+  static async init(): Promise<void> {
+    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
+            id BIGINT PRIMARY KEY,
+            created_at TIMESTAMP DEFAULT current_timestamp,
+            edited_at TIMESTAMP,
+            content VARCHAR(${config.limits.message.length}),
+            embeds JSON NOT NULL,
+            attachments JSON NOT NULL,
+            replies JSON NOT NULL,
+            channel_id BIGINT NOT NULL,
+            author_id BIGINT NOT NULL,
+            FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
+            FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+        )`)
+  }
 }

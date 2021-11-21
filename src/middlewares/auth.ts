@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from '@tinyhttp/app'
 import { User } from '../structures'
 import { HTTPError } from '../errors'
 
-
 interface AuthOptions {
     ignore: `/${string}`[]
 }
@@ -13,10 +12,13 @@ export const auth = (options: AuthOptions) => async (req: Request, _res: Respons
     }
 
     const token = req.headers['x-session-token']
-    const user = token ? await User.findOne({
-        sessions: { token },
-        verified: true
-    }) : null
+
+    if (!token) {
+        // TODO: Add missing header instead of UNAUTHORIZED
+        throw new HTTPError('UNAUTHORIZED')
+    }
+
+    const user = await User.fetchByToken(token as string)
 
     if (!user) {
         throw new HTTPError('UNAUTHORIZED')

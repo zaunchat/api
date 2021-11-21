@@ -1,23 +1,20 @@
-import { AnyEntity, EntityName, EntityRepository, GetRepository, MikroORM } from '@mikro-orm/core'
-import config from './config'
+import postgres from 'postgres'
+import config from '../config'
 
-class Database {
-	orm!: MikroORM
+const noop = () => { }
 
-	get<T extends AnyEntity<T>, U extends EntityRepository<T> = EntityRepository<T>>(entityName: EntityName<T>): GetRepository<T, U> {
-		return this.orm.em.getRepository(entityName)
-	}
-
-	save<T extends AnyEntity<T>>(entity: T | T[]): Promise<void> {
-		return this.orm.em.persistAndFlush(entity)
-	}
-
-	async connect(): Promise<this> {
-		this.orm = await MikroORM.init(config)
-		return this
-	}
-}
-
-const db = new Database()
-
-export default db
+export default postgres(config.database.uri, {
+  debug: console.log,
+  onnotice: noop,
+  types: {
+    number: {
+      to: 0,
+      from: [21, 23, 26, 700, 701],
+      serialize: x => {
+        // if (typeof x === 'object') return JSON.stringify(x)
+        return '' + x
+      },
+      parse: x => +x
+    }
+  }
+})

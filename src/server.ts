@@ -1,4 +1,4 @@
-import { App as HttpServer, extendMiddleware, Request, Response } from '@tinyhttp/app'
+import { App as HTTPServer, extendMiddleware, Request, Response } from '@tinyhttp/app'
 import { getaway } from './getaway'
 import { register } from 'express-decorators'
 import * as middlewares from './middlewares'
@@ -8,11 +8,11 @@ import ms from 'ms'
 interface ServerOptions {
     port: number
     limits: Record<string, string>
-    extensions: (req: Request, res: Response) => void
+    extensions(req: Request, res: Response): void
 }
 
 class Server {
-    readonly http = new HttpServer({
+    readonly http = new HTTPServer({
         onError: middlewares.error(),
         applyExtensions: (req, res, next) => {
             extendMiddleware(this.http)(req, res, next)
@@ -31,7 +31,7 @@ class Server {
 
             const options = {
                 max: Number(max),
-                interval: ms(interval),
+                interval: ms(interval as '1s'),
                 onlyIP: Boolean(onlyIP)
             }
 
@@ -56,7 +56,7 @@ class Server {
             .use('/gateway', middlewares.ws(getaway.server))
     }
 
-    async listen(): Promise<void> {
+    listen(): Promise<void> {
         return new Promise((resolve) => this.http.listen(this.options.port, resolve))
     }
 }

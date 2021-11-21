@@ -3,7 +3,7 @@ import { Response, Request } from '@tinyhttp/app'
 import { User, Session, CreateUserSchema, LoginUserSchema } from '../../structures'
 import { HTTPError } from '../../errors'
 import { is, email } from '../../utils'
-import config from '../../../config'
+import config from '../../config'
 import argon2 from 'argon2'
 
 
@@ -19,11 +19,7 @@ export class AccountController {
 			throw new HTTPError('INVALID_EMAIL')
 		}
 
-		const user = await User.findOne({ email })
-
-		if (!user) {
-			throw new HTTPError('UNKNOWN_USER')
-		}
+		const user = await User.findOne(`email = ${email}`)
 
 		if (!user.verified) {
 			throw new HTTPError('USER_NOT_VERIFIED')
@@ -34,16 +30,14 @@ export class AccountController {
 		}
 
 		const session = Session.from({
-			name: req.hostname
+			user_id: user.id
 		})
 
-		user.sessions.add(session)
-
-		await user.save()
+		await session.save()
 
 		res.json({
 			token: session.token,
-			id: user._id
+			id: user.id
 		})
 	}
 
@@ -57,11 +51,8 @@ export class AccountController {
 			throw new HTTPError('INVALID_EMAIL')
 		}
 
-		const exists = await User.findOne({
-			$or: [{ username }, { email }]
-		}, {
-			fields: ['username', 'email']
-		})
+		const exists = await User.findOne(`email = ${email} OR username = ${username}`, ['username', 'email']).catch(() => null)
+
 
 		if (exists) {
 			if (username === exists.username) {
@@ -74,10 +65,13 @@ export class AccountController {
 		const user = await User.from({
 			username,
 			email: req.body.email,
-			password: await argon2.hash(password)
-		}).save({ verified: !email.enabled })
+			password: await argon2.hash(password),
+			verified: !config.smtp.enabled
+		})
+		
+		await user.save()
 
-		if (!email.enabled) {
+		if (!config.smtp.enabled) {
 			return void res.redirect(`https://${config.endpoints.main}/auth/login`)
 		}
 
@@ -85,7 +79,7 @@ export class AccountController {
 			await email.send(user)
 			res.json({ message: 'Check your email' })
 		} catch (err) {
-			await User.remove(user)
+			await user.delete()
 			throw err
 		}
 	}
@@ -100,13 +94,9 @@ export class AccountController {
 			throw new HTTPError('UNKNOWN_TOKEN')
 		}
 
-		const user = await User.findOne({ _id: user_id })
+		const user = await User.findOne(`id = ${user_id}`)
 
-		if (!user) {
-			throw new HTTPError('UNKNOWN_USER')
-		}
-
-		await user.save({ verified: true })
+		await user.update({ verified: true })
 
 		res.redirect(`${config.endpoints.main}/auth/login`)
 	}

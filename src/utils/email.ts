@@ -1,8 +1,9 @@
-import { createTransport } from 'nodemailer'
 import { nanoid } from 'nanoid'
 import { User } from '../structures'
-import config from '../../config'
 import { createRedisConnection } from '../database/redis'
+import { SMTPClient, Message } from 'emailjs'
+import config from '../config'
+
 
 const THREE_HOURS = 10_800_000
 const EMAIL_MESSAGE_TEMPLATE = `Hello @%%USERNAME%%,
@@ -12,54 +13,46 @@ Please verify your account here: %%LINK%%`
 
 
 class Email {
-	redis = createRedisConnection()
-	readonly client = config.smtp.enabled && config.smtp.uri ? createTransport(config.smtp.uri) : null
+  redis = createRedisConnection()
+  client = new SMTPClient({
+    host: config.smtp.host,
+    user: config.smtp.username,
+    password: config.smtp.password
+  })
 
-	get enabled(): boolean  {
-		return !!this.client
-	}
+  async send(user: User): Promise<string> {
+    const code = nanoid(64)
+    const link = `${config.endpoints.main}/auth/verify/${user.id}/${code}`
+    const message = new Message({
+      from: 'noreply@itchat.world',
+      to: user.email,
+      subject: 'Verify your account',
+      text: EMAIL_MESSAGE_TEMPLATE
+        .replace('%%USERNAME%%', user.username)
+        .replace('%%LINK%%', link),
+    })
 
-	static generateCode(): string {
-		return nanoid(64)
-	}
+    await this.client.sendAsync(message)
 
-	async send(user: User): Promise<string> {
-		if (!this.client) {
-			throw new Error('Email not enabled')
-		}
+    // Expires after three hours.
+    await this.redis.set(user.id, code, 'PX', THREE_HOURS)
 
-		const code = Email.generateCode()
-		const link = `${config.endpoints.main}/auth/verify/${user._id}/${code}`
+    return link
+  }
 
-		await this.client.sendMail({
-			from: 'noreply@itchat.com',
-			subject: 'Verify your email',
-			to: user.email,
-			text: EMAIL_MESSAGE_TEMPLATE
-				.replace('%%USERNAME%%', user.username)
-				.replace('%%LINK%%', link)
-		})
+  async verify(key: ID, code: string): Promise<boolean> {
+    const exists = await this.redis.get(key)
 
+    if (exists && exists === code) {
 
-		// Expires after three hours.
-		await this.redis.set(user._id, code, 'PX', THREE_HOURS)
+      // Allow to use one time
+      await this.redis.del(key)
 
-		return link
-	}
+      return true
+    }
 
-	async verify(key: ID, code: string): Promise<boolean> {
-		const exists = await this.redis.get(key)
-
-		if (exists && exists === code) {
-			
-			// Allow to use one time
-			await this.redis.del(key)
-
-			return true
-		}
-
-		return false
-	}
+    return false
+  }
 }
 
 export const email = new Email()

@@ -1,6 +1,6 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { Member, CreateMemberSchema } from '../../structures'
+import { Member, CreateMemberSchema, Role } from '../../structures'
 import { HTTPError } from '../../errors'
 import { Permissions } from '../../utils'
 
@@ -9,17 +9,11 @@ import { Permissions } from '../../utils'
 export class ServerMemberController {
 	@web.use()
 	async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
-		const server = req.user.servers.getItems().find((s) => {
-			return s._id === req.params.server_id
-		})
+		const exists = await Member.findOne(`id = ${req.user.id} AND server_id = ${req.params.server_id}`).catch(() => null)
 
-		if (!server) {
+		if (!exists) {
 			throw new HTTPError('UNKNOWN_SERVER')
 		}
-
-		Object.defineProperty(req, 'server', {
-			value: server
-		})
 
 		next()
 	}
@@ -27,24 +21,15 @@ export class ServerMemberController {
 	@web.get('/')
 	async fetchMany(req: Request, res: Response): Promise<void> {
 		const limit = 1000 // TODO: Add Limit option
-
-		const members = await Member.find({
-			server: {
-				_id: req.params.server_id
-			}
-		}, { limit })
-
+		const members = await Member.find(`server_id = ${req.params.server_id}`, undefined, limit)
 		res.json(members)
 	}
 
 	@web.get('/:member_id')
 	async fetchOne(req: Request, res: Response): Promise<void> {
-		const member = await Member.findOne({
-			_id: req.params.member_id,
-			server: {
-				_id: req.params.server_id
-			}
-		})
+		const { member_id, server_id } = req.params
+
+		const member = await Member.findOne(`id = ${member_id} AND server_id = ${server_id}`)
 
 		if (!member) {
 			throw new HTTPError('UNKNOWN_MEMBER')
@@ -58,45 +43,40 @@ export class ServerMemberController {
 		req.check(CreateMemberSchema)
 
 		const { server_id, member_id } = req.params as Record<string, ID>
-		const member = await Member.findOne({
-			_id: member_id,
-			server: {
-				_id: server_id
-			}
+		const member = await Member.findOne(`id = ${member_id} AND server_id = ${server_id}`)
+		const permissions = await Permissions.fetch({
+			user: req.user,
+			server: server_id
 		})
 
-		if (!member) {
-			throw new HTTPError('UNKNOWN_MEMBER')
-		}
-
-		const server = req.server
-		const permissions = await Permissions.fetch(req.user, server)
-
+		const updated: Record<string, unknown> = {}
 
 		if ('nickname' in req.body) {
-			if (req.user._id === member._id) {
+			if (req.user.id === member.id) {
 				if (!permissions.has(Permissions.FLAGS.CHANGE_NICKNAME)) throw new HTTPError('MISSING_PERMISSIONS')
 			} else {
 				if (!permissions.has(Permissions.FLAGS.MANAGE_NICKNAMES)) throw new HTTPError('MISSING_PERMISSIONS')
 			}
-			member.nickname = req.body.nickname ? req.body.nickname : void 0
+			updated.nickname = req.body.nickname ? req.body.nickname : void 0
 		}
 
 		if (req.body.roles) {
 			if (!permissions.has(Permissions.FLAGS.MANAGE_ROLES)) throw new HTTPError('MISSING_PERMISSIONS')
 
-			const roles = server.roles.getItems()
+			const roles = await Role.find(`server_id = ${req.params.server_id}`)
 
-			member.roles.removeAll()
+			updated.roles = []
 
-			for (const role_id of req.body.roles) {
-				const role = roles.find(r => r._id === role_id)
-				if (!role) throw new HTTPError('UNKNOWN_ROLE')
-				member.roles.add(role)
+			for (const roleId of req.body.roles) {
+				const role = roles.find(r => r.id === roleId)
+				
+				if (!role) throw new HTTPError('UNKNOWN_ROLE');
+
+				(<string[]>updated.roles).push(role.id)
 			}
 		}
 
-		await member.save()
+		await member.update(updated)
 
 		res.json(member)
 	}
@@ -105,19 +85,19 @@ export class ServerMemberController {
 	async kick(req: Request, res: Response): Promise<void> {
 		const { server_id, member_id } = req.params as Record<string, ID>
 
-		if (member_id !== req.user._id) {
-			const permissions = await Permissions.fetch(req.user, server_id)
+		if (member_id !== req.user.id) {
+			const permissions = await Permissions.fetch({
+				user: req.user,
+				server: server_id
+			})
+
 			if (!permissions.has(Permissions.FLAGS.KICK_MEMBERS)) {
 				throw new HTTPError('MISSING_PERMISSIONS')
 			}
 		}
 
-		const member = await Member.findOne({
-			_id: member_id,
-			server: {
-				_id: server_id
-			}
-		})
+		const member = await Member.findOne(`id = ${member_id} AND server_id = ${server_id}`)
+	
 
 		if (!member) {
 			throw new HTTPError('UNKNOWN_MEMBER')

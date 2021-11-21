@@ -1,42 +1,37 @@
 {
-  "name": "itchat-server",
-  "version": "0.0.1-alpha",
+  "name": "@itchat/server",
+  "version": "0.0.1",
   "scripts": {
-    "start": "node dist/src/index",
-    "build": "tsc",
-    "dev": "npm run build && npm run start"
+    "start": "node --es-module-specifier-resolution=node dist/index",
+    "build": "npx swc src -s false -d dist",
+    "dev": "npm run build && npm run start",
+    "lint": "npx denolint -c lintrc.json"
   },
+  "type": "module",
   "dependencies": {
-    "@mikro-orm/core": "^4.5.7",
-    "@mikro-orm/mongodb": "^4.5.7",
-    "@tinyhttp/app": "^1.3.15",
+    "@tinyhttp/app": "^2.0.12",
     "argon2": "^0.28.2",
     "dotenv": "^10.0.0",
+    "emailjs": "^3.7.0",
     "env-var": "^7.0.1",
     "express-decorators": "^1.2.1",
     "fastest-validator": "^1.11.1",
     "helmet": "^4.6.0",
     "ioredis": "^4.28.0",
-    "mikro-orm": "^4.5.7",
-    "ms": "^2.1.3",
+    "ms": "^3.0.0-canary.1",
     "nanoid": "^3.1.25",
     "node-fetch": "^2.6.1",
-    "nodemailer": "^6.6.3",
-    "rolling-rate-limiter": "^0.2.11",
-    "validator": "^13.6.0",
-    "ws": "^8.2.0"
+    "postgres": "^2.0.0-beta.11",
+    "rate-limiter-flexible": "^2.3.4",
+    "ws": "^8.2.3"
   },
   "devDependencies": {
-    "@types/bcrypt": "^5.0.0",
+    "@node-rs/deno-lint": "^1.10.3",
+    "@swc/cli": "^0.1.51",
+    "@swc/core": "^1.2.111",
     "@types/ioredis": "^4.27.1",
-    "@types/ms": "^0.7.31",
     "@types/node": "^16.7.1",
     "@types/node-fetch": "^2.5.12",
-    "@types/nodemailer": "^6.4.4",
-    "@types/ws": "^7.4.7",
-    "@typescript-eslint/eslint-plugin": "^4.29.2",
-    "@typescript-eslint/parser": "^4.29.2",
-    "eslint": "^7.32.0",
-    "typescript": "^4.3.5"
+    "@types/ws": "^8.2.0"
   }
 }

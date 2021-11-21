@@ -1,65 +1,82 @@
-import { Base, Role, Server } from '.'
-import { Property, Entity, wrap, FilterQuery, FindOptions, ManyToMany, Collection, OneToOne } from '@mikro-orm/core'
+import { Base, Role } from '.'
 import { validator } from '../utils'
-import db from '../database'
-import config from '../../config'
+import { HTTPError } from '../errors'
+import { getaway } from '../getaway'
+import sql from '../database'
+import config from '../config'
 
 export interface CreateMemberOptions extends Partial<Member> {
-    _id: ID
-    server: Server
+  id: ID
+  server_id: ID
 }
 
 export const CreateMemberSchema = validator.compile({
-    nickname: {
-        type: 'string',
-        min: 0,
-        max: config.limits.member.nickname,
-        optional: true
-    },
-    roles: {
-        type: 'array',
-        items: 'string',
-        optional: true
-    }
+  nickname: {
+    type: 'string',
+    min: 0,
+    max: config.limits.member.nickname,
+    optional: true
+  },
+  roles: {
+    type: 'array',
+    items: 'string',
+    optional: true
+  }
 })
 
 
-@Entity({ tableName: 'members' })
+
 export class Member extends Base {
-    @Property({ nullable: true })
-    nickname?: string
+  nickname: string | null = null
+  joined_at = Date.now()
+  server_id!: ID
+  roles: ID[] = []
 
-    @Property()
-    joined_timestamp: number =  Date.now()
+  static async onCreate(self: Member): Promise<void> {
+    await getaway.subscribe(self.id, [self.server_id])
+    await getaway.publish(self.server_id, 'MEMBER_JOIN_SERVER', self)
+  }
 
-    @ManyToMany({ entity: () => Role })
-    roles = new Collection<Role>(this)
+  static async onUpdate(self: Member): Promise<void> {
+    await getaway.publish(self.server_id, 'MEMBER_UPDATE', self)
+  }
 
-    @OneToOne({ entity: () => Server })
-    server!: Server
+  static async onDelete(self: Member): Promise<void> {
+    await getaway.publish(self.server_id, 'MEMBER_LEAVE_SERVER', { id: self.id })
+  }
 
-    static from(options: CreateMemberOptions): Member {
-        return wrap(new Member()).assign(options)
-    }
+  fetchRoles(): Promise<Role[]> {
+    return Role.find(`id IN (${this.roles})`)
+  }
 
-    static find(query: FilterQuery<Member>, options?: FindOptions<Member>): Promise<Member[]> {
-        return db.get(Member).find(query, options)
-    }
+  static from(opts: CreateMemberOptions): Member {
+    return Object.assign(new Member(), opts)
+  }
 
-    static findOne(query: FilterQuery<Member>): Promise<Member | null> {
-        return db.get(Member).findOne(query)
-    }
+  static async find(where: string, select: (keyof Member | '*')[] = ['*'], limit = 100): Promise<Member[]> {
+    const result: Member[] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where} LIMIT ${limit}`)
+    return result.map((row) => Member.from(row))
+  }
 
-    static async save(...members: Member[]): Promise<void> {
-        await db.get(Member).persistAndFlush(members)
-    }
+  static async findOne(where: string, select: (keyof Member | '*')[] = ['*']): Promise<Member> {
+    const [member]: [Member?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
 
-    async save(options?: Partial<Member>): Promise<this> {
-        await Member.save(options ? wrap(this).assign(options) : this)
-        return this
-    }
+    if (member) return Member.from(member)
 
-    async delete(): Promise<void> {
-        await db.get(Member).removeAndFlush(this)
-    }
+    throw new HTTPError('UNKNOWN_USER')
+  }
+
+
+  static async init(): Promise<void> {
+    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
+            id BIGINT PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            joined_at TIMESTAMP DEFAULT current_timestamp,
+            nickname VARCHAR(${config.limits.member.nickname}),
+            server_id BIGINT NOT NULL,
+            roles JSON NOT NULL,
+            FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`)
+  }
 }

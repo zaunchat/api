@@ -1,13 +1,11 @@
 import { SyncCheckFunction, AsyncCheckFunction } from 'fastest-validator'
-import { User, Server, Channel } from '../structures'
+import { User } from '../structures'
 import { Permissions } from '../utils'
 
 declare module '@tinyhttp/app' {
     interface Request {
-        user: User
-        server: Server
-        channel: Channel
         permissions: Permissions
+        user: User
         check(fn: SyncCheckFunction | AsyncCheckFunction): void
     }
 }

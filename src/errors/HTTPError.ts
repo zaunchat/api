@@ -13,6 +13,10 @@ export const APIErrors = {
     TOO_MANY_ATTACHMENTS: [400],
     TOO_MANY_REPLIES: [400],
     INVALID_ID: [400, 'Invalid ID'],
+    BLOCKED: [409],
+    BLOCKED_BY_OTHER: [403],
+    ALREADY_SENT_REQUEST: [409],
+    ALREADY_FRIENDS: [409],
 
     // Unknown - 404
     UNKNOWN_ACCOUNT: [404, 'Unknown account'],
@@ -21,14 +25,14 @@ export const APIErrors = {
     UNKNOWN_MESSAGE: [404, 'Unknown message'],
     UNKNOWN_TOKEN: [404, 'Unknown token'],
     UNKNOWN_SESSION: [404, 'Unknown session'],
-    UNKNOWN_SERVER: [404, 'Unknwon server'],
+    UNKNOWN_SERVER: [404, 'Unknown server'],
     UNKNOWN_MEMBER: [404, 'Unknown member'],
     UNKNOWN_ROLE: [404, 'Unknown role'],
     UNKNOWN_GROUP: [404, 'Unknown group'],
-    UNKNON_INVITE: [404, 'Unknown invite'],
+    UNKNOWN_INVITE: [404, 'Unknown invite'],
 
     // Maximum
-    MAXIMUM_FRIENDS: [400, 'Maximum number of freinds reached'],
+    MAXIMUM_FRIENDS: [400, 'Maximum number of friends reached'],
     MAXIMUM_SERVERS: [400, 'Maximum number of servers reached'],
     MAXIMUM_GROUPS: [400, 'Maximum number of groups reached'],
     MAXIMUM_ROLES: [400, 'Maximum number of roles reached'],
