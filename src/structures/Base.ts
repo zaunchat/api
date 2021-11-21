@@ -1,20 +1,21 @@
 // deno-lint-ignore-file no-explicit-any
-import { Snowflake } from '../utils'
+import { Snowflake, logger } from '../utils'
 import sql from '../database'
+
 
 export abstract class Base {
   readonly id = Snowflake.generate()
 
   static async onUpdate(_self: unknown): Promise<void> {
-    console.warn(`Unhandled method at ${this.tableName}`)
+    logger.warn(`Unhandled method at ${this.tableName}`)
   }
 
   static async onCreate(_self: unknown): Promise<void> {
-    console.warn(`Unhandled method at ${this.tableName}`)
+    logger.warn(`Unhandled method at ${this.tableName}`)
   }
 
   static async onDelete(_self: unknown): Promise<void> {
-    console.warn(`Unhandled method at ${this.tableName}`)
+    logger.warn(`Unhandled method at ${this.tableName}`)
   }
 
   get tableName(): string {
@@ -32,13 +33,13 @@ export abstract class Base {
 
   async save(): Promise<void> {
     // TODO: Better handling
-    const clone = {...this} as unknown as Record<string, string>
+    const clone = { ...this } as unknown as Record<string, string>
 
     // Issue: https://github.com/porsager/postgres/issues/242
     for (const [key, value] of Object.entries(clone)) {
       if (value != null && typeof value === 'object') clone[key] = JSON.stringify(value)
     }
-    
+
     await sql`INSERT INTO ${sql(this.tableName)} ${sql(clone)}`
 
     void (this.constructor as any).onCreate(this)

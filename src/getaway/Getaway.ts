@@ -2,9 +2,8 @@ import WebSocket, { ServerOptions, WebSocketServer } from 'ws'
 import events from './events'
 import { Socket } from './Socket'
 import { WSCodes, WSCloseCodes, WSEvents, Payload } from './Constants'
-import { PresenceStatus, User } from '../structures'
 import { createRedisConnection } from '../database/redis'
-
+import { logger } from '../utils'
 
 export class Getaway {
   redis = createRedisConnection()
@@ -44,7 +43,7 @@ export class Getaway {
         }
       })
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       socket.close(WSCloseCodes.UNKNOWN_ERROR)
     }
   }
@@ -76,7 +75,7 @@ export class Getaway {
       await event(socket, payload)
     } catch (err) {
       socket.close(WSCloseCodes.UNKNOWN_ERROR)
-      console.error(err)
+      logger.error(err)
     }
   }
 
@@ -85,6 +84,6 @@ export class Getaway {
   }
 
   private onError(error: unknown): void {
-    console.error(error)
+    logger.error(error)
   }
 }
