@@ -18,6 +18,7 @@
     "fastest-validator": "^1.11.1",
     "helmet": "^4.6.0",
     "ioredis": "^4.28.0",
+    "kleur": "^4.1.4",
     "ms": "^3.0.0-canary.1",
     "nanoid": "^3.1.25",
     "node-fetch": "^2.6.1",
