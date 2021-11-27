@@ -11,10 +11,17 @@ export const snowflake = (id: unknown): id is ID => {
   return typeof id === 'string' && /^\d{17,19}$/.test(id)
 }
 
+export const nil = (x: unknown): x is null => x === null
 
 export const empty = (obj: unknown): boolean => {
   if (Array.isArray(obj) && obj.length === 0) return true
-  if (obj === null) return true
-  if (typeof obj === 'object' && Object.keys(obj).length === 0) return true
+
+  if (nil(obj)) return true
+
+  if (typeof obj === 'object') {
+    for (const _ in obj) return false
+    return true
+  }
+
   return false
 }
