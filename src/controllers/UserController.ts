@@ -1,13 +1,13 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
-import { Channel, ChannelTypes, PUBLIC_USER_PROPS, User } from '../structures'
-
+import { Channel, ChannelTypes, User } from '../structures'
+import { array } from 'pg-query-config'
 
 @web.basePath('/users')
 export class UserController {
   @web.get('/:user_id')
   async fetchOne(req: Request, res: Response): Promise<void> {
-    const user = await User.findOne(`id = ${req.params.user_id}`, PUBLIC_USER_PROPS)
+    const user = await User.fetchPublicUser(req.params.user_id as ID)
     res.json(user)
   }
 
@@ -20,8 +20,11 @@ export class UserController {
   @web.get('/:user_id/dm')
   async openDM(req: Request, res: Response): Promise<void> {
     const { user_id } = req.params as Record<string, ID>
-    const target = await User.findOne(`id = ${user_id}`)
-    const exists = await Channel.findOne(`type = ${ChannelTypes.DM} AND recipients::jsonb ? ${user_id}`).catch(() => null)
+    const target = await User.fetchPublicUser(user_id)
+    const exists = await Channel.findOne({
+      type: ChannelTypes.DM,
+      recipients: array.lc([user_id])
+    }).catch(() => null)
 
     if (exists) {
       return void res.json(exists)

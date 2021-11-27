@@ -1,6 +1,5 @@
 import { Base, Role } from '.'
 import { validator } from '../utils'
-import { HTTPError } from '../errors'
 import { getaway } from '../getaway'
 import sql from '../database'
 import config from '../config'
@@ -33,7 +32,7 @@ export class Member extends Base {
   roles: ID[] = []
 
   static async onCreate(self: Member): Promise<void> {
-    await getaway.subscribe(self.id, [self.server_id])
+    await getaway.subscribe(self.id, self.server_id)
     await getaway.publish(self.server_id, 'MEMBER_JOIN_SERVER', self)
   }
 
@@ -46,26 +45,12 @@ export class Member extends Base {
   }
 
   fetchRoles(): Promise<Role[]> {
-    return Role.find(`id IN (${this.roles})`)
+    return Role.find({ id: this.roles })
   }
 
   static from(opts: CreateMemberOptions): Member {
     return Object.assign(new Member(), opts)
   }
-
-  static async find(where: string, select: (keyof Member | '*')[] = ['*'], limit = 100): Promise<Member[]> {
-    const result: Member[] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where} LIMIT ${limit}`)
-    return result.map((row) => Member.from(row))
-  }
-
-  static async findOne(where: string, select: (keyof Member | '*')[] = ['*']): Promise<Member> {
-    const [member]: [Member?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
-
-    if (member) return Member.from(member)
-
-    throw new HTTPError('UNKNOWN_USER')
-  }
-
 
   static async init(): Promise<void> {
     await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
@@ -74,7 +59,7 @@ export class Member extends Base {
             joined_at TIMESTAMP DEFAULT current_timestamp,
             nickname VARCHAR(${config.limits.member.nickname}),
             server_id BIGINT NOT NULL,
-            roles JSON NOT NULL,
+            roles JSONB NOT NULL,
             FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )`)

@@ -1,6 +1,5 @@
 import { Base, Role, Channel, Member } from '.'
 import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
-import { HTTPError } from '../errors'
 import { getaway } from '../getaway'
 import sql from '../database'
 import config from '../config'
@@ -45,7 +44,7 @@ export class Server extends Base {
   permissions = DEFAULT_PERMISSION_EVERYONE
 
   static async onCreate(self: Server): Promise<void> {
-    await getaway.subscribe(self.owner_id, [self.id])
+    await getaway.subscribe(self.owner_id, self.id)
     await getaway.publish(self.id, 'SERVER_CREATE', self)
   }
 
@@ -61,30 +60,16 @@ export class Server extends Base {
     return Object.assign(new Server(), opts)
   }
 
-  static async find(where: string, select: (keyof Server | '*')[] = ['*'], limit = 100): Promise<Server[]> {
-    const result: Server[] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where} LIMIT ${limit}`)
-    return result.map((row) => Server.from(row))
-  }
-
-  static async findOne(where: string, select: (keyof Server | '*')[] = ['*']): Promise<Server> {
-    const [server]: [Server?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
-
-    if (server) return Server.from(server)
-
-    throw new HTTPError('UNKNOWN_SERVER')
-  }
-
-
   fetchMembers(): Promise<Member[]> {
-    return sql<Member[]>`SELECT * FROM members WHERE server_id = ${this.id}`.then((m) => m.map(Member.from))
+    return Member.find({ server_id: this.id })
   }
 
   fetchRoles(): Promise<Role[]> {
-    return sql<Role[]>`SELECT * FROM roles WHERE server_id = ${this.id}`.then((r) => r.map(Role.from))
+    return Role.find({ server_id: this.id })
   }
 
   fetchChannels(): Promise<Channel[]> {
-    return sql<Channel[]>`SELECT * FROM channels WHERE server_id = ${this.id}`
+    return Channel.find({ server_id: this.id })
   }
 
   static async init(): Promise<void> {

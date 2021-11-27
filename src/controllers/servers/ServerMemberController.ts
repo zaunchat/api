@@ -1,110 +1,124 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
 import { Member, CreateMemberSchema, Role } from '../../structures'
-import { HTTPError } from '../../errors'
 import { Permissions } from '../../utils'
 
 
 @web.basePath('/servers/:server_id/members')
 export class ServerMemberController {
-	@web.use()
-	async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
-		const exists = await Member.findOne(`id = ${req.user.id} AND server_id = ${req.params.server_id}`).catch(() => null)
+  @web.use()
+  async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
+    const exists = await Member.findOne({
+      id: req.user.id,
+      server_id: req.params.server_id
+    }).catch(() => null)
 
-		if (!exists) {
-			throw new HTTPError('UNKNOWN_SERVER')
-		}
+    if (!exists) {
+      req.throw('UNKNOWN_SERVER')
+    }
 
-		next()
-	}
+    next()
+  }
 
-	@web.get('/')
-	async fetchMany(req: Request, res: Response): Promise<void> {
-		const limit = 1000 // TODO: Add Limit option
-		const members = await Member.find(`server_id = ${req.params.server_id}`, undefined, limit)
-		res.json(members)
-	}
+  @web.get('/')
+  async fetchMany(req: Request, res: Response): Promise<void> {
+    const limit = 1000 // TODO: Add Limit option
+    const members = await Member.find({
+      server_id: req.params.server_id
+    }, limit)
+    res.json(members)
+  }
 
-	@web.get('/:member_id')
-	async fetchOne(req: Request, res: Response): Promise<void> {
-		const { member_id, server_id } = req.params
+  @web.get('/:member_id')
+  async fetchOne(req: Request, res: Response): Promise<void> {
+    const { member_id, server_id } = req.params
 
-		const member = await Member.findOne(`id = ${member_id} AND server_id = ${server_id}`)
+    const member = await Member.findOne({
+      id: member_id,
+      server_id
+    })
 
-		if (!member) {
-			throw new HTTPError('UNKNOWN_MEMBER')
-		}
+    if (!member) {
+      req.throw('UNKNOWN_MEMBER')
+    }
 
-		res.json(member)
-	}
+    res.json(member)
+  }
 
-	@web.patch('/:member_id')
-	async edit(req: Request, res: Response): Promise<void> {
-		req.check(CreateMemberSchema)
+  @web.patch('/:member_id')
+  async edit(req: Request, res: Response): Promise<void> {
+    req.check(CreateMemberSchema)
 
-		const { server_id, member_id } = req.params as Record<string, ID>
-		const member = await Member.findOne(`id = ${member_id} AND server_id = ${server_id}`)
-		const permissions = await Permissions.fetch({
-			user: req.user,
-			server: server_id
-		})
+    const { server_id, member_id } = req.params as Record<string, ID>
+    const member = await Member.findOne({
+      id: member_id,
+      server_id
+    })
 
-		const updated: Record<string, unknown> = {}
+    const permissions = await Permissions.fetch({
+      user: req.user,
+      server: server_id
+    })
 
-		if ('nickname' in req.body) {
-			if (req.user.id === member.id) {
-				if (!permissions.has(Permissions.FLAGS.CHANGE_NICKNAME)) throw new HTTPError('MISSING_PERMISSIONS')
-			} else {
-				if (!permissions.has(Permissions.FLAGS.MANAGE_NICKNAMES)) throw new HTTPError('MISSING_PERMISSIONS')
-			}
-			updated.nickname = req.body.nickname ? req.body.nickname : void 0
-		}
+    const updated: Record<string, unknown> = {}
 
-		if (req.body.roles) {
-			if (!permissions.has(Permissions.FLAGS.MANAGE_ROLES)) throw new HTTPError('MISSING_PERMISSIONS')
+    if ('nickname' in req.body) {
+      if (req.user.id === member.id) {
+        if (!permissions.has(Permissions.FLAGS.CHANGE_NICKNAME)) req.throw('MISSING_PERMISSIONS')
+      } else {
+        if (!permissions.has(Permissions.FLAGS.MANAGE_NICKNAMES)) req.throw('MISSING_PERMISSIONS')
+      }
+      updated.nickname = req.body.nickname ? req.body.nickname : void 0
+    }
 
-			const roles = await Role.find(`server_id = ${req.params.server_id}`)
+    if (req.body.roles) {
+      if (!permissions.has(Permissions.FLAGS.MANAGE_ROLES)) req.throw('MISSING_PERMISSIONS')
 
-			updated.roles = []
+      const roles = await Role.find({ server_id: req.params.server_id })
 
-			for (const roleId of req.body.roles) {
-				const role = roles.find(r => r.id === roleId)
-				
-				if (!role) throw new HTTPError('UNKNOWN_ROLE');
+      updated.roles = []
 
-				(<string[]>updated.roles).push(role.id)
-			}
-		}
+      for (const roleId of req.body.roles) {
+        const role = roles.find(r => r.id === roleId)
 
-		await member.update(updated)
+        if (!role) req.throw('UNKNOWN_ROLE');
 
-		res.json(member)
-	}
+        (<string[]>updated.roles).push(role!.id)
+      }
+    }
 
-	@web.route('delete', '/:member_id')
-	async kick(req: Request, res: Response): Promise<void> {
-		const { server_id, member_id } = req.params as Record<string, ID>
+    await member.update(updated)
 
-		if (member_id !== req.user.id) {
-			const permissions = await Permissions.fetch({
-				user: req.user,
-				server: server_id
-			})
+    res.json(member)
+  }
 
-			if (!permissions.has(Permissions.FLAGS.KICK_MEMBERS)) {
-				throw new HTTPError('MISSING_PERMISSIONS')
-			}
-		}
+  @web.route('delete', '/:member_id')
+  async kick(req: Request, res: Response): Promise<void> {
+    const { server_id, member_id } = req.params as Record<string, ID>
 
-		const member = await Member.findOne(`id = ${member_id} AND server_id = ${server_id}`)
-	
+    if (member_id !== req.user.id) {
+      const permissions = await Permissions.fetch({
+        user: req.user,
+        server: server_id
+      })
 
-		if (!member) {
-			throw new HTTPError('UNKNOWN_MEMBER')
-		}
+      if (!permissions.has(Permissions.FLAGS.KICK_MEMBERS)) {
+        req.throw('MISSING_PERMISSIONS')
+      }
+    }
 
-		await member.delete()
+    const member = await Member.findOne({
+      id: member_id,
+      server_id
+    })
 
-		res.sendStatus(202)
-	}
+
+    if (!member) {
+      req.throw('UNKNOWN_MEMBER')
+    }
+
+    await member.delete()
+
+    res.sendStatus(202)
+  }
 }

@@ -1,6 +1,5 @@
 import * as web from 'express-decorators'
 import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { HTTPError } from '../../errors'
 import { Channel, CreateTextChannelSchema, ChannelTypes, Member } from '../../structures'
 import { Permissions } from '../../utils'
 import config from '../../config'
@@ -8,78 +7,89 @@ import config from '../../config'
 
 @web.basePath('/channels/:server_id')
 export class ServerChannelController {
-	@web.use()
-	async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
-		const exists = await Member.findOne(`id = ${req.user.id} AND server_id = ${req.params.server_id}`).catch(() => null)
+  @web.use()
+  async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
+    const exists = await Member.findOne({
+      id: req.user.id,
+      server_id: req.params.server_id
+    }).catch(() => null)
 
-		if (!exists) {
-			throw new HTTPError('UNKNOWN_SERVER')
-		}
+    if (!exists) {
+      req.throw('UNKNOWN_SERVER')
+    }
 
-		next()
-	}
+    next()
+  }
 
-	@web.get('/')
-	async fetchMany(req: Request, res: Response): Promise<void> {
-		const channels = await Channel.find(`server_id = ${req.params.server_id}`)
-		res.json(channels)
-	}
+  @web.get('/')
+  async fetchMany(req: Request, res: Response): Promise<void> {
+    const channels = await Channel.find({ server_id: req.params.server_id })
+    res.json(channels)
+  }
 
-	@web.get('/:channel_id')
-	async fetchOne(req: Request, res: Response): Promise<void> {
-		const { server_id, channel_id } = req.params
-		const channel = await Channel.findOne(`id = ${channel_id} AND server_id = ${server_id}`)
-		res.json(channel)
-	}
+  @web.get('/:channel_id')
+  async fetchOne(req: Request, res: Response): Promise<void> {
+    const { server_id, channel_id } = req.params
 
-	@web.post('/')
-	async create(req: Request, res: Response): Promise<void> {
-		req.check(CreateTextChannelSchema)
+    const channel = await Channel.findOne({
+      id: channel_id,
+      server_id
+    })
 
-		const server_id = req.params.server_id as ID
+    res.json(channel)
+  }
 
-		const channelCount = await Channel.count(`server_id = ${server_id}`)
+  @web.post('/')
+  async create(req: Request, res: Response): Promise<void> {
+    req.check(CreateTextChannelSchema)
 
-		if (channelCount >= config.limits.server.channels) {
-			throw new HTTPError('MAXIMUM_CHANNELS')
-		}
+    const server_id = req.params.server_id
 
-		const permissions = await Permissions.fetch({
-			user: req.user,
-			server: server_id
-		})
+    const channelCount = await Channel.count(`server_id = ${server_id}`)
 
-		if (!permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)) {
-			throw new HTTPError('MISSING_PERMISSIONS')
-		}
+    if (channelCount >= config.limits.server.channels) {
+      req.throw('MAXIMUM_CHANNELS')
+    }
 
-		const channel = await Channel.from({
-			...req.body,
-			server_id: server_id,
-			type: ChannelTypes.TEXT // TODO: Add category type
-		}).save()
+    const permissions = await Permissions.fetch({
+      user: req.user,
+      server: server_id
+    })
 
-		res.json(channel)
-	}
+    if (!permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)) {
+      req.throw('MISSING_PERMISSIONS')
+    }
 
-	@web.route('delete', '/:channel_id')
-	async delete(req: Request, res: Response): Promise<void> {
-		const { server_id, channel_id } = req.params
-		
-		const channel = await Channel.findOne(`id = ${channel_id} AND server_id = ${server_id}`)
-		
-		const permissions = await Permissions.fetch({
-			user: req.user,
-			server: server_id as ID,
-			channel
-		})
+    const channel = await Channel.from({
+      ...req.body,
+      server_id: server_id,
+      type: ChannelTypes.TEXT // TODO: Add category type
+    }).save()
 
-		if (!permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)) {
-			throw new HTTPError('MISSING_PERMISSIONS')
-		}
+    res.json(channel)
+  }
 
-		await channel!.delete()
+  @web.route('delete', '/:channel_id')
+  async delete(req: Request, res: Response): Promise<void> {
+    const { server_id, channel_id } = req.params
 
-		res.sendStatus(202)
-	}
+    const channel = await Channel.findOne({
+      id: channel_id,
+      server_id
+    })
+
+    const permissions = await Permissions.fetch({
+      user: req.user,
+      server: server_id,
+      channel
+    })
+
+    if (!permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)) {
+      req.throw('MISSING_PERMISSIONS')
+    }
+
+    await channel.delete()
+
+    res.sendStatus(202)
+  }
 }

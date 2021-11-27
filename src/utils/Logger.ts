@@ -22,15 +22,15 @@ class Logger {
   }
 
   error(...data: unknown[]): this {
-    return this._log(data, 'red')
+    return this._log(data, 'error')
   }
 
   info(...data: unknown[]): this {
-    return this._log(data, 'blue')
+    return this._log(data, 'info')
   }
 
   warn(...data: unknown[]): this {
-    return this._log(data, 'yellow')
+    return this._log(data, 'warn')
   }
 }
 

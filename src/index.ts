@@ -1,7 +1,6 @@
 import Server from './server'
 import config from './config'
 import migrations from './database/migrations'
-import * as extensions from './extensions'
 import { logger } from './utils'
 
 
@@ -15,9 +14,6 @@ export const server = new Server({
     servers: '5/5s',
     channels: '5/5s',
     users: '5/5s'
-  },
-  extensions(req, res) {
-    extensions.check(req, res)
   }
 })
 

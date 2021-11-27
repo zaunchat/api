@@ -1,74 +1,73 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { Server, Channel, CreateServerSchema, Member, ChannelTypes } from '../../structures'
-import { HTTPError } from '../../errors'
 import config from '../../config'
 
 @web.basePath('/servers')
 export class ServerController {
-    @web.get('/')
-    async fetchMany(req: Request, res: Response): Promise<void> {
-        res.json(await req.user.fetchServers())
+  @web.get('/')
+  async fetchMany(req: Request, res: Response): Promise<void> {
+    res.json(await req.user.fetchServers())
+  }
+
+  @web.get('/:server_id')
+  async fetchOne(req: Request, res: Response): Promise<void> {
+    const server = await Server.findOne({ id: req.params.server_id })
+    res.json(server)
+  }
+
+  @web.route('delete', '/:server_id')
+  async delete(req: Request, res: Response): Promise<void> {
+    const server = await Server.findOne({ id: req.params.server_id })
+
+    if (req.user.id !== server.owner_id) {
+      req.throw('MISSING_ACCESS')
     }
 
-    @web.get('/:server_id')
-    async fetchOne(req: Request, res: Response): Promise<void> {
-        const server = await Server.findOne(`id = ${req.params.server_id}`)
-        res.json(server)
+    await server.delete()
+
+    res.sendStatus(202)
+  }
+
+
+  @web.post('/')
+  async create(req: Request, res: Response): Promise<void> {
+    req.check(CreateServerSchema)
+
+    const serverCount = await Member.count(`id = ${req.user.id}`)
+
+    if (serverCount >= config.limits.user.servers) {
+      req.throw('MAXIMUM_SERVERS')
     }
 
-    @web.route('delete', '/:server_id')
-    async delete(req: Request, res: Response): Promise<void> {
-        const server = await Server.findOne(`id = ${req.params.server_id}`)
+    const server = Server.from({
+      ...req.body,
+      owner_id: req.user.id
+    })
 
-        if (req.user.id !== server.owner_id) {
-            throw new HTTPError('MISSING_ACCESS')
-        }
+    const category = Channel.from({
+      type: ChannelTypes.CATEGORY,
+      server_id: server.id,
+      name: 'General'
+    })
 
-        await server.delete()
+    const chat = Channel.from({
+      type: ChannelTypes.TEXT,
+      server_id: server.id,
+      name: 'general',
+      parents: [category.id]
+    })
 
-        res.sendStatus(202)
-    }
+    const member = Member.from({
+      id: req.user.id,
+      server_id: server.id
+    })
 
+    await server.save()
+    await chat.save()
+    await category.save()
+    await member.save()
 
-    @web.post('/')
-    async create(req: Request, res: Response): Promise<void> {
-        req.check(CreateServerSchema)
-
-        const serverCount = await Member.count(`id = ${req.user.id}`)
-
-        if (serverCount >= config.limits.user.servers) {
-            throw new HTTPError('MAXIMUM_SERVERS')
-        }
-
-        const server = Server.from({
-            ...req.body,
-            owner_id: req.user.id
-        })
-
-        const category = Channel.from({
-            type: ChannelTypes.CATEGORY,
-            server_id: server.id,
-            name: 'General'
-        })
-
-        const chat = Channel.from({
-            type: ChannelTypes.TEXT,
-            server_id: server.id,
-            name: 'general',
-            parents: [category.id]
-        })
-
-        const member = Member.from({
-            id: req.user.id,
-            server_id: server.id
-        })
-
-        await server.save()
-        await chat.save()
-        await category.save()
-        await member.save()
-
-        res.json(server)
-    }
+    res.json(server)
+  }
 }

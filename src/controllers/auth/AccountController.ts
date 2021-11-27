@@ -1,7 +1,6 @@
 import * as web from 'express-decorators'
 import { Response, Request } from '@tinyhttp/app'
 import { User, Session, CreateUserSchema, LoginUserSchema } from '../../structures'
-import { HTTPError } from '../../errors'
 import { is, email } from '../../utils'
 import config from '../../config'
 import argon2 from 'argon2'
@@ -16,17 +15,17 @@ export class AccountController {
     const { email, password } = req.body
 
     if (!is.email(email)) {
-      throw new HTTPError('INVALID_EMAIL')
+      req.throw('INVALID_EMAIL')
     }
 
-    const user = await User.findOne(`email = ${email}`)
+    const user = await User.findOne({ email })
 
     if (!user.verified) {
-      throw new HTTPError('USER_NOT_VERIFIED')
+      req.throw('USER_NOT_VERIFIED')
     }
 
     if (!await argon2.verify(password, user.password)) {
-      throw new HTTPError('INVALID_PASSWORD')
+      req.throw('INVALID_PASSWORD')
     }
 
     const session = Session.from({
@@ -45,20 +44,24 @@ export class AccountController {
   async register(req: Request, res: Response): Promise<void> {
     req.check(CreateUserSchema)
 
-    const { username, password } = req.body
+    const { username, password } = req.body as Record<string, string>
 
     if (!is.email(req.body.email)) {
-      throw new HTTPError('INVALID_EMAIL')
+      req.throw('INVALID_EMAIL')
     }
 
-    const exists = await User.findOne(`email = ${email} OR username = ${username}`, ['username', 'email']).catch(() => null)
+
+    const exists = await User.findOne(sql => sql
+      .select(['username', 'email'])
+      .where({ email: req.body.email })
+      .orWhere([{ username }])).catch(() => null)
 
 
     if (exists) {
       if (username === exists.username) {
-        throw new HTTPError('USERNAME_TAKEN')
+        req.throw('USERNAME_TAKEN')
       } else {
-        throw new HTTPError('EMAIL_ALREADY_IN_USE')
+        req.throw('EMAIL_ALREADY_IN_USE')
       }
     }
 
@@ -91,10 +94,10 @@ export class AccountController {
     const verified = await email.verify(user_id, code)
 
     if (!verified) {
-      throw new HTTPError('UNKNOWN_TOKEN')
+      req.throw('UNKNOWN_TOKEN')
     }
 
-    const user = await User.findOne(`id = ${user_id}`)
+    const user = await User.findOne({ id: user_id })
 
     await user.update({ verified: true })
 

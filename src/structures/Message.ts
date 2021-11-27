@@ -1,6 +1,5 @@
 import { Base } from './Base'
 import { validator } from '../utils'
-import { HTTPError } from '../errors'
 import { getaway } from '../getaway'
 import sql from '../database'
 import config from '../config'
@@ -67,20 +66,6 @@ export class Message extends Base {
   static from(opts: CreateMessageOptions): Message {
     return Object.assign(new Message(), opts)
   }
-
-  static async find(where: string, select: (keyof Message | '*')[] = ['*'], limit = 100): Promise<Message[]> {
-    const result: Message[] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where} LIMIT ${limit}`)
-    return result.map((row) => Message.from(row))
-  }
-
-  static async findOne(where: string, select: (keyof Message | '*')[] = ['*']): Promise<Message> {
-    const [message]: [Message?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
-
-    if (message) return Message.from(message)
-
-    throw new HTTPError('UNKNOWN_USER')
-  }
-
 
   static async init(): Promise<void> {
     await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (

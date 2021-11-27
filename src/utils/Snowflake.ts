@@ -22,7 +22,7 @@ export class Snowflake extends null {
   }
 
 
-  static binaryToId(num: string): ID {
+  static binaryToId(num: string): string {
     let dec = ''
 
     while (num.length > 50) {
@@ -39,16 +39,16 @@ export class Snowflake extends null {
       number = Math.floor(number / 10)
     }
 
-    return dec as ID
+    return dec
   }
 
-  static generate(now = Date.now()): ID {
+  static generate(now = Date.now()): string {
     if (this.INCREMENT >= 4095) this.INCREMENT = 0
     const time = BigInt(now - this.EPOCH) << 22n
     const workerId = this.workerId << 17n
     const processId = this.processId << 12n
     const increment = BigInt(this.INCREMENT++)
-    return (time | workerId | processId | increment).toString() as ID
+    return (time | workerId | processId | increment).toString()
   }
 
 

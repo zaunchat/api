@@ -1,6 +1,5 @@
 import { Base } from './Base'
 import { validator } from '../utils'
-import { HTTPError } from '../errors'
 import sql from '../database'
 
 export interface CreateRoleOptions extends Partial<Role> {
@@ -39,20 +38,6 @@ export class Role extends Base {
   static from(opts: CreateRoleOptions): Role {
     return Object.assign(new Role(), opts)
   }
-
-  static async find(where: string, select: (keyof Role | '*')[] = ['*'], limit = 100): Promise<Role[]> {
-    const result: Role[] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where} LIMIT ${limit}`)
-    return result.map((row) => Role.from(row))
-  }
-
-  static async findOne(where: string, select: (keyof Role | '*')[] = ['*']): Promise<Role> {
-    const [role]: [Role?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
-
-    if (role) return Role.from(role)
-
-    throw new HTTPError('UNKNOWN_ROLE')
-  }
-
 
   static async init(): Promise<void> {
     await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (

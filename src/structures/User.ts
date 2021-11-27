@@ -1,9 +1,9 @@
 import { Base, Session, Server } from '.'
 import { validator } from '../utils'
-import { HTTPError } from '../errors'
 import { getaway } from '../getaway'
 import sql from '../database'
 import config from '../config'
+
 
 export const PUBLIC_USER_PROPS = [
   'id',
@@ -98,35 +98,24 @@ export class User extends Base {
     return Object.assign(new User(), opts)
   }
 
-  static async find(where: string, select: (keyof User | '*')[] = ['*'], limit = 100): Promise<User[]> {
-    const result: User[] = await sql.unsafe(`
-        SELECT ${select} FROM ${this.tableName}
-        WHERE ${where}
-        LIMIT ${limit}
-    `)
-    return result.map((row) => User.from(row))
-  }
-
-  static async findOne(where: string, select: (keyof User | '*')[] = ['*']): Promise<User> {
-    const [user]: [User?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
-
-    if (user) return User.from(user)
-
-    throw new HTTPError('UNKNOWN_USER')
+  static fetchPublicUser(id: ID): Promise<User> {
+    return User.findOne(q => q.select(PUBLIC_USER_PROPS).where({ id }))
   }
 
   fetchServers(): Promise<Server[]> {
-    return sql<Server[]>`SELECT * FROM servers WHERE id IN (
-            SELECT server_id FROM members WHERE id = ${this.id}
-        )`.then(result => result.map(row => Server.from(row)))
+    return sql<Server[]>`SELECT * FROM ${sql(Server.tableName)} WHERE id IN (
+       SELECT server_id FROM members WHERE id = ${this.id}
+    )`
   }
 
   fetchSessions(): Promise<Session[]> {
-    return sql<Session[]>`SELECT * FROM sessions WHERE user_id = ${this.id}`.then(res => res.map(Session.from))
+    return Session.find({ user_id: this.id })
   }
 
   fetchRelations(): Promise<User[]> {
-    return sql<User[]>`SELECT ${sql(PUBLIC_USER_PROPS)} FROM ${sql(this.tableName)} WHERE id IN (${[...this.relations.keys()]})`.then(res => res.map(User.from))
+    return User.find(q => q
+      .select(PUBLIC_USER_PROPS)
+      .where({ id: [...this.relations.map(r => r.id)] }))
   }
 
   static async fetchByToken(token: string): Promise<User | null> {
@@ -138,10 +127,7 @@ export class User extends Base {
          WHERE verified = TRUE 
          AND sessions.token = ${token}
     `
-
-    if (!user) return null
-
-    return User.from(user)
+    return user ?? null
   }
 
   static async init(): Promise<void> {
@@ -152,8 +138,8 @@ export class User extends Base {
             email VARCHAR(255) NOT NULL UNIQUE,
             avatar VARCHAR(64),
             badges INTEGER DEFAULT 0,
-            presence JSON NOT NULL,
-            relations JSON NOT NULL,
+            presence JSONB NOT NULL,
+            relations JSONB NOT NULL,
             verified BOOLEAN DEFAULT FALSE
         )`)
   }

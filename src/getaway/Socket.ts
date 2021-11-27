@@ -64,11 +64,11 @@ export class Socket {
     this.ws.close(code)
   }
 
-  async subscribe(...topics: ID[]): Promise<void> {
+  async subscribe(topics: ID[]): Promise<void> {
     await this.subscriptions.subscribe(...topics)
   }
 
-  async unsubscribe(...topics: ID[]): Promise<void> {
+  async unsubscribe(topics: ID[]): Promise<void> {
     await this.subscriptions.unsubscribe(...topics)
   }
 }

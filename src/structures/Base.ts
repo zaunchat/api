@@ -1,6 +1,13 @@
 // deno-lint-ignore-file no-explicit-any
 import { Snowflake, logger } from '../utils'
 import sql from '../database'
+import { QueryConfig as QueryBuilder } from 'pg-query-config';
+import { HTTPError, APIErrors } from '../errors';
+
+type WhereFunction<T> = (valueRefSet: Set<T>, args: T[]) => string
+type WhereCondition<T> = {
+  [P in keyof T]?: WhereCondition<T[P]> | T[P] | WhereFunction<T[P]> | Array<T[P]>
+}
 
 
 export abstract class Base {
@@ -24,6 +31,49 @@ export abstract class Base {
 
   static get tableName(): string {
     return `${this.name.toLowerCase()}s`
+  }
+
+  static async findOne<T>(
+    this: new () => T,
+    where: WhereCondition<T> | ((query: QueryBuilder<T>) => QueryBuilder<T>)
+  ): Promise<T> {
+    let query = new QueryBuilder<T>({ table: (<any>this).tableName, limit: 1 })
+
+    if (typeof where === 'function') {
+      query = where(query)
+    } else {
+      query.where(where)
+    }
+
+    const [item] = await sql.unsafe(query.text, query.values) as [T?]
+
+    if (!item) {
+      const tag = `UNKNOWN_${this.name.toUpperCase()}` as keyof typeof APIErrors
+
+      if (!(tag in APIErrors)) {
+        throw new Error('Unhandled type')
+      }
+
+      throw new HTTPError(tag)
+    }
+
+    return item
+  }
+
+  static find<T>(
+    this: new () => T,
+    where: WhereCondition<T> | ((query: QueryBuilder<T>) => QueryBuilder<T>),
+    limit = 100
+  ): Promise<T[]> {
+    let query = new QueryBuilder<T>({ table: (<any>this).tableName, limit })
+
+    if (typeof where === 'function') {
+      query = where(query)
+    } else {
+      query.where(where)
+    }
+
+    return sql.unsafe(query.text, query.values) as Promise<T[]>
   }
 
   static async count(where: string): Promise<number> {

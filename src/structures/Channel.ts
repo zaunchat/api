@@ -1,6 +1,5 @@
 import { Base } from './Base'
 import { DEFAULT_PERMISSION_DM, validator } from '../utils'
-import { HTTPError } from '../errors'
 import { getaway } from '../getaway'
 import sql from '../database'
 import config from '../config'
@@ -106,7 +105,7 @@ export class Channel extends Base {
   static async onCreate(self: Channel): Promise<void> {
     if (self.recipients) {
       const recipients = self.recipients
-      await Promise.all(recipients.map((id) => getaway.subscribe(id, [self.id])))
+      await Promise.all(recipients.map((id) => getaway.subscribe(id, self.id)))
     }
     await getaway.publish(self.id, 'CHANNEL_CREATE', self)
   }
@@ -127,19 +126,6 @@ export class Channel extends Base {
     return Object.assign(new Channel(), opts)
   }
 
-  static async find(where: string, select: (keyof Channel | '*')[] = ['*'], limit = 100): Promise<Channel[]> {
-    const result: Channel[] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where} LIMIT ${limit}`)
-    return result.map((row) => Channel.from(row as TextChannel))
-  }
-
-  static async findOne(where: string, select: (keyof Channel | '*')[] = ['*']): Promise<Channel> {
-    const [channel]: [Channel?] = await sql.unsafe(`SELECT ${select} FROM ${this.tableName} WHERE ${where}`)
-
-    if (channel) return Channel.from(channel as TextChannel)
-
-    throw new HTTPError('UNKNOWN_CHANNEL')
-  }
-
   static async init(): Promise<void> {
     await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
@@ -147,9 +133,9 @@ export class Channel extends Base {
             name VARCHAR(${config.limits.channel.name}),
             topic VARCHAR(${config.limits.channel.topic}),
             permissions BIGINT DEFAULT 0,
-            overwrites JSON,
-            recipients JSON,
-            parents JSON,
+            overwrites JSONB,
+            recipients JSONB,
+            parents JSONB,
             owner_id BIGINT,
             server_id BIGINT,
             FOREIGN KEY (owner_id) REFERENCES users(id),

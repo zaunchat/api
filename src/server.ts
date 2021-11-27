@@ -1,14 +1,14 @@
-import { App as HTTPServer, extendMiddleware, Request, Response } from '@tinyhttp/app'
+import { App as HTTPServer, extendMiddleware } from '@tinyhttp/app'
 import { getaway } from './getaway'
 import { register } from 'express-decorators'
 import * as middlewares from './middlewares'
 import * as controllers from './controllers'
-import ms from 'ms'
+import * as extensions from './extensions'
+
 
 interface ServerOptions {
   port: number
   limits: Record<string, string>
-  extensions(req: Request, res: Response): void
 }
 
 class Server {
@@ -16,7 +16,7 @@ class Server {
     onError: middlewares.error(),
     applyExtensions: (req, res, next) => {
       extendMiddleware(this.http)(req, res, next)
-      this.options.extensions(req, res)
+      extensions.extend(req, res)
     }
   })
 
@@ -27,19 +27,9 @@ class Server {
 
     // Setup rate limiter
     for (const [route, opts] of Object.entries(this.options.limits)) {
-      const [max, interval, onlyIP] = opts.split(/\/|--/).map(s => s.trim())
-
-      const options = {
-        max: Number(max),
-        interval: ms(interval as '1s'),
-        onlyIP: Boolean(onlyIP)
-      }
-
-      if (route === 'global') {
-        this.http.use(middlewares.rateLimit(options, 'global'))
-      } else {
-        this.http.use(`/${route}`, middlewares.rateLimit(options, route))
-      }
+      route === 'global' 
+        ? this.http.use(middlewares.rateLimit(opts, 'global'))
+        : this.http.use(route, middlewares.rateLimit(opts, route))
     }
 
     // Register Controllers
@@ -57,7 +47,7 @@ class Server {
   }
 
   listen(): Promise<void> {
-    return new Promise((resolve) => this.http.listen(this.options.port, resolve))
+    return new Promise((ok) => this.http.listen(this.options.port, ok))
   }
 }
 

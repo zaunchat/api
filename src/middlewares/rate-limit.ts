@@ -1,23 +1,25 @@
 import { Request, Response, NextFunction } from '@tinyhttp/app'
-import { createRedisConnection } from '../database/redis'
 import { RateLimiterRedis } from 'rate-limiter-flexible'
+import { createRedisConnection } from '../database/redis'
+import ms from 'ms'
 
+const storeClient = createRedisConnection()
 
-interface RateLimitOptions {
-  max: number
-  interval: number
-  onlyIP?: boolean
-  message?: string
-}
+export const rateLimit = (opts: string, prefix: string): typeof middleware => {
+  const [max, interval, onlyIP] = opts.split(/\/|--/).map(s => s.trim())
 
-export const rateLimit = (options: RateLimitOptions, prefix: string): typeof middleware => {
+  const options = {
+    max: Number(max),
+    interval: ms(interval as '1'),
+    onlyIP: Boolean(onlyIP)
+  }
+
   const limiter = new RateLimiterRedis({
-    storeClient: createRedisConnection(),
+    storeClient,
     points: options.max,
     duration: options.interval
   })
 
-  if (!options.message) options.message = 'Too many requests, please try again later.'
 
   const middleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     let key = (req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress) as string
@@ -37,11 +39,10 @@ export const rateLimit = (options: RateLimitOptions, prefix: string): typeof mid
       .setHeader("X-RateLimit-Remaining", info.remainingPoints)
       .setHeader("X-RateLimit-Reset", new Date(Date.now() + info.msBeforeNext).toString())
 
-
     res
       .status(429)
       .json({
-        message: options.message,
+        message: 'Too many requests, please try again later.',
         retry_after: Math.ceil(info.millisecondsUntilAllowed / 1000)
       })
   }

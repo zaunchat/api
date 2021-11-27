@@ -3,7 +3,7 @@ import events from './events'
 import { Socket } from './Socket'
 import { WSCodes, WSCloseCodes, WSEvents, Payload } from './Constants'
 import { createRedisConnection } from '../database/redis'
-import { logger } from '../utils'
+import { is, logger } from '../utils'
 
 export class Getaway {
   redis = createRedisConnection()
@@ -15,16 +15,16 @@ export class Getaway {
     this.server.on('error', this.onError.bind(this))
   }
 
-  async publish<T extends keyof WSEvents = keyof WSEvents>(channel: ID, event: T, data?: WSEvents[T]): Promise<void> {
-    await this.redis.publish(channel, JSON.stringify({ event, data }))
+  async publish<T extends keyof WSEvents>(topic: ID, event: T, data?: WSEvents[T]): Promise<void> {
+    await this.redis.publish(topic, JSON.stringify({ event, data }))
   }
 
-  async subscribe(targetId: ID, topics: ID[]): Promise<void> {
-    await this.connections.get(targetId)?.subscribe(...topics)
+  async subscribe(targetId: ID, ...topics: ID[]): Promise<void> {
+    await this.connections.get(targetId)?.subscribe(topics)
   }
 
-  async unsubscribe(targetId: ID, topics: ID[]): Promise<void> {
-    await this.connections.get(targetId)?.unsubscribe(...topics)
+  async unsubscribe(targetId: ID, ...topics: ID[]): Promise<void> {
+    await this.connections.get(targetId)?.unsubscribe(topics)
   }
 
   private async onConnection(ws: WebSocket): Promise<void> {
@@ -51,10 +51,16 @@ export class Getaway {
   private async onMessage(socket: Socket, buffer: WebSocket.Data): Promise<void> {
     let payload: Payload
 
+    // TODO: Add other encodings not only "json"
+
     try {
       payload = JSON.parse(String(buffer))
 
-      if (!payload) { // Ignore falsy values such as 'null', 'NaN', '""'
+      if (Array.isArray(payload)) {
+        throw 'Non-supported type'
+      }
+
+      if (is.empty(payload)) { // Ignore falsy values
         throw 'Empty payload'
       }
     } catch {

@@ -3,9 +3,9 @@ import { User } from '../structures'
 import { createRedisConnection } from '../database/redis'
 import { SMTPClient, Message } from 'emailjs'
 import config from '../config'
+import ms from 'ms'
 
-
-const THREE_HOURS = 10_800_000
+const THREE_HOURS = ms('3 hours')
 const EMAIL_MESSAGE_TEMPLATE = `Hello @%%USERNAME%%,
 
 You're almost there! If you did not perform this action you can safely ignore this email.
