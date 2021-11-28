@@ -8,9 +8,9 @@ export const server = new Server({
   port: config.port,
   limits: {
     global: '20/5s',
-    'auth/login': '3/24h --ip',
-    'auth/register': '3/24h --ip',
-    'auth/verify': '2/24h --ip',
+    'auth/accounts/login': '3/24h --ip',
+    'auth/accounts/register': '3/24h --ip',
+    'auth/accounts/verify': '2/24h --ip',
     servers: '5/5s',
     channels: '5/5s',
     users: '5/5s'

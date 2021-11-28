@@ -14,7 +14,7 @@ Core Backend API
 ## 📌 Roadmap
 
 - [X] Rate limit for routes
-- [ ] Rate limit for socket connections
+- [X] Rate limit for socket connections
 - [X] Pub/Sub Notification system
 - [X] Email verification
 - [X] Captcha Checker 

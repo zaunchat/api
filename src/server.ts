@@ -17,7 +17,8 @@ class Server {
     applyExtensions: (req, res, next) => {
       extendMiddleware(this.http)(req, res, next)
       extensions.extend(req, res)
-    }
+    },
+    noMatchHandler: (_req, res) => res.sendStatus(404)
   })
 
   constructor(public readonly options: ServerOptions) { }
@@ -27,7 +28,7 @@ class Server {
 
     // Setup rate limiter
     for (const [route, opts] of Object.entries(this.options.limits)) {
-      route === 'global' 
+      route === 'global'
         ? this.http.use(middlewares.rateLimit(opts, 'global'))
         : this.http.use(route, middlewares.rateLimit(opts, route))
     }
@@ -41,8 +42,8 @@ class Server {
     this.http
       .use(middlewares.validID())
       .use(middlewares.json({ parser: JSON.parse, limit: 102400 /* 100KB */ }))
-      .use(middlewares.captcha({ required: ['/auth/login', '/auth/register'] }))
-      .use(middlewares.auth({ ignore: ['/auth/verify', '/gateway', '/test'] }))
+      .use(middlewares.captcha({ required: ['/auth/accounts/login', '/auth/accounts/register'] }))
+      .use(middlewares.auth({ ignore: ['/auth/accounts/verify', '/gateway'] }))
       .use('/gateway', middlewares.ws(getaway.server))
   }
 

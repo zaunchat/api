@@ -99,7 +99,7 @@ export class User extends Base {
   }
 
   static fetchPublicUser(id: ID): Promise<User> {
-    return User.findOne(q => q.select(PUBLIC_USER_PROPS).where({ id }))
+    return User.findOne(sql => sql.select(PUBLIC_USER_PROPS).where({ id }))
   }
 
   fetchServers(): Promise<Server[]> {
@@ -113,7 +113,7 @@ export class User extends Base {
   }
 
   fetchRelations(): Promise<User[]> {
-    return User.find(q => q
+    return User.find(sql => sql
       .select(PUBLIC_USER_PROPS)
       .where({ id: [...this.relations.map(r => r.id)] }))
   }

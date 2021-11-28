@@ -1,15 +1,26 @@
 import WebSocket, { ServerOptions, WebSocketServer } from 'ws'
+import { RateLimiterRedis } from 'rate-limiter-flexible'
 import events from './events'
 import { Socket } from './Socket'
 import { WSCodes, WSCloseCodes, WSEvents, Payload } from './Constants'
 import { createRedisConnection } from '../database/redis'
 import { is, logger } from '../utils'
+import ms from 'ms'
+
+const HEARTBEAT_INTERVAL_MS = ms('45ms')
 
 export class Getaway {
   redis = createRedisConnection()
   server: WebSocketServer
   connections = new Map<ID, Socket>()
-  constructor(options: ServerOptions = { noServer: true, maxPayload: 4096 }) {
+  limiter = new RateLimiterRedis({
+    storeClient: createRedisConnection(),
+    points: 120,
+    duration: ms('1 minute') / 1000,
+    keyPrefix: 'ws'
+  })
+
+  constructor(options: ServerOptions) {
     this.server = new WebSocketServer(options)
     this.server.on('connection', this.onConnection.bind(this))
     this.server.on('error', this.onError.bind(this))
@@ -39,7 +50,7 @@ export class Getaway {
       await socket.send({
         code: WSCodes.HELLO,
         data: {
-          heartbeat_interval: 1000 * 30
+          heartbeat_interval: HEARTBEAT_INTERVAL_MS
         }
       })
     } catch (error) {
@@ -49,6 +60,15 @@ export class Getaway {
   }
 
   private async onMessage(socket: Socket, buffer: WebSocket.Data): Promise<void> {
+    let limited = true
+
+    await this.limiter.consume(socket.id).then(() => limited = false).catch(() => null)
+
+    if (limited) {
+      return socket.close(WSCloseCodes.RATE_LIMITED)
+    }
+
+
     let payload: Payload
 
     // TODO: Add other encodings not only "json"

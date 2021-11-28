@@ -3,11 +3,13 @@ import { Payload, WSCloseCodes, WSEvents } from './Constants'
 import { Getaway } from './Getaway'
 import { Permissions } from '../utils'
 import { createRedisConnection } from '../database/redis'
+import { nanoid } from 'nanoid'
 
 export const DEFAULT_HEARTBEAT_TIME = 1000 * 42
 
 export class Socket {
   heartbeatTimeout?: NodeJS.Timeout
+  id = nanoid(12)
   user_id!: ID
   subscriptions = createRedisConnection()
   constructor(public ws: WebSocket, public getaway: Getaway) {

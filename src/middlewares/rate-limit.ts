@@ -17,7 +17,8 @@ export const rateLimit = (opts: string, prefix: string): typeof middleware => {
   const limiter = new RateLimiterRedis({
     storeClient,
     points: options.max,
-    duration: options.interval
+    duration: options.interval / 1000, // Per second(s)
+    keyPrefix: prefix
   })
 
 
@@ -25,7 +26,7 @@ export const rateLimit = (opts: string, prefix: string): typeof middleware => {
     let key = (req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress) as string
     let blocked = true
 
-    if (!options.onlyIP && req.user) key = prefix + req.user.id
+    if (!options.onlyIP && req.user) key = req.user.id
 
     const info = await limiter.consume(key).then(() => blocked = false).catch(res => res)
 
@@ -39,11 +40,12 @@ export const rateLimit = (opts: string, prefix: string): typeof middleware => {
       .setHeader("X-RateLimit-Remaining", info.remainingPoints)
       .setHeader("X-RateLimit-Reset", new Date(Date.now() + info.msBeforeNext).toString())
 
+
     res
       .status(429)
       .json({
         message: 'Too many requests, please try again later.',
-        retry_after: Math.ceil(info.millisecondsUntilAllowed / 1000)
+        retry_after: info.msBeforeNext / 1000
       })
   }
 
