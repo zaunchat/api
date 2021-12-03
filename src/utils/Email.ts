@@ -40,7 +40,7 @@ class Email {
     return link
   }
 
-  async verify(key: ID, code: string): Promise<boolean> {
+  async verify(key: string, code: string): Promise<boolean> {
     const exists = await this.redis.get(key)
 
     if (exists && exists === code) {

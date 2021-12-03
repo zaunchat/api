@@ -7,7 +7,7 @@ import { array } from 'pg-query-config'
 export class UserController {
   @web.get('/:user_id')
   async fetchOne(req: Request, res: Response): Promise<void> {
-    const user = await User.fetchPublicUser(req.params.user_id as ID)
+    const user = await User.fetchPublicUser(req.params.user_id)
     res.json(user)
   }
 
@@ -65,21 +65,26 @@ export class UserController {
         }
         break
       case 'PUT': // Block
-        if (relations[target.id] === RelationshipStatus.BLOCKED) {
+        if (relations[target.id] === RelationshipStatus.BLOCKED) { // Already blocked
           req.throw('BLOCKED')
         }
+
         relations[target.id] = RelationshipStatus.BLOCKED
-        targetRelations[req.user.id] = RelationshipStatus.BLOCKED_OTHER
+
+        if (targetRelations[req.user.id] !== RelationshipStatus.BLOCKED) {
+          targetRelations[req.user.id] = RelationshipStatus.BLOCKED_OTHER
+        }
         break
       case 'DELETE': // Unfriend or unblock
-        if (!(target.id in relations)) {
-          // req.throw('NOT_EXISTS')
+        if (!relations[target.id]) {
+          res.status(404).json({ message: 'They are not friend/block' })
+          return
         }
-
         delete relations[target.id]
         break
       default:
-        break
+        res.status(404).json({ message: 'Unsupported method' })
+        return
     }
 
 

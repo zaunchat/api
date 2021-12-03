@@ -11,6 +11,8 @@ import {
   Server
 } from '../structures'
 
+const noop = () => { }
+
 export default postgres(config.database.uri, {
   transform: {
     row: (x: any) => {
@@ -24,5 +26,6 @@ export default postgres(config.database.uri, {
       if ('owner_id' in x) return Server.from(x)
       return x
     }
-  }
+  },
+  onnotice: noop
 })
