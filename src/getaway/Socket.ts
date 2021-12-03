@@ -4,18 +4,25 @@ import { Getaway } from './Getaway'
 import { Permissions } from '../utils'
 import { createRedisConnection } from '../database/redis'
 import { nanoid } from 'nanoid'
+import { setTimeout as sleep } from 'timers/promises'
+import ms from 'ms'
 
-export const DEFAULT_HEARTBEAT_TIME = 1000 * 42
+export const DEFAULT_HEARTBEAT_TIME = ms('45ms')
 
 export class Socket {
   heartbeatTimeout?: NodeJS.Timeout
   id = nanoid(12)
   user_id!: ID
   subscriptions = createRedisConnection()
+  permissions = new Map<string, Permissions>()
+  isPermissionsCached = false
   constructor(public ws: WebSocket, public getaway: Getaway) {
     this.setHeartbeat()
 
-    this.subscriptions.on('message', (topic: ID, raw: string) => {
+    this.subscriptions.on('message', async (topic: ID, raw: string) => {
+      // Don't made any operation unitl the permissions are fully cached.
+      while (!this.isPermissionsCached) await sleep(25)
+
       const data = JSON.parse(raw)
 
       switch (data.event as keyof WSEvents) {
@@ -30,10 +37,10 @@ export class Socket {
           break
       }
 
-      const permissions = new Permissions(Permissions.FLAGS.ADMINISTRATOR) // TODO: Fetch permission
+      const permissions = this.permissions.get(topic) || new Permissions(Permissions.FLAGS.ADMINISTRATOR)
 
       // TODO: Add more events to check
-      switch (data.event) { // permissions check
+      switch (data.event as keyof WSEvents) { // permissions check
         case 'MESSAGE_CREATE':
         case 'MESSAGE_UPDATE':
         case 'MESSAGE_DELETE':

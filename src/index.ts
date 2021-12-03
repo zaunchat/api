@@ -2,6 +2,7 @@ import Server from './server'
 import config from './config'
 import migrations from './database/migrations'
 import { logger } from './utils'
+import { User } from './structures'
 
 
 export const server = new Server({
@@ -26,6 +27,19 @@ try {
 
   await migrations.run()
   await server.listen()
+
+
+  const u = User.from({
+    username: 'maestroo!',
+    password: 'great-password',
+    email: 'email@gmail.com'
+  })
+
+  logger.log('Saving user..')
+  await u.save()
+
+
+  logger.log(await User.find({ id: u.id }))
 
   logger.log('Server running on port:', config.port)
 } catch (err) {

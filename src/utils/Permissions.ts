@@ -88,16 +88,26 @@ export class Permissions extends BitField {
         case ChannelTypes.GROUP:
           if (channel.owner_id === user.id) {
             permissions.add(Permissions.FLAGS.ADMINISTRATOR)
-          } else if (channel.recipients?.includes(user.id)) {
+          } else if (channel.recipients.includes(user.id)) {
             permissions.add(channel.permissions)
           }
           break
         case ChannelTypes.DM:
-          if (channel.recipients?.includes(user.id)) permissions.add(DEFAULT_PERMISSION_DM)
+          if (channel.recipients.includes(user.id)) permissions.add(DEFAULT_PERMISSION_DM)
           break
         case ChannelTypes.TEXT:
         case ChannelTypes.CATEGORY:
-          break // Todo: Handle channel overwrites
+          if (!server || typeof server === 'string') server = await Server.findOne({ id: channel.server_id! })
+
+          if (user.id === server.owner_id) {
+            permissions.add(Permissions.FLAGS.ADMINISTRATOR)
+            break
+          }
+
+          permissions.add(await Permissions.fetch({ server, user }))
+
+          // TODO: Add channel overwrites.
+          break
         default:
           throw new Error(`Unknown channel type - ${channel}`)
       }

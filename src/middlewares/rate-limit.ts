@@ -23,14 +23,15 @@ export const rateLimit = (opts: string, prefix: string): typeof middleware => {
 
 
   const middleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    let key = (req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress) as string
-    let blocked = true
+    let limited = true
 
-    if (!options.onlyIP && req.user) key = req.user.id
+    const key = req.user && !options.onlyIP
+      ? req.user.id
+      : req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress
 
-    const info = await limiter.consume(key).then(() => blocked = false).catch(res => res)
+    const info = await limiter.consume(key as string).then(() => limited = false).catch(res => res)
 
-    if (!blocked) {
+    if (!limited) {
       return next()
     }
 

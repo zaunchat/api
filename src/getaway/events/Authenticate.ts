@@ -1,6 +1,7 @@
 import { Payload, WSCloseCodes, WSCodes, WSEvents } from '../Constants'
-import { Channel, User } from '../../structures'
+import { Channel, ChannelTypes, User } from '../../structures'
 import { Socket } from '../Socket'
+import { Permissions } from '../../utils'
 import sql from '../../database'
 
 export const Authenticate = async (socket: Socket, data: Payload): Promise<void> => {
@@ -28,15 +29,18 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
 
   await socket.send({ code: WSCodes.AUTHENTICATED })
 
-  const servers = await user.fetchServers()
-  const serverIDs = extractIDs(servers)
 
   const [
+    servers,
     users,
     channels
   ] = await Promise.all([
+    user.fetchServers(),
     user.fetchRelations(),
-    sql<Channel[]>`SELECT * FROM ${sql(Channel.tableName)} WHERE server_id IN (${sql(serverIDs)}) OR recipients ? ${user.id}`
+    sql<Channel[]>`
+    SELECT * FROM channels
+    WHERE server_id IN ( SELECT server_id FROM members WHERE id = ${user.id} )
+    OR recipients ? ${user.id}`
   ])
 
   const clientUser = {
@@ -61,9 +65,30 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
   await socket.subscribe([
     [user.id],
     extractIDs(user.relations),
-    serverIDs,
+    extractIDs(servers),
     extractIDs(channels)
-  ].flat(4) as ID[])
+  ].flat(4))
+
+  const promises: Promise<Permissions>[] = [], ids: string[] = []
+
+  for (const server of servers) {
+    promises.push(Permissions.fetch({ user, server }))
+    ids.push(server.id)
+  }
+
+  for (const channel of channels) {
+    if (channel.type === ChannelTypes.DM) continue
+    promises.push(Permissions.fetch({ user, channel }))
+    ids.push(channel.id)
+  }
+
+  const result = await Promise.all(promises)
+
+  for (let i = 0; i < result.length; i++) {
+    socket.permissions.set(ids[i], result[i])
+  }
+
+  socket.isPermissionsCached = true
 }
 
 

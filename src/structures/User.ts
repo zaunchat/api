@@ -5,13 +5,13 @@ import sql from '../database'
 import config from '../config'
 
 
-export const PUBLIC_USER_PROPS = [
+export const PUBLIC_USER_PROPS: (keyof User)[] = [
   'id',
   'username',
   'presence',
   'badges',
   'avatar'
-] as (keyof User)[]
+]
 
 export interface CreateUserOptions extends Partial<User> {
   username: string
@@ -52,10 +52,7 @@ export interface Presence {
   status: PresenceStatus
 }
 
-export interface Relationship {
-  id: ID,
-  status: RelationshipStatus
-}
+export type Relationships = Record<string, RelationshipStatus>
 
 export enum PresenceStatus {
   ONLINE,
@@ -78,7 +75,7 @@ export class User extends Base {
   password!: string
   email!: string
   presence: Presence = { status: PresenceStatus.OFFLINE }
-  relations: Relationship[] = []
+  relations: Record<string, RelationshipStatus> = {}
   badges = 0
   avatar: string | null = null
   verified = false
@@ -115,7 +112,11 @@ export class User extends Base {
   fetchRelations(): Promise<User[]> {
     return User.find(sql => sql
       .select(PUBLIC_USER_PROPS)
-      .where({ id: [...this.relations.map(r => r.id)] }))
+      .where({ id: Object.keys(this.relations) }))
+  }
+
+  with(target: User): RelationshipStatus | null {
+    return this.relations[target.id] ?? null
   }
 
   static async fetchByToken(token: string): Promise<User | null> {
