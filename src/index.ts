@@ -14,7 +14,8 @@ export const server = new Server({
     'auth/accounts/verify': '2/24h --ip',
     servers: '5/5s',
     channels: '5/5s',
-    users: '5/5s'
+    users: '5/5s',
+    getaway: '3/20s --ip'
   }
 })
 

@@ -12,7 +12,6 @@
   "type": "module",
   "dependencies": {
     "@tinyhttp/app": "^2.0.12",
-    "@tinyhttp/cors": "^2.0.0",
     "argon2": "^0.28.2",
     "dotenv": "^10.0.0",
     "emailjs": "^3.7.0",

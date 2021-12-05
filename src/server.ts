@@ -28,9 +28,9 @@ class Server {
 
     // Security related
     this.http.use(middlewares.helmet())
-    this.http.use('*', middlewares.cors({
+    this.http.use(middlewares.cors({
       methods: ['GET', 'POST', 'DELETE', 'PATCH', 'PUT'],
-      allowedHeaders: ['content-type', 'x-session-token']
+      headers: ['content-type', 'x-session-token']
     }))
 
     this.http.use('/auth', middlewares.cors({
