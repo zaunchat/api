@@ -9,6 +9,7 @@ import * as extensions from './extensions'
 interface ServerOptions {
   port: number
   limits: Record<string, string>
+  origin: string
 }
 
 class Server {
@@ -24,7 +25,18 @@ class Server {
   constructor(public readonly options: ServerOptions) { }
 
   async init() {
+
+    // Security related
     this.http.use(middlewares.helmet())
+    this.http.use('*', middlewares.cors({
+      methods: ['GET', 'POST', 'DELETE', 'PATCH', 'PUT'],
+      allowedHeaders: ['content-type', 'x-session-token']
+    }))
+
+    this.http.use('/auth', middlewares.cors({
+      origin: this.options.origin,
+      methods: ['GET', 'POST']
+    }))
 
     // Setup rate limiter
     for (const [route, opts] of Object.entries(this.options.limits)) {
@@ -38,12 +50,20 @@ class Server {
       register(this.http, new Controller())
     }
 
+    const NON_AUTH_ROUTES = [
+      '/getaway',
+      '/auth/accounts'
+    ], CAPTCHA_ROUTES = [
+      '/auth/accounts/login',
+      '/auth/accounts/register'
+    ], KB_100 = 102400
+
     // Add other middlewares
     this.http
       .use(middlewares.validID())
-      .use(middlewares.json({ parser: JSON.parse, limit: 102400 /* 100KB */ }))
-      .use(middlewares.captcha({ required: ['/auth/accounts/login', '/auth/accounts/register'] }))
-      .use(middlewares.auth({ ignore: ['/auth/accounts/verify', '/gateway'] }))
+      .use(middlewares.json({ parser: JSON.parse, limit: KB_100 }))
+      .use(middlewares.captcha({ required: CAPTCHA_ROUTES }))
+      .use(middlewares.auth({ ignored: NON_AUTH_ROUTES }))
       .use('/gateway', middlewares.ws(getaway.server))
   }
 

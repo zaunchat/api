@@ -2,11 +2,11 @@ import { Request, Response, NextFunction } from '@tinyhttp/app'
 import { User } from '../structures'
 
 interface AuthOptions {
-  ignore: `/${string}`[]
+  ignored: string[]
 }
 
 export const auth = (options: AuthOptions) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
-  if (options.ignore.some((p) => req.path.includes(p))) {
+  if (options.ignored.some((p) => req.path.includes(p))) {
     return next()
   }
 

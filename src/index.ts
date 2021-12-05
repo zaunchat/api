@@ -5,6 +5,7 @@ import { logger } from './utils'
 
 
 export const server = new Server({
+  origin: config.endpoints.main,
   port: config.port,
   limits: {
     global: '20/5s',

@@ -4,7 +4,7 @@ import config from '../config'
 
 
 interface CaptchaOptions {
-  required: `/${string}`[]
+  required: string[]
 }
 
 export const captcha = (options: CaptchaOptions) => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
