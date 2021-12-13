@@ -5,6 +5,11 @@ interface JSONOptions {
   limit: number
 }
 
+const
+  UNPROCESSABLE_ENTITY = 422,
+  PAYLOAD_TOO_LARGE = 413,
+  LENGTH_REQUIRED = 411
+
 export const parser = <T extends unknown>(input: string): T => {
   if (input === 'null') return null as T
 
@@ -16,34 +21,39 @@ export const parser = <T extends unknown>(input: string): T => {
   return JSON.parse(input)
 }
 
+const isJSONMethod = (method?: string): boolean => !!method && ['POST', 'PUT', 'PATCH'].includes(method)
 
 export const json = ({ limit }: JSONOptions) => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  if (req.method && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
+  const status = (status: number) => void res.sendStatus(status)
 
-    if (req.header('content-type') !== 'application/json') {
-      return next()
+
+  if (isJSONMethod(req.method) && req.header('content-type') === 'application/json') {
+    let length: number | string | null = req.header('content-length')
+
+    if (is.empty(length)) {
+      return status(LENGTH_REQUIRED)
     }
 
-    const length = Number(req.headers['content-length']) || 0
+    length = Number(length)
 
     if (length > limit) {
-      return next('Request entity too large')
+      return status(PAYLOAD_TOO_LARGE)
+    }
+
+    let body = ''
+
+    for await (const chunk of req) {
+      body += chunk
+      if (body.length > limit) return status(PAYLOAD_TOO_LARGE)
     }
 
     try {
-      let body = ''
-
-      for await (const chunk of req) {
-        body += chunk
-        if (body.length > limit) return void res.sendStatus(413)
-      }
-
       req.body = parser(body)
-
-      if (is.empty(req.body)) throw 'Invalid'
     } catch {
-      return next('Invalid JSON body')
+      return status(UNPROCESSABLE_ENTITY)
     }
+
+    if (is.nil(req.body)) return status(UNPROCESSABLE_ENTITY)
   }
 
   next()

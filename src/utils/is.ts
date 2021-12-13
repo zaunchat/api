@@ -1,7 +1,6 @@
 import { validator } from './Validator'
 
 
-
 const isEmail = validator.compile({
   $$root: true,
   type: 'email'
@@ -16,9 +15,9 @@ export const snowflake = (id: unknown): id is ID => {
 export const nil = (x: unknown): x is null => x == null
 
 export const empty = (obj: unknown): boolean => {
-  if (Array.isArray(obj) && obj.length === 0) return true
-
   if (nil(obj)) return true
+
+  if (Array.isArray(obj) && obj.length === 0) return true
 
   if (typeof obj === 'object') {
     for (const _ in obj) return false
