@@ -11,7 +11,7 @@ import {
 
 const COMMIT = 1;
 
-const run = async () => {
+const run = async (): Promise<void> => {
   await User.init()
   await Session.init()
   await Server.init()

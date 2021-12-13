@@ -9,6 +9,7 @@ declare module '@tinyhttp/app' {
     user: User
     check(fn: SyncCheckFunction | AsyncCheckFunction): void
     throw(tag: keyof typeof APIErrors): void
+    header(name: string): string | null
   }
 }
 

@@ -5,6 +5,7 @@ import { Socket } from './Socket'
 import { WSCodes, WSCloseCodes, WSEvents, Payload } from './Constants'
 import { createRedisConnection } from '../database/redis'
 import { is, logger } from '../utils'
+import { parser } from '../middlewares/json'
 import ms from 'ms'
 
 const HEARTBEAT_INTERVAL_MS = ms('45ms')
@@ -74,7 +75,7 @@ export class Getaway {
     // TODO: Add other encodings not only "json"
 
     try {
-      payload = JSON.parse(String(buffer))
+      payload = parser(String(buffer))
 
       if (Array.isArray(payload)) {
         throw 'Non-supported type'

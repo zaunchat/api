@@ -61,7 +61,7 @@ class Server {
     // Add other middlewares
     this.http
       .use(middlewares.validID())
-      .use(middlewares.json({ parser: JSON.parse, limit: KB_100 }))
+      .use(middlewares.json({ limit: KB_100 }))
       .use(middlewares.captcha({ required: CAPTCHA_ROUTES }))
       .use(middlewares.auth({ ignored: NON_AUTH_ROUTES }))
       .use('/gateway', middlewares.ws(getaway.server))

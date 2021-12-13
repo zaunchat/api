@@ -5,8 +5,7 @@
   "scripts": {
     "start": "node --es-module-specifier-resolution=node dist/index",
     "build": "node scripts/build.js",
-    "watch": "esbuild ./src/** --target=node16 --outdir=dist --minify --watch",
-    "dev": "npm run build && npm run start",
+    "start:dev": "npm run build && npm run start",
     "lint": "npx denolint -c lintrc.json"
   },
   "type": "module",
@@ -29,7 +28,6 @@
     "ws": "^8.2.3"
   },
   "devDependencies": {
-    "@node-rs/deno-lint": "^1.10.3",
     "@types/ioredis": "^4.27.1",
     "@types/node": "^16.7.1",
     "@types/ws": "^8.2.0",

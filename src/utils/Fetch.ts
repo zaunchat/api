@@ -1,7 +1,6 @@
-import type { IncomingHttpHeaders, OutgoingHttpHeaders } from 'http'
-import http from 'http'
-import https from 'https'
-import { URL } from 'url'
+import http, { IncomingHttpHeaders, OutgoingHttpHeaders } from 'node:http'
+import https from 'node:https'
+import { URL } from 'node:url'
 
 interface FetchOptions {
   method?: 'GET' | 'POST' | 'DELETE' | 'PUT' | 'PATCH'

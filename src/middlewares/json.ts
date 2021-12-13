@@ -1,19 +1,26 @@
 import { Request, Response, NextFunction } from '@tinyhttp/app'
+import { is } from '../utils'
 
 interface JSONOptions {
-  parser: typeof JSON.parse
   limit: number
 }
 
-export const json = ({ parser, limit }: JSONOptions) => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  if (req.method && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
-    const contentType = req.headers['content-type']
+export const parser = <T extends unknown>(input: string): T => {
+  if (input === 'null') return null as T
 
-    if (
-      !contentType ||
-      (typeof contentType === 'string' && contentType !== 'application/json') ||
-      (Array.isArray(contentType) && !contentType.includes('application/json'))
-    ) {
+  if (is.suspicious(input)) return JSON.parse(input, (key, value) => {
+    if (key === '__proto__' || key === 'constructor') return
+    return value
+  })
+
+  return JSON.parse(input)
+}
+
+
+export const json = ({ limit }: JSONOptions) => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  if (req.method && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
+
+    if (req.header('content-type') !== 'application/json') {
       return next()
     }
 
@@ -28,13 +35,12 @@ export const json = ({ parser, limit }: JSONOptions) => async (req: Request, res
 
       for await (const chunk of req) {
         body += chunk
-
-        if (body.length > limit) {
-          return void res.sendStatus(413)
-        }
+        if (body.length > limit) return void res.sendStatus(413)
       }
 
       req.body = parser(body)
+
+      if (is.empty(req.body)) throw 'Invalid'
     } catch {
       return next('Invalid JSON body')
     }

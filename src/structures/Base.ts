@@ -1,8 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 import { Snowflake, logger } from '../utils'
 import sql from '../database'
-import { QueryConfig as QueryBuilder } from 'pg-query-config';
-import { HTTPError, APIErrors } from '../errors';
+import { QueryConfig as QueryBuilder } from 'pg-query-config'
+import { HTTPError, APIErrors } from '../errors'
 
 type WhereFunction<T> = (valueRefSet: Set<T>, args: T[]) => string
 type WhereCondition<T> = {
@@ -96,7 +96,7 @@ export abstract class Base {
   }
 
   async update(props: Partial<this>): Promise<this> {
-    const [data] = await sql<unknown[]>`UPDATE ${this.tableName} SET ${sql(props)} WHERE id = ${this.id} RETURNING *`
+    const [data] = await sql<unknown[]>`UPDATE ${sql(this.tableName)} SET ${sql(props)} WHERE id = ${this.id} RETURNING *`
 
     void (this.constructor as any).onUpdate(this)
 
