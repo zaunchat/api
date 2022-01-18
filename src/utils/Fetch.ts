@@ -3,9 +3,10 @@ import https from 'node:https'
 import { URL } from 'node:url'
 
 interface FetchOptions {
-  method?: 'GET' | 'POST' | 'DELETE' | 'PUT' | 'PATCH'
-  body?: unknown
-  headers?: OutgoingHttpHeaders
+  method: 'GET' | 'POST' | 'DELETE' | 'PUT' | 'PATCH'
+  body: Record<string, unknown>
+  headers: OutgoingHttpHeaders
+  timeout: number
 }
 
 interface FetchResponse {
@@ -16,8 +17,9 @@ interface FetchResponse {
   json(): Promise<any>
 }
 
-export const fetch = (url: string | URL, { method = 'GET', body, headers }: FetchOptions = {}): Promise<FetchResponse> => {
-  return new Promise((ok, err) => {
+
+export const fetch = (url: string | URL, { method = 'GET', body, headers, timeout = 10000 }: Partial<FetchOptions> = {}): Promise<FetchResponse> => {
+  return new Promise(async (ok, err) => {
     if (typeof url === 'string') url = new URL(url)
 
     const options = {
@@ -26,7 +28,7 @@ export const fetch = (url: string | URL, { method = 'GET', body, headers }: Fetc
       path: url.pathname + (url.search ?? ''),
       method,
       headers,
-      timeout: 10000
+      timeout
     }
 
     const request = (url.protocol === 'https:' ? https : http).request(options, (response) => {
@@ -35,28 +37,27 @@ export const fetch = (url: string | URL, { method = 'GET', body, headers }: Fetc
         headers: response.headers,
         ok: !response.statusCode || (response.statusCode >= 200 && response.statusCode < 300),
         text(): Promise<string> {
-          return new Promise((resolve) => {
+          return new Promise(ok => {
             let body = ''
             response
               .setEncoding('utf8')
-              .on('data', (data) => body += data)
-              .on('end', () => resolve(body))
+              .on('data', chunk => body += chunk)
+              .on('end', () => ok(body))
           })
         },
         json(): Promise<unknown> {
           return data.text().then(JSON.parse)
         }
       }
-
       ok(data)
     })
 
     request
-      .on('timeout', () => err(new Error(`Request timeout.`)))
+      .on('timeout', () => err(new Error('Request timeout.')))
       .on('error', err)
 
     if (method !== 'GET' && typeof body !== 'undefined') {
-      request.write(typeof body === 'object' ? JSON.stringify(body) : body)
+      request.write(JSON.stringify(body))
     }
 
     request.end()

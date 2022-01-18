@@ -1,17 +1,20 @@
-import { Base, Session, Server } from '.'
-import { validator } from '../utils'
-import { getaway } from '../getaway'
-import sql from '../database'
-import config from '../config'
+import { Base, Session, Server, Member } from '.'
+import { is, validator } from '@utils'
+import { getaway } from '@getaway'
+import sql from '@database'
+import config from '@config'
+import { Bot } from './Bot'
 
+export type PublicUser = Omit<User, 'email' | 'password' | 'relations' | 'verified'>
 
-export const PUBLIC_USER_PROPS: (keyof User)[] = [
+export const PUBLIC_USER_PROPS: (keyof PublicUser)[] = [
   'id',
   'username',
   'presence',
   'badges',
   'avatar'
 ]
+
 
 export interface CreateUserOptions extends Partial<User> {
   username: string
@@ -20,31 +23,42 @@ export interface CreateUserOptions extends Partial<User> {
 }
 
 export const CreateUserSchema = validator.compile({
+  $$async: true,
   username: {
     type: 'string',
     min: 3,
-    max: config.limits.user.username
+    max: config.limits.user.username,
+    pattern: /^[a-z0-9_]+$/i,
+    custom: async (value: string, errors: unknown[]) => {
+      if (['system', 'admin', 'bot', 'developer', 'staff', '___'].includes(value.toLowerCase())) {
+        errors.push({ type: 'unique', actual: value })
+      } else {
+        const exists = await User.findOne({ username: value })
+        if (exists) errors.push({ type: "unique", actual: value })
+      }
+      return value
+    }
   },
   email: {
-    type: 'string',
-    min: 3,
-    max: 320
+    type: 'email',
+    normalize: true,
+    custom: async (value: string, errors: unknown[]) => {
+      const exists = await User.findOne({ email: value })
+      if (exists) errors.push({ type: "unique", actual: value })
+      return value
+    }
   },
-  password: {
-    type: 'string',
-    min: 8,
-    max: 72
-  }
+  password: 'string|min:8|max:72'
 })
 
 export const LoginUserSchema = validator.compile({
-  email: { type: 'string', min: 3, max: 320 },
-  password: { type: 'string', min: 8, max: 72 }
+  email: 'email|normalize',
+  password: 'string|min:8|max:32'
 })
 
 export const LogoutUserSchema = validator.compile({
-  token: { type: 'string' },
-  user_id: { type: 'string' }
+  token: 'string',
+  user_id: 'string'
 })
 
 export interface Presence {
@@ -66,8 +80,9 @@ export enum RelationshipStatus {
   OUTGOING,
   IN_COMING,
   BLOCKED,
-  BLOCKED_OTHER
+  BLOCKED_BY_OTHER
 }
+
 
 
 export class User extends Base {
@@ -76,12 +91,14 @@ export class User extends Base {
   email!: string
   presence: Presence = { status: PresenceStatus.OFFLINE }
   relations: Record<string, RelationshipStatus> = {}
-  badges = 0
-  avatar: string | null = null
+  badges = 0n
+  avatar: Nullable<string> = null
   verified = false
 
-  static async onUpdate(self: User): Promise<void> {
-    // TODO: Better handling
+  static async onUpdate(self: User, keys: string[]): Promise<void> {
+    // Ignore other property updates such as (password, email, etc..)
+    if (!['username', 'avatar', 'badges', 'presence'].some(property => keys.includes(property))) return
+
     await getaway.publish(self.id, 'USER_UPDATE', {
       id: self.id,
       avatar: self.avatar,
@@ -95,7 +112,7 @@ export class User extends Base {
     return Object.assign(new User(), opts)
   }
 
-  static fetchPublicUser(id: ID): Promise<User> {
+  static fetchPublicUser(id: string): Promise<PublicUser> {
     return User.findOne(sql => sql.select(PUBLIC_USER_PROPS).where({ id }))
   }
 
@@ -109,17 +126,22 @@ export class User extends Base {
     return Session.find({ user_id: this.id })
   }
 
-  fetchRelations(): Promise<User[]> {
+  fetchRelations(): Promise<PublicUser[]> {
     return User.find(sql => sql
       .select(PUBLIC_USER_PROPS)
       .where({ id: Object.keys(this.relations) }))
   }
 
-  with(target: User): RelationshipStatus | null {
-    return this.relations[target.id] ?? null
+  fetchBots(): Promise<Bot[]> {
+    return Bot.find({ owner_id: this.id })
   }
 
-  static async fetchByToken(token: string): Promise<User | null> {
+  async member(server: Server | string): Promise<Member> {
+    const server_id = typeof server === 'string' ? server : server.id
+    return await Member.findOne({ id: this.id, server_id })
+  }
+
+  static async fetchByToken(token: string): Promise<Nullable<User>> {
     const [user]: [User?] = await sql`
          SELECT *
          FROM ${sql(this.tableName)}
@@ -138,7 +160,7 @@ export class User extends Base {
             password VARCHAR(32) NOT NULL,
             email VARCHAR(255) NOT NULL UNIQUE,
             avatar VARCHAR(64),
-            badges INTEGER DEFAULT 0,
+            badges INTEGER NOT NULL,
             presence JSONB NOT NULL,
             relations JSONB NOT NULL,
             verified BOOLEAN DEFAULT FALSE

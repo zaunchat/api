@@ -1,20 +1,20 @@
-import { nanoid } from 'nanoid'
-import { User } from '../structures'
-import { createRedisConnection } from '../database/redis'
 import { SMTPClient, Message } from 'emailjs'
-import config from '../config'
+import { nanoid } from 'nanoid'
+import { User } from '@structures'
+import { createRedisConnection } from '@database/redis'
+import config from '@config'
 import ms from 'ms'
 
 const THREE_HOURS = ms('3 hours')
 const EMAIL_MESSAGE_TEMPLATE = `Hello @%%USERNAME%%,
 
 You're almost there! If you did not perform this action you can safely ignore this email.
-Please verify your account here: %%LINK%%`
+Please verify your account by clicking on this link: %%LINK%%`
 
 
 class Email {
-  redis = createRedisConnection()
-  client = new SMTPClient({
+  readonly pendingAccounts = createRedisConnection()
+  readonly client = new SMTPClient({
     host: config.smtp.host,
     user: config.smtp.username,
     password: config.smtp.password
@@ -22,7 +22,7 @@ class Email {
 
   async send(user: User): Promise<string> {
     const code = nanoid(64)
-    const link = `${config.endpoints.main}/auth/verify/${user.id}/${code}`
+    const link = `${config.endpoints.api}/auth/verify/${user.id}/${code}`
     const message = new Message({
       from: 'noreply@itchat.world',
       to: user.email,
@@ -35,18 +35,18 @@ class Email {
     await this.client.sendAsync(message)
 
     // Expires after three hours.
-    await this.redis.set(user.id, code, 'PX', THREE_HOURS)
+    await this.pendingAccounts.set(user.id, code, 'PX', THREE_HOURS)
 
     return link
   }
 
   async verify(key: string, code: string): Promise<boolean> {
-    const exists = await this.redis.get(key)
+    const exists = await this.pendingAccounts.get(key)
 
-    if (exists && exists === code) {
+    if (exists === code) {
 
       // Allow to use one time
-      await this.redis.del(key)
+      await this.pendingAccounts.del(key)
 
       return true
     }

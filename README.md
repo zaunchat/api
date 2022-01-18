@@ -11,13 +11,23 @@ Core Backend API
 - [WebSocket](https://wikipedia.org/wiki/WebSocket) ([Lib](https://github.com/websockets/ws))
 - [HTTP](https://wikipedia.org/wiki/Web_server) ([Lib](https://github.com/tinyhttp/tinyhttp))
 
-## 📌 Roadmap
+## Development
 
-- [X] Rate limit for routes
-- [X] Rate limit for socket connections
-- [X] Pub/Sub Notification system
-- [X] Email verification
-- [X] Captcha Checker 
+#### Commands
+
+| Command               | Description                           | 
+| ----------------------|-------------------------------------- |
+| `npm run start`       | Run the current build at `/dist`      |
+| `npm run start:quick` | Quick build and start                 |
+| `npm run build`       | Build the source code                 |
+| `npm run lint`        | Run linter review                     |
+| `npm run format`      | Prettify source code                  |
+| `npm run docs`        | Generate docs                         |
+
+
+#### Resources
+- [Docs](https://docs.itchat.world)
+
 
 #### 📝 License
 Refer to the [LICENSE](LICENSE) file.

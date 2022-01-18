@@ -1,36 +1,32 @@
-import kleur from 'kleur'
+import colors from 'kleur'
+import { format } from 'node:util'
 
-const time = () => new Date().toTimeString().slice(0, 8)
 
-const color = (mode: 'error' | 'info' | 'warn' | 'log'): string => {
-  switch (mode) {
-    case 'error': return kleur.red('ERROR')
-    case 'warn': return kleur.yellow('WARN')
-    case 'info': return kleur.blue('INFO')
-    case 'log': return kleur.green('LOG')
-  }
-}
+const time = new Date()
 
 class Logger {
-  private _log(data: unknown[], mode: string): this {
-    console.log(`[${time()}] [${color(mode as 'log')}]:`, ...data)
+  private static write = (text: string) => process.stdout.write(text + '\n')
+
+  private _log(data: unknown[], tag: string): this {
+    time.setTime(Date.now())
+    Logger.write(`[${time.toTimeString().slice(0, 8)}] [${tag}]: ${format(...data)}`)
     return this
   }
 
   log(...data: unknown[]): this {
-    return this._log(data, 'log')
+    return this._log(data, colors.green('LOG'))
   }
 
   error(...data: unknown[]): this {
-    return this._log(data, 'error')
+    return this._log(data, colors.red('ERROR'))
   }
 
   info(...data: unknown[]): this {
-    return this._log(data, 'info')
+    return this._log(data, colors.blue('INFO'))
   }
 
   warn(...data: unknown[]): this {
-    return this._log(data, 'warn')
+    return this._log(data, colors.yellow('WARN'))
   }
 }
 

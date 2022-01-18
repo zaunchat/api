@@ -1,11 +1,13 @@
 import { build } from 'esbuild'
-import { readdirSync, statSync } from 'node:fs'
-import { join, dirname } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { readdirSync, statSync } from 'node:fs'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const __dirname = dirname(fileURLToPath(import.meta.url)), start = Date.now()
+
 
 function readdir(...directory) {
+
   const result = [];
 
   (function read(dir) {
@@ -21,12 +23,14 @@ function readdir(...directory) {
 }
 
 await build({
-  entryPoints: readdir(__dirname, '../src').filter(file => file.endsWith('.ts')),
+  entryPoints: readdir(__dirname, '../src'),
+  format: 'esm',
   platform: 'node',
   outdir: 'dist',
-  minify: true,
+  minify: false,
   target: 'node16'
 })
 
+const now = Date.now()
 
-console.log('Compiled')
+console.log(`⚡ Done in ${now - start}ms`)

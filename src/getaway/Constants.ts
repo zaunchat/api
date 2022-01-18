@@ -1,4 +1,7 @@
-import type { Member, Message, Server, Channel, User } from '../structures'
+import type { Member, Message, Server, Channel, User, PublicUser } from '@structures'
+import ms from 'ms'
+
+export const DEFAULT_HEARTBEAT_TIME = ms('45ms')
 
 export interface Payload {
   code: WSCodes
@@ -6,36 +9,38 @@ export interface Payload {
   data?: unknown
 }
 
-export type WithID<T = unknown, Partially extends boolean = true> = Partially extends true
-  ? Partial<T> & { id: ID }
-  : T & { id: ID }
-
+type Partial<T extends Empty> = { [P in keyof T]?: T[P] } & Empty
+type Empty = { id: string }
 
 export interface WSEvents {
   READY: {
     user: User
     channels: Channel[]
     servers: Server[]
-    users: User[]
+    users: PublicUser[]
   }
 
   MESSAGE_CREATE: Message
-  MESSAGE_DELETE: WithID
-  MESSAGE_UPDATE: WithID<Message>
+  MESSAGE_UPDATE: Partial<Message>
+  MESSAGE_DELETE: Empty
 
   CHANNEL_CREATE: Channel
-  CHANNEL_UPDATE: WithID<Channel>
-  CHANNEL_DELETE: WithID<{ server_id?: ID }>
+  CHANNEL_UPDATE: Partial<Channel>
+  CHANNEL_DELETE: Empty & { server_id?: string }
 
   SERVER_CREATE: Server
-  SERVER_DELETE: WithID
-  SERVER_UPDATE: WithID<Server>
+  SERVER_UPDATE: Partial<Server>
+  SERVER_DELETE: Empty
 
-  MEMBER_JOIN_SERVER: Member
-  MEMBER_LEAVE_SERVER: WithID<{ server_id: ID }>
-  MEMBER_UPDATE: WithID<Member>
+  SERVER_MEMBER_JOIN: Member
+  SERVER_MEMBER_UPDATE: Partial<Member>
+  SERVER_MEMBER_LEAVE: Empty & { server_id: string }
 
-  USER_UPDATE: WithID<User>
+  GROUP_MEMBER_JOIN: User
+  GROUP_MEMBER_UPDATE: Partial<User>
+  GROUP_MEMBER_LEAVE: Empty
+
+  USER_UPDATE: Partial<User>
 }
 
 export enum WSCodes {

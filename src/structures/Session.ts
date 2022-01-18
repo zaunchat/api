@@ -1,9 +1,9 @@
-import { Base } from './Base'
+import { Base } from '.'
 import { nanoid } from 'nanoid'
-import sql from '../database'
+import sql from '@database'
 
-export interface CreateSessionOptions extends Partial<Session> {
-  user_id: ID
+export interface CreateSessionOptions extends Options<Session> {
+  user_id: string
 }
 
 interface DeviceInfo {
@@ -11,8 +11,8 @@ interface DeviceInfo {
 }
 
 export class Session extends Base {
-  token = nanoid(64)
-  user_id!: ID
+  readonly token = nanoid(64)
+  readonly user_id!: string
   info!: DeviceInfo
 
   static from(opts: CreateSessionOptions): Session {

@@ -1,21 +1,39 @@
-import { Base } from './Base'
-import { validator } from '../utils'
-import { getaway } from '../getaway'
-import sql from '../database'
-import config from '../config'
+import { Base } from '.'
+import { validator } from '@utils'
+import { getaway } from '@getaway'
+import sql from '@database'
+import config from '@config'
 
-export interface CreateMessageOptions extends Partial<Message> {
-  author_id: ID
-  channel_id: ID
+export interface CreateMessageOptions extends Options<Message> {
+  author_id: string
+  channel_id: string
 }
 
 export const CreateMessageSchema = validator.compile({
-  content: {
-    type: 'string',
-    min: 1,
-    max: config.limits.message.length
+  content: `string|max:${config.limits.message.length}|min:1`,
+  attachments: {
+    type: 'array',
+    items: {
+      $$type: "object",
+      id: 'snowflake',
+      name: 'string'
+    },
+    max: config.limits.message.attachments
   },
-  $$strict: true
+  replies: {
+    type: 'array',
+    items: {
+      $$type: "object",
+      id: 'snowflake',
+      mention: 'boolean'
+    },
+    max: config.limits.message.replies,
+    unique: true
+  }
+})
+
+export const UpdateMessageSchema = validator.compile({
+  content: `string|max:${config.limits.message.length}|min:1`
 })
 
 
@@ -26,25 +44,25 @@ export interface Embed {
 }
 
 export interface Attachment {
-  name: string
   id: string
+  name: string
 }
 
 export interface Reply {
-  id: ID
+  id: string
   mention: boolean
 }
 
 export class Message extends Base {
   created_at = Date.now()
-  edited_at: number | null = null
-  content: string | null = null
+  edited_at: Nullable<number> = null
+  content: Nullable<string> = null
   embeds: Embed[] = []
   attachments: Attachment[] = []
-  mentions: ID[] = []
+  mentions: string[] = []
   replies: Reply[] = []
-  channel_id!: ID
-  author_id!: ID
+  channel_id!: string
+  author_id!: string
 
   static async onCreate(self: Message): Promise<void> {
     await getaway.publish(self.channel_id, 'MESSAGE_CREATE', self)

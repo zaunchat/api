@@ -11,7 +11,7 @@ export const cors = (options: Partial<CorsOptions>): typeof middleware => {
   const {
     origin = '*',
     methods = ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-    headers = ['content-type'],
+    headers = ['content-type', 'content-length'],
     optionsSuccessStatus = 204
   } = options
 
@@ -19,7 +19,7 @@ export const cors = (options: Partial<CorsOptions>): typeof middleware => {
     if (origin) res.setHeader('Access-Control-Allow-Origin', origin)
     if (methods) res.setHeader('Access-Control-Allow-Methods', methods)
     if (headers) res.setHeader('Access-Control-Allow-Headers', headers)
-    if (req.method?.toUpperCase?.() === 'OPTIONS') {
+    if (req.method === 'OPTIONS') {
       res.statusCode = optionsSuccessStatus
       res.setHeader('Content-Length', '0')
       res.end()

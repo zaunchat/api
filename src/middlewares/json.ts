@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from '@tinyhttp/app'
-import { is } from '../utils'
+import { is } from '@utils'
 
 interface JSONOptions {
   limit: number
@@ -10,25 +10,14 @@ const
   PAYLOAD_TOO_LARGE = 413,
   LENGTH_REQUIRED = 411
 
-export const parser = <T extends unknown>(input: string): T => {
-  if (input === 'null') return null as T
-
-  if (is.suspicious(input)) return JSON.parse(input, (key, value) => {
-    if (key === '__proto__' || key === 'constructor') return
-    return value
-  })
-
-  return JSON.parse(input)
-}
-
-const isJSONMethod = (method?: string): boolean => !!method && ['POST', 'PUT', 'PATCH'].includes(method)
+const isJSONMethod = (method?: string): boolean => !!method && (method === 'POST' || method === 'PUT' || method === 'PATCH')
 
 export const json = ({ limit }: JSONOptions) => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const status = (status: number) => void res.sendStatus(status)
+  const header = (name: string) => req.headers[name]?.toString() ?? null
 
-
-  if (isJSONMethod(req.method) && req.header('content-type') === 'application/json') {
-    let length: number | string | null = req.header('content-length')
+  if (isJSONMethod(req.method) && header('content-type') === 'application/json') {
+    let length: number | string | null = header('content-length')
 
     if (is.empty(length)) {
       return status(LENGTH_REQUIRED)
@@ -47,8 +36,11 @@ export const json = ({ limit }: JSONOptions) => async (req: Request, res: Respon
       if (body.length > limit) return status(PAYLOAD_TOO_LARGE)
     }
 
+    // Ignore "__proto__" or "constructor" JSON attacks.
+    if (is.suspicious(body)) return status(UNPROCESSABLE_ENTITY)
+
     try {
-      req.body = parser(body)
+      req.body = JSON.parse(body)
     } catch {
       return status(UNPROCESSABLE_ENTITY)
     }

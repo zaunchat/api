@@ -1,21 +1,20 @@
-import { Base } from './Base'
+import { Base } from '.'
 import { nanoid } from 'nanoid'
-import sql from '../database'
+import sql from '@database'
 
-
-export interface CreateInviteOptions extends Partial<Invite> {
-  inviter_id: ID
-  channel_id: ID
-  server_id: ID
+export interface CreateInviteOptions extends Options<Invite> {
+  inviter_id: string
+  channel_id: string
+  server_id: string
 }
 
 
 export class Invite extends Base {
-  code = nanoid(8)
+  readonly code = nanoid(8)
   uses = 0
-  inviter_id!: ID
-  channel_id!: ID
-  server_id!: ID
+  inviter_id!: string
+  channel_id!: string
+  server_id!: string
 
   static from(opts: CreateInviteOptions): Invite {
     return Object.assign(new Invite(), opts)

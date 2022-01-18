@@ -25,6 +25,7 @@ const config = {
       groups: 50,
       friends: 1_000,
       blocked: 1_000,
+      bots: 10
     },
     server: {
       name: 50,
@@ -54,12 +55,17 @@ const config = {
     }
   },
   endpoints: {
-    main: env.get('DOMAIN').default('https://itchat.com').asUrlString(),
-    app: env.get('APP_DOMAIN').default('https://app.itchat.world').asUrlString(),
-    api: env.get('API_DOMAIN').default('https://api.itchat.world').asUrlString(),
-    cdn: env.get('CDN_DOMAIN').default('https://cdn.itchat.world').asUrlString()
+    main: env.get('DOMAIN').default('https://itchat.world').asUrlString(),
+    app: '',
+    api: '',
+    cdn: ''
   }
-} as const
+}
 
+const [protocol, hostname] = config.endpoints.main.split(/:\/\//, 1)
 
-export default config
+for (const subdomain of ['app', 'api', 'cdn'] as const) {
+  config.endpoints[subdomain] = `${protocol}://${subdomain}.${hostname}`
+}
+
+export default Object.freeze(config)

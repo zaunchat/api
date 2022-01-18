@@ -1,153 +1,111 @@
-import * as web from 'express-decorators'
-import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { CreateMessageSchema, Message } from '../structures'
-import { is, Permissions } from '../utils'
-import { QueryConfig as QueryBuilder, gt, lt, gte } from 'pg-query-config'
-import config from '../config'
+import { Controller, Context, Check, Next, Permission } from '@Controller'
+import { Message, CreateMessageSchema, UpdateMessageSchema } from '@structures'
+import { Permissions } from '@utils'
+import { gt, lt, gte } from 'pg-query-config'
 
-@web.basePath('/channels/:channel_id/messages')
-export class MessageController {
-  @web.use()
-  async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
-    const permissions = await Permissions.fetch({
-      user: req.user,
-      channel: req.params.channel_id
-    })
+export class MessageController extends Controller('/channels/:channel_id/messages') {
+  async 'USE /'(ctx: Context, next: Next) {
+    const permissions = await Permissions.from(ctx.request)
 
     if (!permissions.has(Permissions.FLAGS.VIEW_CHANNEL)) {
-      req.throw('MISSING_PERMISSIONS')
+      ctx.throw('MISSING_PERMISSIONS')
     }
-
-    Object.defineProperties(req, {
-      permissions: {
-        value: permissions
-      }
-    })
 
     next()
   }
 
-  @web.post('/')
-  async send(req: Request, res: Response): Promise<void> {
-    if (!req.permissions.has(Permissions.FLAGS.SEND_MESSAGES)) {
-      req.throw('MISSING_PERMISSIONS')
-    }
-
-    req.check(CreateMessageSchema)
-
+  @Check(CreateMessageSchema)
+  @Permission.has('SEND_MESSAGES')
+  async 'POST /'(ctx: Context): Promise<Message> {
     const message = Message.from({
-      ...req.body,
-      author_id: req.user.id,
-      channel_id: req.params.channel_id
+      ...ctx.body,
+      author_id: ctx.user.id,
+      channel_id: ctx.params.channel_id
     })
 
     if (message.isEmpty()) {
-      req.throw('EMPTY_MESSAGE')
-    }
-
-    if ((message.content?.length ?? 0) > config.limits.message.length) {
-      req.throw('MAXIMUM_MESSAGE_LENGTH')
-    }
-
-    if (message.replies.length > config.limits.message.replies) {
-      req.throw('TOO_MANY_REPLIES')
-    }
-
-    if (message.attachments.length > config.limits.message.attachments) {
-      req.throw('TOO_MANY_ATTACHMENTS')
+      ctx.throw('EMPTY_MESSAGE')
     }
 
     await message.save()
 
-    res.json(message)
+    return message
   }
 
-  @web.get('/')
-  async fetchMany(req: Request, res: Response): Promise<void> {
-    if (!req.permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
-      req.throw('MISSING_PERMISSIONS')
-    }
-
-    const {
-      before,
-      after,
-      around
-    } = req.query
-
-    const limit = Number(req.query.limit ?? 50)
-
-    if (isNaN(limit) || limit > 100 || limit < 0) {
-      req.throw('MISSING_ACCESS')
-    }
-
-    const query = new QueryBuilder({ limit, table: Message.tableName })
-
-    query.where({
-      channel_id: req.params.channel_id
-    })
-
-    if (is.snowflake(around)) {
-      query.where({ id: gte(around) })
-    } else {
-      if (is.snowflake(after)) query.where({ id: gt(after) })
-      if (is.snowflake(before)) query.where({ id: lt(before) })
-    }
-
-    const messages = await Message.find(() => query)
-
-    res.json(messages)
-  }
-
-
-  @web.get('/:message_id')
-  async fetchOne(req: Request, res: Response): Promise<void> {
-    if (!req.permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
-      req.throw('MISSING_PERMISSIONS')
-    }
-
-    const { message_id, channel_id } = req.params
-    const message = await Message.findOne({
-      id: message_id,
-      channel_id
-    })
-
-    res.json(message)
-  }
-
-  @web.patch('/:message_id')
-  async edit(req: Request, res: Response): Promise<void> {
-    req.check(CreateMessageSchema)
-
-    const { message_id, channel_id } = req.params
+  @Check(UpdateMessageSchema)
+  async 'PATCH /:message_id'(ctx: Context): Promise<Message> {
+    const { message_id, channel_id } = ctx.params
 
     const message = await Message.findOne({
       id: message_id,
       channel_id
     })
 
-    if (message.author_id !== req.user.id) {
-      req.throw('CANNOT_EDIT_MESSAGE_BY_OTHER')
+    if (message.author_id !== ctx.user.id) {
+      ctx.throw('CANNOT_EDIT_MESSAGE_BY_OTHER')
     }
 
-    await message.update(req.body)
+    ctx.body.edited_at = Date.now()
 
-    res.json(message)
+    await message.update(ctx.body)
+
+    return message
   }
 
-  @web.route('delete', '/:message_id')
-  async delete(req: Request, res: Response): Promise<void> {
-    const { message_id, channel_id } = req.params
+  async 'DELETE /:message_id'(ctx: Context): Promise<void> {
+    const { message_id, channel_id } = ctx.params
+
     const message = await Message.findOne({
       id: message_id,
       channel_id
     })
 
-    if (message.author_id !== req.user.id && !req.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) {
-      req.throw('MISSING_PERMISSIONS')
+    const permissions = await Permissions.from(ctx.request)
+
+    if (message.author_id !== ctx.user.id && !permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) {
+      ctx.throw('MISSING_PERMISSIONS')
     }
 
     await message.delete()
+  }
 
-    res.sendStatus(202)
+  @Permission.has('READ_MESSAGE_HISTORY')
+  @Check({
+    limit: 'number|min:1|max:100|convert',
+    before: 'snowflake|optional',
+    after: 'snowflake|optional',
+    around: 'snowflake|optional',
+  }, 'query')
+  async 'GET /'(ctx: Context): Promise<Message[]> {
+    const {
+      before,
+      after,
+      around,
+      limit
+    } = ctx.query as Record<string, string>
+
+    const messages = await Message.find((sql) => {
+      sql.where({ channel_id: ctx.params.channel_id })
+
+      if (around) {
+        sql.where({ id: gte(around) })
+      } else {
+        if (after) sql.where({ id: gt(after) })
+        if (before) sql.where({ id: lt(before) })
+      }
+    }, Number(limit))
+
+    return messages
+  }
+
+  @Permission.has('READ_MESSAGE_HISTORY')
+  'GET /search'(_ctx: Context) {
+    // Not Implemented yet.
+    return 501
+  }
+
+  @Permission.has('READ_MESSAGE_HISTORY')
+  'GET /:message_id'(ctx: Context): Promise<Message> {
+    return Message.findOne({ id: ctx.params.message_id, channel_id: ctx.params.channel_id })
   }
 }

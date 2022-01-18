@@ -1,31 +1,23 @@
-import * as web from 'express-decorators'
-import { Response, Request } from '@tinyhttp/app'
-import { User, Session, CreateUserSchema, LoginUserSchema } from '../../structures'
-import { is, email } from '../../utils'
-import config from '../../config'
+import { Controller, Context, Check, Limit, Captcha } from '@Controller'
+import { User, Session, CreateUserSchema, LoginUserSchema } from '@structures'
+import { email } from '@utils'
+import config from '@config'
 import argon2 from 'argon2'
 
-
-@web.basePath('/auth/accounts')
-export class AccountController {
-  @web.post('/login')
-  async login(req: Request, res: Response): Promise<void> {
-    req.check(LoginUserSchema)
-
-    const { email, password } = req.body
-
-    if (!is.email(email)) {
-      req.throw('INVALID_EMAIL')
-    }
-
-    const user = await User.findOne({ email })
+//@AntiProxy()
+@Limit('30/1h --ip')
+export class AccountController extends Controller('/auth/accounts') {
+  @Captcha()
+  @Check(LoginUserSchema)
+  async 'POST /login'(ctx: Context) {
+    const user = await User.findOne({ email: ctx.body.email })
 
     if (!user.verified) {
-      req.throw('USER_NOT_VERIFIED')
+      ctx.throw('USER_NOT_VERIFIED')
     }
 
-    if (!await argon2.verify(password, user.password)) {
-      req.throw('INVALID_PASSWORD')
+    if (!await argon2.verify(ctx.body.password, user.password)) {
+      ctx.throw('INVALID_PASSWORD')
     }
 
     const session = Session.from({
@@ -34,73 +26,51 @@ export class AccountController {
 
     await session.save()
 
-    res.json({
+    return {
       token: session.token,
       id: user.id
-    })
+    }
   }
 
-  @web.post('/register')
-  async register(req: Request, res: Response): Promise<void> {
-    req.check(CreateUserSchema)
-
-    const { username, password } = req.body as Record<string, string>
-
-    if (!is.email(req.body.email)) {
-      req.throw('INVALID_EMAIL')
-    }
-
-
-    const exists = await User.findOne(sql => sql
-      .select(['username', 'email'])
-      .where({ email: req.body.email })
-      .orWhere([{ username }])).catch(() => null)
-
-
-    if (exists) {
-      if (username === exists.username) {
-        req.throw('USERNAME_TAKEN')
-      } else {
-        req.throw('EMAIL_ALREADY_IN_USE')
-      }
-    }
-
+  @Captcha()
+  @Check(CreateUserSchema)
+  async 'POST /register'(ctx: Context) {
     const user = User.from({
-      username,
-      email: req.body.email,
-      password: await argon2.hash(password),
+      username: ctx.body.username,
+      email: ctx.body.email,
+      password: await argon2.hash(ctx.body.password),
       verified: !config.smtp.enabled
     })
 
     await user.save()
 
+    // No email verification :(
     if (!config.smtp.enabled) {
-      return void res.redirect(`${config.endpoints.main}/auth/login`)
+      return 201 // Created
     }
 
     try {
       await email.send(user)
-      res.json({ message: 'Check your email' })
+      return 201
     } catch (err) {
       await user.delete()
       throw err
     }
   }
 
-  @web.get('/verify/:user_id/:code')
-  async verify(req: Request, res: Response): Promise<void> {
-    const { user_id, code } = req.params as { user_id: ID; code: string }
+  async 'GET /verify/:user_id/:code'(ctx: Context) {
+    const { user_id, code } = ctx.params
 
     const verified = await email.verify(user_id, code)
 
     if (!verified) {
-      req.throw('UNKNOWN_TOKEN')
+      ctx.throw('UNKNOWN_TOKEN')
     }
 
     const user = await User.findOne({ id: user_id })
 
     await user.update({ verified: true })
 
-    res.redirect(`${config.endpoints.main}/auth/login`)
+    ctx.response.redirect(config.endpoints.app)
   }
 }

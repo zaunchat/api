@@ -1,7 +1,7 @@
 import { BitField } from './BitField'
 
 export type BadgeString = keyof typeof FLAGS
-export type BadgesResolvable = number | Badges | BadgeString | BadgesResolvable[]
+export type BadgesResolvable = bigint | number | Badges | BadgeString | BadgesResolvable[]
 
 export declare interface Badges {
   serialize(): Record<BadgeString, boolean>
@@ -15,10 +15,10 @@ export declare interface Badges {
 }
 
 const FLAGS = {
-  STAFF: 1 << 1,
-  DEVELOPER: 1 << 2,
-  SUPPORTER: 1 << 3,
-  TRANSLATOR: 1 << 4
+  STAFF: 1n << 1n,
+  DEVELOPER: 1n << 2n,
+  SUPPORTER: 1n << 3n,
+  TRANSLATOR: 1n << 4n
 } as const
 
 export class Badges extends BitField {

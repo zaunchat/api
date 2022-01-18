@@ -1,5 +1,5 @@
 import postgres from 'postgres'
-import config from '../config'
+import config from '@config'
 import {
   Invite,
   Member,
@@ -9,11 +9,23 @@ import {
   Channel,
   Role,
   Server
-} from '../structures'
+} from '@structures'
 
 const noop = () => { }
 
-export default postgres(config.database.uri, {
+const sql = postgres(config.database.uri, {
+  publications: 'alltables',
+  types: {
+    number: {
+      to: 0,
+      from: [21, 23, 26, 700, 701],
+      serialize: value => {
+        if (value !== null && typeof value === 'object') return JSON.stringify(value)
+        return String(value)
+      },
+      parse: value => Number(value)
+    }
+  },
   transform: {
     row: (x: any) => {
       if ('username' in x) return User.from(x)
@@ -29,3 +41,5 @@ export default postgres(config.database.uri, {
   },
   onnotice: noop
 })
+
+export default sql

@@ -27,9 +27,13 @@ export const rateLimit = (opts: string, prefix: string): typeof middleware => {
 
     const key = req.user && !options.onlyIP
       ? req.user.id
-      : req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress
+      : req.ip
 
-    const info = await limiter.consume(key as string).then(() => limited = false).catch(res => res)
+    if (!key) {
+      throw new Error(`Couldn't Get key for the following request at ${req.path}`)
+    }
+
+    const info = await limiter.consume(key).then(() => limited = false).catch(res => res)
 
     if (!limited) {
       return next()

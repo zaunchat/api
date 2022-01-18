@@ -1,39 +1,25 @@
-import { Base } from './Base'
-import { validator } from '../utils'
-import sql from '../database'
+import { Base } from '.'
+import { validator } from '@utils'
+import sql from '@database'
 
-export interface CreateRoleOptions extends Partial<Role> {
+export interface CreateRoleOptions extends Options<Role> {
   name: string
-  server_id: ID
+  server_id: string
 }
 
 export const CreateRoleSchema = validator.compile({
-  name: {
-    type: 'string',
-    min: 1,
-    max: 32
-  },
-  color: {
-    type: 'number',
-    optional: true
-  },
-  permissions: {
-    type: 'number',
-    optional: true
-  },
-  hoist: {
-    type: 'boolean',
-    optional: true
-  }
+  name: 'string|min:1|max:32',
+  color: 'number|optional',
+  permissions: 'number|optional',
+  hoist: 'boolean|optional'
 })
-
 
 export class Role extends Base {
   name!: string
-  permissions = 0
+  permissions = 0n
   color = 0
   hoist = false
-  server_id!: ID
+  server_id!: string
 
   static from(opts: CreateRoleOptions): Role {
     return Object.assign(new Role(), opts)
@@ -43,8 +29,8 @@ export class Role extends Base {
     await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
             id BIGINT PRIMARY KEY,
             name VARCHAR(32) NOT NULL,
-            permissions BIGINT NOT NULL DEFAULT 0,
-            hoist BOOLEAN NOT NULL DEFAULT FALSE,
+            permissions BIGINT NOT NULL,
+            hoist BOOLEAN NOT NULL,
             server_id BIGINT NOT NULL,
             FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
         )`)

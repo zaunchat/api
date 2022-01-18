@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node --es-module-specifier-resolution=node dist/index",
-    "build": "node scripts/build.js",
-    "start:dev": "npm run build && npm run start",
-    "lint": "npx denolint -c lintrc.json"
+    "start": "node --es-module-specifier-resolution=node dist/server",
+    "start:quick": "npm run build && npm run start",
+    "build": "node scripts/build",
+    "format": "echo \"Soon\"",
+    "lint": "npx denolint -c lintrc.json",
+    "docs": "node docs/generate.js"
   },
   "type": "module",
   "dependencies": {
@@ -15,7 +17,7 @@
     "dotenv": "^10.0.0",
     "emailjs": "^3.7.0",
     "env-var": "^7.0.1",
-    "express-decorators": "^1.2.1",
+    "erlpack": "^0.1.4",
     "fastest-validator": "^1.11.1",
     "helmet": "^4.6.0",
     "ioredis": "^4.28.0",

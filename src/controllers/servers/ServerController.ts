@@ -1,48 +1,39 @@
-import * as web from 'express-decorators'
-import { Response, Request } from '@tinyhttp/app'
-import { Server, Channel, CreateServerSchema, Member, ChannelTypes } from '../../structures'
-import config from '../../config'
+import { Controller, Context, Check, Limit } from '@Controller'
+import { Server, Channel, CreateServerSchema, Member, ChannelTypes } from '@structures'
+import config from '@config'
 
-@web.basePath('/servers')
-export class ServerController {
-  @web.get('/')
-  async fetchMany(req: Request, res: Response): Promise<void> {
-    res.json(await req.user.fetchServers())
+@Limit('5/5s')
+export class ServerController extends Controller('/servers') {
+  'GET /'(ctx: Context): Promise<Server[]> {
+    return ctx.user.fetchServers()
   }
 
-  @web.get('/:server_id')
-  async fetchOne(req: Request, res: Response): Promise<void> {
-    const server = await Server.findOne({ id: req.params.server_id })
-    res.json(server)
+  'GET /:server_id'(ctx: Context): Promise<Server> {
+    return Server.findOne({ id: ctx.params.server_id })
   }
 
-  @web.route('delete', '/:server_id')
-  async delete(req: Request, res: Response): Promise<void> {
-    const server = await Server.findOne({ id: req.params.server_id })
-
-    if (req.user.id !== server.owner_id) {
-      req.throw('MISSING_ACCESS')
+  async 'DELETE /:server_id'(ctx: Context) {
+    const server = await Server.findOne({ id: ctx.params.server_id })
+    
+    if (ctx.user.id === server.owner_id) {
+      await server.delete()
+    } else {
+      const member = await Member.findOne({ id: ctx.user.id, server_id: server.id })
+      await member.delete() 
     }
-
-    await server.delete()
-
-    res.sendStatus(202)
   }
 
-
-  @web.post('/')
-  async create(req: Request, res: Response): Promise<void> {
-    req.check(CreateServerSchema)
-
-    const serverCount = await Member.count(`id = ${req.user.id}`)
+  @Check(CreateServerSchema)
+  async 'POST /'(ctx: Context): Promise<Server> {
+    const serverCount = await Member.count(`id = ${ctx.user.id}`)
 
     if (serverCount >= config.limits.user.servers) {
-      req.throw('MAXIMUM_SERVERS')
+      ctx.throw('MAXIMUM_SERVERS')
     }
 
     const server = Server.from({
-      ...req.body,
-      owner_id: req.user.id
+      ...ctx.body,
+      owner_id: ctx.user.id
     })
 
     const category = Channel.from({
@@ -55,11 +46,11 @@ export class ServerController {
       type: ChannelTypes.TEXT,
       server_id: server.id,
       name: 'general',
-      parents: [category.id]
+      parent_id: category.id
     })
 
     const member = Member.from({
-      id: req.user.id,
+      id: ctx.user.id,
       server_id: server.id
     })
 
@@ -68,6 +59,6 @@ export class ServerController {
     await category.save()
     await member.save()
 
-    res.json(server)
+    return server
   }
 }

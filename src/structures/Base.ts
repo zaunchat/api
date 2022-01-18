@@ -1,32 +1,23 @@
-// deno-lint-ignore-file no-explicit-any
-import { Snowflake, logger } from '../utils'
-import sql from '../database'
 import { QueryConfig as QueryBuilder } from 'pg-query-config'
-import { HTTPError, APIErrors } from '../errors'
+import { Snowflake } from '@utils'
+import { HTTPError, APIErrors } from '@errors'
+import sql from '@database'
 
-type WhereFunction<T> = (valueRefSet: Set<T>, args: T[]) => string
-type WhereCondition<T> = {
-  [P in keyof T]?: WhereCondition<T[P]> | T[P] | WhereFunction<T[P]> | Array<T[P]>
-}
+export type WhereFunction<T> = (valueRefSet: Set<T>, args: T[]) => string
+export type WhereCondition<T> = { [P in keyof T]?: WhereCondition<T[P]> | T[P] | WhereFunction<T[P]> | Array<T[P]> }
+export { QueryConfig as QueryBuilder } from 'pg-query-config'
+
 
 
 export abstract class Base {
   readonly id = Snowflake.generate()
 
-  static async onUpdate(_self: unknown): Promise<void> {
-    logger.warn(`Unhandled method at ${this.tableName}`)
-  }
-
-  static async onCreate(_self: unknown): Promise<void> {
-    logger.warn(`Unhandled method at ${this.tableName}`)
-  }
-
-  static async onDelete(_self: unknown): Promise<void> {
-    logger.warn(`Unhandled method at ${this.tableName}`)
-  }
+  static onCreate?: (self: any) => Awaited<void>
+  static onUpdate?: (self: any, keys: string[]) => Awaited<void>
+  static onDelete?: (self: any) => Awaited<void>
 
   get tableName(): string {
-    return `${this.constructor.name.toLowerCase()}s`
+    return (this.constructor as typeof Base).tableName
   }
 
   static get tableName(): string {
@@ -34,26 +25,17 @@ export abstract class Base {
   }
 
   static async findOne<T>(
-    this: new () => T,
-    where: WhereCondition<T> | ((query: QueryBuilder<T>) => QueryBuilder<T>)
+    this: (new () => T) & { tableName: string },
+    where: WhereCondition<T> | ((query: QueryBuilder<T>) => unknown)
   ): Promise<T> {
-    let query = new QueryBuilder<T>({ table: (<any>this).tableName, limit: 1 })
+    const query = new QueryBuilder<T>({ table: this.tableName, limit: 1 })
 
-    if (typeof where === 'function') {
-      query = where(query)
-    } else {
-      query.where(where)
-    }
+    typeof where === 'function' ? where(query) : query.where(where)
 
     const [item] = await sql.unsafe(query.text, query.values) as [T?]
 
     if (!item) {
       const tag = `UNKNOWN_${this.name.toUpperCase()}` as keyof typeof APIErrors
-
-      if (!(tag in APIErrors)) {
-        throw new Error('Unhandled type')
-      }
-
       throw new HTTPError(tag)
     }
 
@@ -61,50 +43,40 @@ export abstract class Base {
   }
 
   static find<T>(
-    this: new () => T,
-    where: WhereCondition<T> | ((query: QueryBuilder<T>) => QueryBuilder<T>),
+    this: (new () => T) & { tableName: string },
+    where: WhereCondition<T> | ((query: QueryBuilder<T>) => unknown),
     limit = 100
   ): Promise<T[]> {
-    let query = new QueryBuilder<T>({ table: (<any>this).tableName, limit })
+    const query = new QueryBuilder<T>({ table: this.tableName, limit })
 
-    if (typeof where === 'function') {
-      query = where(query)
-    } else {
-      query.where(where)
-    }
+    typeof where === 'function' ? where(query) : query.where(where)
 
     return sql.unsafe(query.text, query.values) as Promise<T[]>
   }
 
   static async count(where: string): Promise<number> {
+    // TODO: We should return only the count.
     const result = await sql.unsafe(`SELECT * FROM ${this.tableName} WHERE ${where} LIMIT = 1000`)
     return result.count
   }
 
   async save(): Promise<void> {
-    // TODO: Better handling
-    const clone = { ...this } as unknown as Record<string, string>
-
-    // Issue: https://github.com/porsager/postgres/issues/242
-    for (const [key, value] of Object.entries(clone)) {
-      if (value != null && typeof value === 'object') clone[key] = JSON.stringify(value)
-    }
-
-    await sql`INSERT INTO ${sql(this.tableName)} ${sql(clone)}`
-
-    void (this.constructor as any).onCreate(this)
+    await sql`INSERT INTO ${sql(this.tableName)} ${sql(this)}`;
+    (this.constructor as typeof Base).onCreate?.(this)
   }
 
-  async update(props: Partial<this>): Promise<this> {
-    const [data] = await sql<unknown[]>`UPDATE ${sql(this.tableName)} SET ${sql(props)} WHERE id = ${this.id} RETURNING *`
+  async update(props: Partial<NonFunctionProperties<this>>): Promise<this> {
+    await sql`UPDATE ${sql(this.tableName)} SET ${sql(props)} WHERE id = ${this.id}`
 
-    void (this.constructor as any).onUpdate(this)
+    Object.assign(this, props);
 
-    return Object.assign(this, data)
+    (this.constructor as typeof Base).onUpdate?.(this, Object.keys(props))
+
+    return this
   }
 
   async delete(): Promise<void> {
-    await sql`DELETE FROM ${sql(this.tableName)} WHERE id = ${this.id}`
-    void (this.constructor as any).onDelete(this)
+    await sql`DELETE FROM ${sql(this.tableName)} WHERE id = ${this.id}`;
+    (this.constructor as typeof Base).onDelete?.(this)
   }
 }

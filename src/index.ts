@@ -1,37 +1,26 @@
 import Server from './server'
-import config from './config'
-import migrations from './database/migrations'
-import { logger } from './utils'
+import migrations from '@database/migrations'
+import config from '@config'
+import { logger } from '@utils'
 
+export const server = new Server()
 
-export const server = new Server({
-  origin: config.endpoints.main,
-  port: config.port,
-  limits: {
-    global: '20/5s',
-    'auth/accounts/login': '3/24h --ip',
-    'auth/accounts/register': '3/24h --ip',
-    'auth/accounts/verify': '2/24h --ip',
-    servers: '5/5s',
-    channels: '5/5s',
-    users: '5/5s',
-    getaway: '3/20s --ip'
-  }
-})
 
 try {
   logger.log('Initialling the server...')
 
-  await server.init()
+  await server.init({
+    origin: config.endpoints.main
+  })
 
   logger.log('Initialling the database...')
 
   await migrations.run()
-  await server.listen()
+  await server.listen(config.port)
 
   logger.log('Server running on port:', config.port)
 } catch (err) {
-
+  
   logger
     .error('Failed to Init the server....')
     .error(err)

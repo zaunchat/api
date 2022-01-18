@@ -7,7 +7,7 @@ import {
   Invite,
   Role,
   Message
-} from '../../structures'
+} from '@structures'
 
 const COMMIT = 1;
 

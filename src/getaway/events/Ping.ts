@@ -1,6 +1,7 @@
 import { WSCodes } from '../Constants'
-import { Socket } from '../Socket'
+import { Client } from '../Client'
+import { WebSocket } from 'ws'
 
-export const Ping = async (socket: Socket): Promise<void> => {
-    await socket.setHeartbeat().send({ code: WSCodes.PONG })
+export const Ping = async (client: Client, socket: WebSocket): Promise<void> => {
+    await client.setHeartbeat(socket).send({ code: WSCodes.PONG }, socket)
 }

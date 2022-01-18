@@ -1,61 +1,38 @@
-import * as web from 'express-decorators'
-import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { Channel, Invite, Member } from '../../structures'
-import { Permissions } from '../../utils'
+import { Controller, Context, Next, Check, Permission } from '@Controller'
+import { Invite, Member } from '@structures'
 
-@web.basePath('/servers/:server_id/invites')
-export class ServerInviteController {
-  @web.use()
-  async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
+export class ServerInviteController extends Controller('/servers/:server_id/invites') {
+  async 'USE /'(ctx: Context, next: Next) {
     const exists = await Member.findOne({
-      id: req.user.id,
-      server_id: req.params.server_id
+      id: ctx.user.id,
+      server_id: ctx.params.server_id
     }).catch(() => null)
 
     if (!exists) {
-      req.throw('UNKNOWN_SERVER')
+      ctx.throw('UNKNOWN_SERVER')
     }
 
     next()
   }
 
-  @web.get('/')
-  async fetchMany(req: Request, res: Response): Promise<void> {
-    const limit = 100 // TODO: Add Limit option
-
-    const invites = await Invite.find({ server_id: req.params.server_id }, limit)
-
-    res.json(invites)
+  @Check({ limit: 'number|convert|min:1|max:100|default:100' }, 'query')
+  'GET /'(ctx: Context): Promise<Invite[]> {
+    return Invite.find({ server_id: ctx.params.server_id }, Number(ctx.query.limit))
   }
 
-  @web.get('/:invite_code')
-  async fetchOne(req: Request, res: Response): Promise<void> {
-    const { invite_code, server_id } = req.params
-    const invite = await Invite.find({ code: invite_code, server_id })
-    res.json(invite)
+  'GET /:invite_code'(ctx: Context): Promise<Invite> {
+    return Invite.findOne({ code: ctx.params.invite_code, server_id: ctx.params.server_id })
   }
 
-  @web.post('/:channel_id')
-  async create(req: Request, res: Response): Promise<void> {
-    const channel = await Channel.findOne({ id: req.params.channel_id })
-    const permissions = await Permissions.fetch({
-      user: req.user,
-      server: req.params.server_id as ID,
-      channel
-    })
-
-    if (!permissions.has(Permissions.FLAGS.INVITE_OTHERS)) {
-      req.throw('MISSING_PERMISSIONS')
-    }
-
+  @Permission.has('INVITE_OTHERS')
+  async 'POST /:channel_id'(ctx: Context): Promise<Invite> {
     const invite = Invite.from({
-      inviter_id: req.user.id,
-      channel_id: channel.id,
-      server_id: req.params.server_id as ID
+      inviter_id: ctx.user.id,
+      ...ctx.params as any
     })
 
     await invite.save()
 
-    res.json({ code: invite.code })
+    return invite
   }
 }

@@ -1,20 +1,30 @@
 import { Payload, WSCloseCodes, WSCodes, WSEvents } from '../Constants'
-import { Channel, ChannelTypes, User } from '../../structures'
-import { Socket } from '../Socket'
-import { Permissions } from '../../utils'
-import sql from '../../database'
+import { Channel, User } from '@structures'
+import { Client } from '../Client'
+import { Permissions, validator } from '@utils'
+import sql from '@database'
+import { getaway } from '@getaway'
+import { WebSocket } from 'ws'
 
-export const Authenticate = async (socket: Socket, data: Payload): Promise<void> => {
-  if (socket.user_id) {
+const isValidAuth = validator.compile({
+  type: {
+    type: 'enum',
+    values: ['user', 'bot']
+  },
+  token: 'string'
+})
+
+export const Authenticate = async (client: Client, socket: WebSocket, payload: Payload): Promise<void> => {
+  if (client.authenticated) {
     return socket.close(WSCloseCodes.ALREADY_AUTHENTICATED)
   }
 
-  const auth = (data.data ?? {}) as {
-    type: 'user',
+  const auth = payload.data as {
+    type: 'user' | 'bot'
     token: string
   }
 
-  if (!auth.token || !auth.type) { // Ignore kidding..
+  if (isValidAuth(auth) !== true) {
     return socket.close(WSCloseCodes.AUTHENTICATED_FAILED)
   }
 
@@ -24,11 +34,17 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
     return socket.close(WSCloseCodes.AUTHENTICATED_FAILED)
   }
 
-  socket.user_id = user.id
-  socket.getaway.connections.set(user.id, socket)
+  await client.send({ code: WSCodes.AUTHENTICATED }, socket)
 
-  await socket.send({ code: WSCodes.AUTHENTICATED })
+  const otherClient = getaway.clients.get(user.id)
 
+  if (otherClient) {
+    otherClient.connections.add(socket)
+    client.connections.delete(socket)
+    return
+  }
+
+  getaway.clients.set(user.id, client)
 
   const [
     servers,
@@ -43,52 +59,42 @@ export const Authenticate = async (socket: Socket, data: Payload): Promise<void>
     OR recipients ? ${user.id}`
   ])
 
-  const clientUser = {
-    id: user.id,
-    username: user.username,
-    avatar: user.avatar,
-    badges: user.badges
-  } as User
+  await client.subscribe([
+    [user.id],
+    Object.keys(user.relations),
+    extractIDs(servers),
+    extractIDs(channels)
+  ].flat(4))
+
+  const promises: Promise<Permissions>[] = []
+
+  for (const server of servers) {
+    promises.push(Permissions.fetch({ user, server }))
+  }
+
+  for (const channel of channels) {
+    promises.push(Permissions.fetch({ user, channel }))
+  }
+
+  for (const permission of await Promise.all(promises)) {
+    client.permissions.set(permission.target_id, permission)
+  }
+
+  Object.defineProperty(client, 'user_id', {
+    value: user.id
+  })
 
   const readyData: WSEvents['READY'] = {
-    user: clientUser,
+    user,
     users,
     servers,
     channels
   }
 
-  await socket.send({
+  await client.send({
     code: WSCodes.READY,
     data: readyData
   })
-
-  await socket.subscribe([
-    [user.id],
-    extractIDs(user.relations),
-    extractIDs(servers),
-    extractIDs(channels)
-  ].flat(4))
-
-  const promises: Promise<Permissions>[] = [], ids: string[] = []
-
-  for (const server of servers) {
-    promises.push(Permissions.fetch({ user, server }))
-    ids.push(server.id)
-  }
-
-  for (const channel of channels) {
-    if (channel.type === ChannelTypes.DM) continue
-    promises.push(Permissions.fetch({ user, channel }))
-    ids.push(channel.id)
-  }
-
-  const result = await Promise.all(promises)
-
-  for (let i = 0; i < result.length; i++) {
-    socket.permissions.set(ids[i], result[i])
-  }
-
-  socket.isPermissionsCached = true
 }
 
 

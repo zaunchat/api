@@ -1,74 +1,60 @@
-import { App as HTTPServer, extendMiddleware } from '@tinyhttp/app'
-import { getaway } from './getaway'
-import { register } from 'express-decorators'
-import * as middlewares from './middlewares'
-import * as controllers from './controllers'
-import * as extensions from './extensions'
+import { App as HTTPServer } from '@tinyhttp/app'
+import { getaway } from '@getaway'
+import { logger } from '@utils'
+import * as middlewares from '@middlewares'
+import * as controllers from '@controllers'
 
-
-interface ServerOptions {
-  port: number
-  limits: Record<string, string>
+interface InitServerOptions {
   origin: string
 }
 
 class Server {
   readonly http = new HTTPServer({
     onError: middlewares.error(),
-    applyExtensions: (req, res, next) => {
-      extendMiddleware(this.http)(req, res, next)
-      extensions.extend(req, res)
-    },
-    noMatchHandler: (_req, res) => res.sendStatus(404)
+    noMatchHandler: (_req, res) => res.sendStatus(404),
+    settings: {
+      networkExtensions: true,
+      xPoweredBy: false
+    }
   })
 
-  constructor(public readonly options: ServerOptions) { }
-
-  async init() {
-
+  async init({ origin }: InitServerOptions) {
     // Security related
-    this.http.use(middlewares.helmet())
-    this.http.use(middlewares.cors({
-      methods: ['GET', 'POST', 'DELETE', 'PATCH', 'PUT'],
-      headers: ['content-type', 'x-session-token']
-    }))
+    this.http
+      .use(middlewares.helmet({ hidePoweredBy: false }))
+      .use(middlewares.cors({
+        methods: ['GET', 'POST', 'DELETE', 'PATCH', 'PUT'],
+        headers: ['content-type', 'content-length', 'x-session-token']
+      }))
+      .use('/auth', middlewares.cors({ origin, methods: ['GET', 'POST'] }))
+      .use(middlewares.rateLimit('20/5s', 'global'))
+      .use('/getaway', middlewares.rateLimit('3/20s --ip', 'getaway'))
 
-    this.http.use('/auth', middlewares.cors({
-      origin: this.options.origin,
-      methods: ['GET', 'POST']
-    }))
 
-    // Setup rate limiter
-    for (const [route, opts] of Object.entries(this.options.limits)) {
-      route === 'global'
-        ? this.http.use(middlewares.rateLimit(opts, 'global'))
-        : this.http.use(route, middlewares.rateLimit(opts, route))
-    }
-
-    // Register Controllers
     for (const Controller of Object.values(controllers)) {
-      register(this.http, new Controller())
+      const controller = new Controller()      
+      const count = controller.register(this.http)
+      
+      logger
+        .log(`Loaded ${controller.name} with ${count.routes} route & ${count.guards} guard.`)
     }
 
     const NON_AUTH_ROUTES = [
       '/getaway',
-      '/auth/accounts'
-    ], CAPTCHA_ROUTES = [
-      '/auth/accounts/login',
-      '/auth/accounts/register'
-    ], KB_100 = 102400
+      '/auth/accounts',
+      '/ping'
+    ]
 
     // Add other middlewares
     this.http
       .use(middlewares.validID())
-      .use(middlewares.json({ limit: KB_100 }))
-      .use(middlewares.captcha({ required: CAPTCHA_ROUTES }))
+      .use(middlewares.json({ limit: 102400 /* 100KB */ }))
       .use(middlewares.auth({ ignored: NON_AUTH_ROUTES }))
-      .use('/gateway', middlewares.ws(getaway.server))
+      .get('/gateway/:encoding?', middlewares.ws(getaway.server))
   }
 
-  listen(): Promise<void> {
-    return new Promise((ok) => this.http.listen(this.options.port, ok))
+  listen(port: number): Promise<void> {
+    return new Promise((ok) => this.http.listen(port, ok))
   }
 }
 

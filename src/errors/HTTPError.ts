@@ -1,5 +1,6 @@
 export const APIErrors = {
   MISSING_ACCESS: [400, 'Missing access'],
+  MISSING_HEADER: [400, 'Missing header'],
   MISSING_PERMISSIONS: [400, 'You lack permissions to perform that action'],
   FAILED_CAPTCHA: [403],
   UNAUTHORIZED: [403, 'Unauthorized. Provide a valid token and try again'],
@@ -17,6 +18,7 @@ export const APIErrors = {
   BLOCKED_BY_OTHER: [403],
   ALREADY_SENT_REQUEST: [409],
   ALREADY_FRIENDS: [409],
+  INVALID_CHANNEL_TYPE: [409, 'Invalid channel type'],
 
   // Unknown - 404
   UNKNOWN_ACCOUNT: [404, 'Unknown account'],
@@ -30,6 +32,7 @@ export const APIErrors = {
   UNKNOWN_ROLE: [404, 'Unknown role'],
   UNKNOWN_GROUP: [404, 'Unknown group'],
   UNKNOWN_INVITE: [404, 'Unknown invite'],
+  UNKNOWN_BOT: [404, 'Unknown bot'],
 
   // Maximum
   MAXIMUM_FRIENDS: [400, 'Maximum number of friends reached'],
@@ -39,6 +42,7 @@ export const APIErrors = {
   MAXIMUM_CHANNELS: [400, 'Maximum number of channels reached'],
   MAXIMUM_MESSAGE_LENGTH: [400],
   MAXIMUM_GROUP_MEMBERS: [400, 'Maximum number of group members reached'],
+  MAXIMUM_BOTS: [400, 'Maximum number of bots reached'],
 
   // Misc
   BOT_ONLY: [400],

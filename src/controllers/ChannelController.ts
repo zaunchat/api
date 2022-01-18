@@ -1,129 +1,114 @@
-import * as web from 'express-decorators'
-import { Response, Request } from '@tinyhttp/app'
-import { Channel, ChannelTypes, CreateGroupSchema, User } from '../structures'
-import { Permissions } from '../utils'
-import config from '../config'
+import { Controller, Context, Check, Limit } from '@Controller'
+import { Channel, ChannelTypes, CreateGroupSchema, GroupChannel, User } from '@structures'
+import { Permissions } from '@utils'
 import { array } from 'pg-query-config'
+import config from '@config'
 
-
-@web.basePath('/channels/@me')
-export class ChannelController {
-  @web.get('/')
-  async fetchMany(req: Request, res: Response): Promise<void> {
-    const channels = await Channel.find({ recipients: array.lc([req.user.id]) })
-    res.json(channels)
+@Limit('5/5s')
+export class ChannelController extends Controller('/channels/@me') {
+  'GET /'(ctx: Context) {
+    return Channel.find({ recipients: array.lc([ctx.user.id]) })
   }
 
-  @web.get('/:channel_id')
-  async fetchOne(req: Request, res: Response): Promise<void> {
-    const channel = await Channel.findOne({
-      id: req.params.channel_id,
-      recipients: array.lc([req.user.id])
+  'GET /:channel_id'(ctx: Context) {
+    return Channel.findOne({
+      id: ctx.params.channel_id,
+      recipients: array.lc([ctx.user.id])
     })
-    res.json(channel)
   }
 
-  @web.post('/')
-  async create(req: Request, res: Response): Promise<void> {
-    req.check(CreateGroupSchema)
-
-    const groupCount = await Channel.count(`type = ${ChannelTypes.GROUP} AND recipients::jsonb ? ${req.user.id}`)
+  @Check(CreateGroupSchema)
+  async 'POST /'(ctx: Context) {
+    const groupCount = await Channel.count(`type = ${ChannelTypes.GROUP} AND recipients::jsonb ? ${ctx.user.id}`)
 
     if (groupCount >= config.limits.user.groups) {
-      req.throw('MAXIMUM_GROUPS')
+      ctx.throw('MAXIMUM_GROUPS')
     }
 
     const group = Channel.from({
       type: ChannelTypes.GROUP,
-      name: req.body.name,
-      owner_id: req.user.id,
-      recipients: [req.user.id]
+      name: ctx.body.name,
+      owner_id: ctx.user.id,
+      recipients: [ctx.user.id]
     })
 
     await group.save()
 
-    res.json(group)
+    return group
   }
 
-  @web.post('/:group_id/:user_id')
-  async add(req: Request, res: Response): Promise<void> {
-    const { user_id, group_id } = req.params
+  async 'POST /:group_id/:user_id'(ctx: Context) {
+    const { user_id, group_id } = ctx.params
 
     const [group, target] = await Promise.all([
-      Channel.findOne({
+      Channel.findOne<GroupChannel>({
         id: group_id,
         type: ChannelTypes.GROUP,
-        recipients: array.lc([req.user.id])
+        recipients: array.lc([ctx.user.id])
       }),
       User.findOne({ id: user_id })
     ])
 
     if (group.recipients.length >= config.limits.group.members) {
-      req.throw('MAXIMUM_GROUP_MEMBERS')
+      ctx.throw('MAXIMUM_GROUP_MEMBERS')
     }
 
     if (group.recipients.includes(target.id)) {
-      req.throw('MISSING_ACCESS')
+      ctx.throw('MISSING_ACCESS')
     }
 
     await group.update({
       recipients: [...group.recipients, target.id]
     })
 
-    res.json(group)
+    return group
   }
 
-  @web.route('delete', '/:group_id/:user_id')
-  async kick(req: Request, res: Response): Promise<void> {
-    const { user_id, group_id } = req.params
+  async 'DELETE /:group_id/:user_id'(ctx: Context) {
+    const { user_id, group_id } = ctx.params
 
     const [group, target] = await Promise.all([
-      Channel.findOne({
+      Channel.findOne<GroupChannel>({
         id: group_id,
         type: ChannelTypes.GROUP,
-        recipients: array.lc([req.user.id])
+        recipients: array.lc([ctx.user.id])
       }),
       User.findOne({ id: user_id })
     ])
 
-    if (req.user.id === group.owner_id && req.user.id === target.id) {
-      req.throw('MISSING_ACCESS')
+    if (ctx.user.id === group.owner_id && ctx.user.id === target.id) {
+      ctx.throw('MISSING_ACCESS')
     }
 
     if (!group.recipients.includes(target.id)) {
-      req.throw('UNKNOWN_MEMBER')
+      ctx.throw('UNKNOWN_MEMBER')
     }
 
     const permissions = await Permissions.fetch({
-      user: req.user,
+      user: ctx.user,
       channel: group
     })
 
     if (!permissions.has('KICK_MEMBERS')) {
-      req.throw('MISSING_PERMISSIONS')
+      ctx.throw('MISSING_PERMISSIONS')
     }
 
     await group.update({
       recipients: group.recipients.filter((id) => id !== target.id)
     })
-
-    res.sendStatus(202)
   }
 
-  @web.route('delete', '/:channel_id')
-  async delete(req: Request, res: Response): Promise<void> {
-    const channel = await Channel.findOne({
-      id: req.params.channel_id,
+  async 'DELETE /:channel_id'(ctx: Context) {
+    const channel = await Channel.findOne<GroupChannel>({
+      id: ctx.params.channel_id,
       type: ChannelTypes.GROUP,
-      recipients: array.lc([req.user.id])
+      recipients: array.lc([ctx.user.id])
     })
 
-    if (channel.type === ChannelTypes.GROUP && channel.owner_id !== req.user.id) {
-      req.throw('MISSING_ACCESS')
+    if (channel.owner_id !== ctx.user.id) {
+      ctx.throw('MISSING_ACCESS')
     }
 
     await channel.delete()
-
-    res.sendStatus(202)
   }
 }

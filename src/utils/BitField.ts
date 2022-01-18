@@ -1,101 +1,99 @@
-const DEFAULT_BIT = 0
+export const DEFAULT_BIT = 0n
 
-type Constructor<T> = new (...args: unknown[]) => T
+export type BitFieldResolvable = bigint | number | BitField | string | BitFieldResolvable[]
 
-export type BitFieldResolvable = number | BitField | string | BitFieldResolvable[]
+export declare interface BitField {
+  constructor: typeof BitField
+}
 
 export class BitField {
-	static FLAGS: Record<string, number>
-	bitfield = DEFAULT_BIT
+  static FLAGS: Record<string, bigint>
+  bitfield = DEFAULT_BIT
 
-	constructor(bits: BitFieldResolvable) {
-		this.bitfield = this.self.resolve(bits)
-	}
+  constructor(bits: BitFieldResolvable) {
+    this.bitfield = this.constructor.resolve(bits)
+  }
 
-	private get self(): Constructor<BitField> & {
-		resolve: typeof BitField.resolve
-		FLAGS: Record<string, number>
-	} {
-		return this.constructor as Constructor<BitField> & {
-			resolve: typeof BitField.resolve
-			FLAGS: Record<string, number>
-		}
-	}
+  missing(bits: BitFieldResolvable): string[] {
+    return new this.constructor(bits).remove(this).toArray()
+  }
 
-	missing(bits: BitFieldResolvable): string[] {
-		return new this.self(bits).remove(this).toArray()
-	}
+  any(bit: BitFieldResolvable): boolean {
+    return (this.bitfield & this.constructor.resolve(bit)) !== DEFAULT_BIT
+  }
 
-	any(bit: BitFieldResolvable): boolean {
-		return (this.bitfield & this.self.resolve(bit)) !== DEFAULT_BIT
-	}
+  has(bit: BitFieldResolvable): boolean {
+    return (this.bitfield & this.constructor.resolve(bit)) === bit
+  }
 
-	has(bit: BitFieldResolvable): boolean {
-		return (this.bitfield & this.self.resolve(bit)) === bit
-	}
+  set(bits: bigint): this {
+    this.bitfield = bits
+    return this
+  }
 
-	add(...bits: BitFieldResolvable[]): this {
-		let total = 0
+  add(...bits: BitFieldResolvable[]): this {
+    let total = 0n
 
-		for (const bit of bits) {
-			total |= this.self.resolve(bit)
-		}
+    for (const bit of bits) {
+      total |= this.constructor.resolve(bit)
+    }
 
-		if (Object.isFrozen(this)) return new this.self(this.bitfield | total) as this
+    if (Object.isFrozen(this)) return new this.constructor(this.bitfield | total) as this
 
-		this.bitfield |= total
+    this.bitfield |= total
 
-		return this
-	}
+    return this
+  }
 
-	remove(...bits: BitFieldResolvable[]): this {
-		let total = 0
+  remove(...bits: BitFieldResolvable[]): this {
+    let total = 0n
 
-		for (const bit of bits) {
-			total |= this.self.resolve(bit)
-		}
+    for (const bit of bits) {
+      total |= this.constructor.resolve(bit)
+    }
 
-		if (Object.isFrozen(this)) return new this.self(this.bitfield & ~total) as this
+    if (Object.isFrozen(this)) return new this.constructor(this.bitfield & ~total) as this
 
-		this.bitfield &= ~total
+    this.bitfield &= ~total
 
-		return this
-	}
+    return this
+  }
 
-	freeze(): Readonly<this> {
-		return Object.freeze(this)
-	}
+  freeze(): Readonly<this> {
+    return Object.freeze(this)
+  }
 
-	valueOf(): number {
-		return this.bitfield
-	}
+  valueOf(): bigint {
+    return this.bitfield
+  }
 
-	serialize(): Record<string, boolean> {
-		const serialized: Record<string, boolean> = {}
-		for (const [flag, bit] of Object.entries(this.self.FLAGS)) serialized[flag] = this.has(bit)
-		return serialized
-	}
+  serialize(): Record<string, boolean> {
+    const serialized: Record<string, boolean> = {}
+    for (const [flag, bit] of Object.entries(this.constructor.FLAGS)) serialized[flag] = this.has(bit)
+    return serialized
+  }
 
-	toArray(): string[] {
-		const flags = Object.keys(BitField.FLAGS)
-		return flags.filter(bit => this.has(bit))
-	}
+  toArray(): string[] {
+    const flags = Object.keys(this.constructor.FLAGS)
+    return flags.filter(bit => this.has(bit))
+  }
 
-	equals(bit: BitFieldResolvable): boolean {
-		return this.bitfield === this.self.resolve(bit)
-	}
+  equals(bit: BitFieldResolvable): boolean {
+    return this.bitfield === this.constructor.resolve(bit)
+  }
 
-	*[Symbol.iterator](): Iterable<string> {
-		yield* this.toArray()
-	}
+  *[Symbol.iterator](): Iterable<string> {
+    yield* this.toArray()
+  }
 
-	static resolve(bit: BitFieldResolvable): number {
-		if (typeof bit === 'number') return bit
-		if (Array.isArray(bit)) return bit.map(p => this.resolve(p)).reduce((prev, p) => prev | p, DEFAULT_BIT)
-		if (bit instanceof BitField) return bit.bitfield
-		if (typeof this.FLAGS[bit] !== 'undefined') return this.FLAGS[bit]
-		throw new Error('Invalid Bit')
-	}
+  static resolve(bit: BitFieldResolvable): bigint {
+    if (typeof bit === 'bigint') return bit
+    if (typeof bit === 'number') return BigInt(bit)
+    if (Array.isArray(bit)) return bit.map(p => this.resolve(p)).reduce((prev, p) => prev | p, DEFAULT_BIT)
+    if (bit instanceof BitField) return bit.bitfield
+    if (typeof this.FLAGS[bit] !== 'undefined') return this.FLAGS[bit]
+    throw new Error('Invalid Bit')
+  }
 }
 
 

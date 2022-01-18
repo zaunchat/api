@@ -1,36 +1,26 @@
-import * as web from 'express-decorators'
-import { Response, Request } from '@tinyhttp/app'
-import { LogoutUserSchema, Session } from '../../structures'
+import { Controller, Context, Check, Limit } from '@Controller'
+import { LogoutUserSchema, Session } from '@structures'
 
-@web.basePath('/auth/sessions')
-export class SessionController {
-  @web.get('/')
-  async fetchMany(req: Request, res: Response): Promise<void> {
-    const sessions = await Session.find(sql => sql.select(['id', 'info']).where({ user_id: req.user.id }))
-    res.json(sessions)
+@Limit('30/1h')
+export class SessionController extends Controller('/auth/sessions') {
+  'GET /'(ctx: Context): Promise<Session[]> {
+    return Session.find(sql => sql.select(['id', 'info']).where({ user_id: ctx.user.id }))
   }
 
-  @web.get('/:session_id')
-  async fetchOne(req: Request, res: Response): Promise<void> {
-    const session = await Session.findOne(sql => sql.select('info').where({
-      id: req.params.session_id,
-      user_id: req.user.id
+  'GET /:session_id'(ctx: Context): Promise<Session> {
+    return Session.findOne(sql => sql.select('info').where({
+      id: ctx.params.session_id,
+      user_id: ctx.user.id
     }))
-    res.json(session)
   }
 
-
-  @web.post('/logout/:session_id')
-  async logout(req: Request, res: Response): Promise<void> {
-    req.check(LogoutUserSchema)
-
+  @Check(LogoutUserSchema)
+  async 'POST /logout/:session_id'(ctx: Context) {
     const session = await Session.findOne({
-      id: req.params.session_id,
-      token: req.body.token
+      id: ctx.params.session_id,
+      token: ctx.body.token
     })
 
     await session.delete()
-
-    res.sendStatus(202)
   }
 }

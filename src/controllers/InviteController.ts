@@ -1,33 +1,28 @@
-import * as web from 'express-decorators'
-import { Response, Request } from '@tinyhttp/app'
-import { Invite, Member } from '../structures'
+import { Controller, Context } from '@Controller'
+import { Invite, Member } from '@structures'
 
-@web.basePath('/invites')
-export class InviteController {
-  @web.get('/:invite_code')
-  async fetch(req: Request, res: Response): Promise<void> {
-    const invite = await Invite.findOne({ code: req.params.invite_code })
-    res.json(invite)
+export class InviteController extends Controller('/invites') {
+  'GET /:invite_code'(ctx: Context): Promise<Invite> {
+    return Invite.findOne({ code: ctx.params.invite_code })
   }
 
-
-  @web.post('/:invite_code')
-  async join(req: Request, res: Response): Promise<void> {
-    const invite = await Invite.findOne({ code: req.params.invite_code })
+  async 'POST /:invite_code'(ctx: Context) {
+    const invite = await Invite.findOne({ code: ctx.params.invite_code })
     const alreadyJoined = await Member.findOne({
-      id: req.user.id,
+      id: ctx.user.id,
       server_id: invite.server_id
     }).catch(() => null)
 
     if (alreadyJoined) {
-      req.throw('MISSING_ACCESS')
+      ctx.throw('MISSING_ACCESS')
     }
 
-    await Member.from({
-      id: req.user.id,
-      server_id: invite.server_id
-    }).save()
-
-    res.json({})
+    await Promise.all([
+      invite.update({ uses: invite.uses + 1 }),
+      Member.from({
+        id: ctx.user.id,
+        server_id: invite.server_id
+      }).save()
+    ])
   }
 }

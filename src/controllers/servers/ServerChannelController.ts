@@ -1,95 +1,78 @@
-import * as web from 'express-decorators'
-import { Response, Request, NextFunction } from '@tinyhttp/app'
-import { Channel, CreateTextChannelSchema, ChannelTypes, Member } from '../../structures'
-import { Permissions } from '../../utils'
-import config from '../../config'
+import { Controller, Context, Check, Permission, Next } from '@Controller'
+import { Channel, CreateServerChannelSchema, ChannelTypes, Member, ServerChannel } from '@structures'
+import config from '@config'
 
 
-@web.basePath('/channels/:server_id')
-export class ServerChannelController {
-  @web.use()
-  async authentication(req: Request, _res: Response, next: NextFunction): Promise<void> {
+export class ServerChannelController extends Controller('/channels/:server_id') {
+  async 'USE /'(ctx: Context, next: Next) {
     const exists = await Member.findOne({
-      id: req.user.id,
-      server_id: req.params.server_id
+      id: ctx.user.id,
+      server_id: ctx.params.server_id
     }).catch(() => null)
 
     if (!exists) {
-      req.throw('UNKNOWN_SERVER')
+      ctx.throw('UNKNOWN_SERVER')
     }
 
     next()
   }
 
-  @web.get('/')
-  async fetchMany(req: Request, res: Response): Promise<void> {
-    const channels = await Channel.find({ server_id: req.params.server_id })
-    res.json(channels)
+  'GET /'(ctx: Context) {
+    return Channel.find({ server_id: ctx.params.server_id })
   }
 
-  @web.get('/:channel_id')
-  async fetchOne(req: Request, res: Response): Promise<void> {
-    const { server_id, channel_id } = req.params
-
-    const channel = await Channel.findOne({
-      id: channel_id,
-      server_id
+  'GET /:channel_id'({ params }: Context) {
+    return Channel.findOne<ServerChannel>({
+      id: params.channel_id,
+      server_id: params.server_id
     })
-
-    res.json(channel)
   }
 
-  @web.post('/')
-  async create(req: Request, res: Response): Promise<void> {
-    req.check(CreateTextChannelSchema)
 
-    const server_id = req.params.server_id
-
+  @Check(CreateServerChannelSchema)
+  @Permission.has('MANAGE_CHANNELS')
+  async 'POST /'(ctx: Context) {
+    const server_id = ctx.params.server_id
     const channelCount = await Channel.count(`server_id = ${server_id}`)
 
     if (channelCount >= config.limits.server.channels) {
-      req.throw('MAXIMUM_CHANNELS')
+      ctx.throw('MAXIMUM_CHANNELS')
     }
 
-    const permissions = await Permissions.fetch({
-      user: req.user,
-      server: server_id
-    })
+    let channel!: Channel
 
-    if (!permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)) {
-      req.throw('MISSING_PERMISSIONS')
+    switch (ctx.body.type as ChannelTypes) {
+      case ChannelTypes.TEXT:
+        channel = Channel.from({
+          ...ctx.body,
+          type: ChannelTypes.TEXT,
+          server_id: server_id,
+        })
+        break
+      case ChannelTypes.CATEGORY:
+        channel = Channel.from({
+          ...ctx.body,
+          type: ChannelTypes.CATEGORY,
+          server_id: server_id
+        })
+        break
+      default:
+        ctx.throw('INVALID_CHANNEL_TYPE')
     }
 
-    const channel = await Channel.from({
-      ...req.body,
-      server_id: server_id,
-      type: ChannelTypes.TEXT // TODO: Add category type
-    }).save()
+    await channel.save()
 
-    res.json(channel)
+    return channel
   }
 
-  @web.route('delete', '/:channel_id')
-  async delete(req: Request, res: Response): Promise<void> {
-    const { server_id, channel_id } = req.params
 
-    const channel = await Channel.findOne({
-      id: channel_id,
-      server_id
+  @Permission.has('MANAGE_CHANNELS')
+  async 'DELETE /:channel_id'(ctx: Context): Promise<void> {
+    const channel = await Channel.findOne<ServerChannel>({
+      id: ctx.params.channel_id,
+      server_id: ctx.params.server_id
     })
-
-    const permissions = await Permissions.fetch({
-      user: req.user,
-      server: server_id,
-      channel
-    })
-
-    if (!permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)) {
-      req.throw('MISSING_PERMISSIONS')
-    }
 
     await channel.delete()
-
-    res.sendStatus(202)
   }
 }
