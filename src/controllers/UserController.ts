@@ -1,5 +1,5 @@
-import { Controller, Context, Limit, Next } from '@Controller'
-import { Channel, ChannelTypes, User, RelationshipStatus, DMChannel, PublicUser } from '@structures'
+import { Controller, Context, Limit, Next } from './Controller'
+import { Channel, ChannelTypes, User, RelationshipStatus, DMChannel, PublicUser } from '../structures'
 import { array } from 'pg-query-config'
 
 @Limit('5/5s')

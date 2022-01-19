@@ -1,6 +1,6 @@
-import { Controller, Context, Check, Limit } from '@Controller'
-import { Server, Channel, CreateServerSchema, Member, ChannelTypes } from '@structures'
-import config from '@config'
+import { Controller, Context, Check, Limit } from '../Controller'
+import { Server, Channel, CreateServerSchema, Member, ChannelTypes } from '../../structures'
+import config from '../../config'
 
 @Limit('5/5s')
 export class ServerController extends Controller('/servers') {

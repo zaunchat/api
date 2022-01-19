@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from '@tinyhttp/app'
-import { HTTPError } from '@errors'
-import { is } from '@utils'
+import { HTTPError } from '../errors'
+import { is } from '../utils'
 
 export const validID = () => async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
   

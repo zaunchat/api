@@ -9,7 +9,7 @@ const config = {
   },
   smtp: {
     enabled: env.get('SMTP_ENABLED').default('true').asBool(),
-    host: env.get('SMTP_HOST').required().asUrlString(),
+    host: env.get('SMTP_HOST').asUrlString(),
     username: env.get('SMTP_USERNAME').asString(),
     password: env.get('SMTP_PASSWORD').asString()
   },

@@ -1,5 +1,5 @@
-import { User } from '@structures'
-import { Permissions } from '@utils'
+import { User } from '../structures'
+import { Permissions } from '../utils'
 
 declare module '@tinyhttp/app' {
   interface Request {

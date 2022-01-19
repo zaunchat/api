@@ -1,6 +1,6 @@
-import { HTTPError } from '@errors'
+import { HTTPError } from '../errors'
 import { Request, Response, NextFunction } from '@tinyhttp/app'
-import { Permissions, PermissionsResolvable } from '@utils'
+import { Permissions, PermissionsResolvable } from '../utils'
 
 export const permissions = (bits: PermissionsResolvable, type: 'has' | 'any' = 'has'): typeof middleware => {
   bits = Permissions.resolve(bits)

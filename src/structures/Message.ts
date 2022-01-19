@@ -1,8 +1,8 @@
 import { Base } from '.'
-import { validator } from '@utils'
-import { getaway } from '@getaway'
-import sql from '@database'
-import config from '@config'
+import { validator } from '../utils'
+import { getaway } from '../getaway'
+import sql from '../database'
+import config from '../config'
 
 export interface CreateMessageOptions extends Options<Message> {
   author_id: string

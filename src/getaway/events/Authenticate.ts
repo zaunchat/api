@@ -1,9 +1,9 @@
 import { Payload, WSCloseCodes, WSCodes, WSEvents } from '../Constants'
-import { Channel, User } from '@structures'
+import { Channel, User } from '../../structures'
 import { Client } from '../Client'
-import { Permissions, validator } from '@utils'
-import sql from '@database'
-import { getaway } from '@getaway'
+import { Permissions, validator } from '../../utils'
+import sql from '../../database'
+import { getaway } from '../../getaway'
 import { WebSocket } from 'ws'
 
 const isValidAuth = validator.compile({

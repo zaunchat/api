@@ -1,8 +1,8 @@
 import { SMTPClient, Message } from 'emailjs'
 import { nanoid } from 'nanoid'
-import { User } from '@structures'
-import { createRedisConnection } from '@database/redis'
-import config from '@config'
+import { User } from '../structures'
+import { createRedisConnection } from '../database/redis'
+import config from '../config'
 import ms from 'ms'
 
 const THREE_HOURS = ms('3 hours')

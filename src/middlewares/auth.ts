@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from '@tinyhttp/app'
-import { User } from '@structures'
-import { HTTPError } from '@errors'
+import { User } from '../structures'
+import { HTTPError } from '../errors'
 
 interface AuthOptions {
   ignored: string[]

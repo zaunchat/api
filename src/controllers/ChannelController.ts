@@ -1,8 +1,8 @@
-import { Controller, Context, Check, Limit } from '@Controller'
-import { Channel, ChannelTypes, CreateGroupSchema, GroupChannel, User } from '@structures'
-import { Permissions } from '@utils'
+import { Controller, Context, Check, Limit } from './Controller'
+import { Channel, ChannelTypes, CreateGroupSchema, GroupChannel, User } from '../structures'
+import { Permissions } from '../utils'
 import { array } from 'pg-query-config'
-import config from '@config'
+import config from '../config'
 
 @Limit('5/5s')
 export class ChannelController extends Controller('/channels/@me') {

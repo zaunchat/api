@@ -1,6 +1,6 @@
-import { Controller, Context, Check, Next, Permission } from '@Controller'
-import { Role, CreateRoleSchema, Member } from '@structures'
-import config from '@config'
+import { Controller, Context, Check, Next, Permission } from '../Controller'
+import { Role, CreateRoleSchema, Member } from '../../structures'
+import config from '../../config'
 
 
 export class ServerRoleController extends Controller('/servers/:server_id/roles') {

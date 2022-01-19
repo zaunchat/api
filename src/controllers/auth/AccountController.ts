@@ -1,7 +1,7 @@
-import { Controller, Context, Check, Limit, Captcha } from '@Controller'
-import { User, Session, CreateUserSchema, LoginUserSchema } from '@structures'
-import { email } from '@utils'
-import config from '@config'
+import { Controller, Context, Check, Limit, Captcha } from '../Controller'
+import { User, Session, CreateUserSchema, LoginUserSchema } from '../../structures'
+import { email } from '../../utils'
+import config from '../../config'
 import argon2 from 'argon2'
 
 //@AntiProxy()

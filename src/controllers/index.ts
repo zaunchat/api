@@ -1,4 +1,4 @@
-import { Controller } from '@Controller'
+import { Controller } from './Controller'
 
 export class PingController extends Controller('/ping') {
   'GET /'(): string {

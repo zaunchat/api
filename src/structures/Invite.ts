@@ -1,6 +1,6 @@
 import { Base } from '.'
 import { nanoid } from 'nanoid'
-import sql from '@database'
+import sql from '../database'
 
 export interface CreateInviteOptions extends Options<Invite> {
   inviter_id: string

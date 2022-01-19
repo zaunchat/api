@@ -1,9 +1,9 @@
 import { Base, QueryBuilder, WhereCondition } from '.'
-import { DEFAULT_PERMISSION_DM, validator } from '@utils'
-import { APIErrors, HTTPError } from '@errors'
-import { getaway } from '@getaway'
-import sql from '@database'
-import config from '@config'
+import { DEFAULT_PERMISSION_DM, validator } from '../utils'
+import { APIErrors, HTTPError } from '../errors'
+import { getaway } from '../getaway'
+import sql from '../database'
+import config from '../config'
 
 export enum ChannelTypes {
   DM,
@@ -50,11 +50,10 @@ interface CreateDMChannelOptions extends Options<DMChannel> {
   recipients: string[]
 }
 
-
 export const CreateServerChannelSchema = validator.compile({
   type: {
     type: 'enum',
-    values: ChannelTypes
+    values: Object.keys(ChannelTypes).filter(k => !isNaN(+k))
   },
   name: `string|min:1|max:${config.limits.channel.name}`,
   topic: `string|min:1|max:${config.limits.channel.topic}|optional`

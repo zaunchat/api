@@ -9,7 +9,7 @@ const isEmail = validator.compile({
 const isPayload = validator.compile({
   code: {
     type: 'enum',
-    values: WSCodes
+    values: Object.keys(WSCodes).filter(k => !isNaN(+k))
   },
   data: {
     type: 'any',

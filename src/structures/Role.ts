@@ -1,6 +1,6 @@
 import { Base } from '.'
-import { validator } from '@utils'
-import sql from '@database'
+import { validator } from '../utils'
+import sql from '../database'
 
 export interface CreateRoleOptions extends Options<Role> {
   name: string

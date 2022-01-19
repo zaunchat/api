@@ -1,6 +1,6 @@
-import { Controller, Context, Check, Permission, Next } from '@Controller'
-import { Channel, CreateServerChannelSchema, ChannelTypes, Member, ServerChannel } from '@structures'
-import config from '@config'
+import { Controller, Context, Check, Permission, Next } from '../Controller'
+import { Channel, CreateServerChannelSchema, ChannelTypes, Member, ServerChannel } from '../../structures'
+import config from '../../config'
 
 
 export class ServerChannelController extends Controller('/channels/:server_id') {

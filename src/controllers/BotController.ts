@@ -1,6 +1,6 @@
-import { Context, Controller, Check } from "@Controller"
-import { Bot, CreateBotSchema } from '@structures'
-import config from '@config';
+import { Context, Controller, Check } from "./Controller"
+import { Bot, CreateBotSchema } from '../structures'
+import config from '../config';
 
 export class BotController extends Controller('/bots') {
   'USE /'() {

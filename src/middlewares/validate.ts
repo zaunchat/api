@@ -1,6 +1,6 @@
-import { CheckError } from "@errors"
+import { CheckError } from '../errors'
 import { Request, Response, NextFunction } from "@tinyhttp/app"
-import { validator } from "@utils"
+import { validator } from '../utils'
 import { AsyncCheckFunction, SyncCheckFunction, ValidationSchema } from "fastest-validator"
 
 

@@ -1,8 +1,8 @@
 import { Base, Role, Channel, Member, ServerChannel } from '.'
-import { DEFAULT_PERMISSION_EVERYONE, validator } from '@utils'
-import { getaway } from '@getaway'
-import sql from '@database'
-import config from '@config'
+import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
+import { getaway } from '../getaway'
+import sql from '../database'
+import config from '../config'
 
 
 export interface CreateServerOptions extends Options<Server> {

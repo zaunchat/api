@@ -1,5 +1,5 @@
-import { Controller, Context, Next, Check, Permission } from '@Controller'
-import { Invite, Member } from '@structures'
+import { Controller, Context, Next, Check, Permission } from '../Controller'
+import { Invite, Member } from '../../structures'
 
 export class ServerInviteController extends Controller('/servers/:server_id/invites') {
   async 'USE /'(ctx: Context, next: Next) {

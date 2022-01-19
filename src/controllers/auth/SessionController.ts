@@ -1,5 +1,5 @@
-import { Controller, Context, Check, Limit } from '@Controller'
-import { LogoutUserSchema, Session } from '@structures'
+import { Controller, Context, Check, Limit } from '../Controller'
+import { LogoutUserSchema, Session } from '../../structures'
 
 @Limit('30/1h')
 export class SessionController extends Controller('/auth/sessions') {

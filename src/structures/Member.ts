@@ -1,8 +1,8 @@
 import { Base, Role } from '.'
-import { validator } from '@utils'
-import { getaway } from '@getaway'
-import sql from '@database'
-import config from '@config'
+import { validator } from '../utils'
+import { getaway } from '../getaway'
+import sql from '../database'
+import config from '../config'
 
 export interface CreateMemberOptions extends Options<Member> {
   id: string

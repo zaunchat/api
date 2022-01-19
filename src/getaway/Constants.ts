@@ -1,4 +1,4 @@
-import type { Member, Message, Server, Channel, User, PublicUser } from '@structures'
+import type { Member, Message, Server, Channel, User, PublicUser } from '../structures'
 import ms from 'ms'
 
 export const DEFAULT_HEARTBEAT_TIME = ms('45ms')

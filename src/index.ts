@@ -1,7 +1,7 @@
 import Server from './server'
-import migrations from '@database/migrations'
-import config from '@config'
-import { logger } from '@utils'
+import migrations from './database/migrations'
+import config from './config'
+import { logger } from './utils'
 
 export const server = new Server()
 

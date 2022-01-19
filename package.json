@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node --es-module-specifier-resolution=node dist/server",
+    "start": "node --es-module-specifier-resolution=node dist/index",
     "start:quick": "npm run build && npm run start",
     "build": "node scripts/build",
     "format": "echo \"Soon\"",
-    "lint": "npx denolint -c lintrc.json",
     "docs": "node docs/generate.js"
   },
   "type": "module",
@@ -35,6 +34,7 @@
     "@types/ws": "^8.2.0",
     "esbuild": "^0.14.1"
   },
+  "license": "AGPL-3.0",
   "engines": {
     "node": ">=16"
   }

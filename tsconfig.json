@@ -12,39 +12,7 @@
     "skipLibCheck": true,
     "outDir": "dist",
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "paths": {
-      "@structures": [
-        "./src/structures"
-      ],
-      "@utils": [
-        "./src/utils"
-      ],
-      "@controllers": [
-        "./src/controllers"
-      ],
-      "@database": [
-        "./src/database"
-      ],
-      "@database/*": [
-        "./src/database/*"
-      ],
-      "@Controller": [
-        "./src/controllers/Controller"
-      ],
-      "@errors": [
-        "./src/errors"
-      ],
-      "@middlewares": [
-        "./src/middlewares"
-      ],
-      "@getaway": [
-        "./src/getaway"
-      ],
-      "@config": [
-        "./src/config"
-      ]
-    }
+    "baseUrl": "."
   },
   "exclude": [
     "node_modules",

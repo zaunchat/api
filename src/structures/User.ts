@@ -1,8 +1,8 @@
 import { Base, Session, Server, Member } from '.'
-import { is, validator } from '@utils'
-import { getaway } from '@getaway'
-import sql from '@database'
-import config from '@config'
+import { is, validator } from '../utils'
+import { getaway } from '../getaway'
+import sql from '../database'
+import config from '../config'
 import { Bot } from './Bot'
 
 export type PublicUser = Omit<User, 'email' | 'password' | 'relations' | 'verified'>

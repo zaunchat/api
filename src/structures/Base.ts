@@ -1,7 +1,7 @@
 import { QueryConfig as QueryBuilder } from 'pg-query-config'
-import { Snowflake } from '@utils'
-import { HTTPError, APIErrors } from '@errors'
-import sql from '@database'
+import { Snowflake } from '../utils'
+import { HTTPError, APIErrors } from '../errors'
+import sql from '../database'
 
 export type WhereFunction<T> = (valueRefSet: Set<T>, args: T[]) => string
 export type WhereCondition<T> = { [P in keyof T]?: WhereCondition<T[P]> | T[P] | WhereFunction<T[P]> | Array<T[P]> }

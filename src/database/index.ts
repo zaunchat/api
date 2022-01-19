@@ -1,5 +1,5 @@
 import postgres from 'postgres'
-import config from '@config'
+import config from '../config'
 import {
   Invite,
   Member,
@@ -9,12 +9,11 @@ import {
   Channel,
   Role,
   Server
-} from '@structures'
+} from '../structures'
 
 const noop = () => { }
 
 const sql = postgres(config.database.uri, {
-  publications: 'alltables',
   types: {
     number: {
       to: 0,

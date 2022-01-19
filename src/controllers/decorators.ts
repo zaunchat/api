@@ -1,7 +1,7 @@
 import { StringValue } from "ms"
 import { BaseController, Middleware } from "./Controller"
 import { Request, Response, NextFunction } from "@tinyhttp/app"
-import * as middlewares from "@middlewares"
+import * as middlewares from "../middlewares"
 
 export type Guard = (request: Request, response: Response, next: NextFunction) => Awaited<unknown>
 

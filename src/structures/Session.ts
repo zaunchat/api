@@ -1,6 +1,6 @@
 import { Base } from '.'
 import { nanoid } from 'nanoid'
-import sql from '@database'
+import sql from '../database'
 
 export interface CreateSessionOptions extends Options<Session> {
   user_id: string

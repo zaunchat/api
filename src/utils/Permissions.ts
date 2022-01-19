@@ -1,8 +1,8 @@
 import { Badges, is } from '.'
-import { Member, Server, User, Channel, AnyChannel, OverwriteTypes, CategoryChannel, RelationshipStatus } from '@structures'
+import { Member, Server, User, Channel, AnyChannel, OverwriteTypes, CategoryChannel, RelationshipStatus } from '../structures'
 import { BitField } from './BitField'
 import { Request } from '@tinyhttp/app'
-import { Context } from '@Controller'
+import { Context } from '../controllers/Controller'
 
 export type PermissionString = keyof typeof FLAGS
 export type PermissionsResolvable = bigint | number | Permissions | PermissionString | PermissionsResolvable[]

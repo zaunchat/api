@@ -1,8 +1,8 @@
 import { App as HTTPServer } from '@tinyhttp/app'
-import { getaway } from '@getaway'
-import { logger } from '@utils'
-import * as middlewares from '@middlewares'
-import * as controllers from '@controllers'
+import { getaway } from './getaway'
+import { logger } from './utils'
+import * as middlewares from './middlewares'
+import * as controllers from './controllers'
 
 interface InitServerOptions {
   origin: string
@@ -32,11 +32,12 @@ class Server {
 
 
     for (const Controller of Object.values(controllers)) {
-      const controller = new Controller()      
-      const count = controller.register(this.http)
+      const controller = new Controller()
+      
+      const { routes, guards } = controller.register(this.http)
       
       logger
-        .log(`Loaded ${controller.name} with ${count.routes} route & ${count.guards} guard.`)
+        .log(`Loaded ${controller.name} with ${routes} route & ${guards} guard.`)
     }
 
     const NON_AUTH_ROUTES = [

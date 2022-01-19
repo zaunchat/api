@@ -1,6 +1,6 @@
-import { Controller, Context, Check, Next, Permission } from '@Controller'
-import { Message, CreateMessageSchema, UpdateMessageSchema } from '@structures'
-import { Permissions } from '@utils'
+import { Controller, Context, Check, Next, Permission } from './Controller'
+import { Message, CreateMessageSchema, UpdateMessageSchema } from '../structures'
+import { Permissions } from '../utils'
 import { gt, lt, gte } from 'pg-query-config'
 
 export class MessageController extends Controller('/channels/:channel_id/messages') {

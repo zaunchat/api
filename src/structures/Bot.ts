@@ -1,6 +1,6 @@
 import { Base, Presence, PresenceStatus } from '.'
-import sql from '@database'
-import { validator } from '@utils'
+import sql from '../database'
+import { validator } from '../utils'
 
 
 export const CreateBotSchema = validator.compile({

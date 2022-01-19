@@ -2,8 +2,8 @@ import { ServerOptions, WebSocketServer } from 'ws'
 import { RateLimiterRedis } from 'rate-limiter-flexible'
 import { Client, EncodingTypes } from './Client'
 import { WSCodes, WSEvents, DEFAULT_HEARTBEAT_TIME } from './Constants'
-import { createRedisConnection } from '@database/redis'
-import { logger } from '@utils'
+import { createRedisConnection } from '../database/redis'
+import { logger } from '../utils'
 import ms from 'ms'
 
 export class Getaway {

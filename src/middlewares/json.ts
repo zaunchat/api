@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from '@tinyhttp/app'
-import { is } from '@utils'
+import { is } from '../utils'
 
 interface JSONOptions {
   limit: number

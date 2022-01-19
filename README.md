@@ -20,7 +20,6 @@ Core Backend API
 | `npm run start`       | Run the current build at `/dist`      |
 | `npm run start:quick` | Quick build and start                 |
 | `npm run build`       | Build the source code                 |
-| `npm run lint`        | Run linter review                     |
 | `npm run format`      | Prettify source code                  |
 | `npm run docs`        | Generate docs                         |
 
