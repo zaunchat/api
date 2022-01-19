@@ -33,6 +33,7 @@
     "@types/ws": "^8.2.0",
     "esbuild": "^0.14.1"
   },
+  "license": "AGPL-3",
   "engines": {
     "node": ">=16"
   }
