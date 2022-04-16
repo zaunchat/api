@@ -16,22 +16,19 @@
     "dotenv": "^10.0.0",
     "emailjs": "^3.7.0",
     "env-var": "^7.0.1",
-    "erlpack": "^0.1.4",
-    "fastest-validator": "^1.11.1",
+    "fastest-validator": "^1.12.0",
     "helmet": "^4.6.0",
     "ioredis": "^4.28.0",
     "kleur": "^4.1.4",
     "ms": "^3.0.0-canary.1",
     "nanoid": "^3.1.25",
     "pg-query-config": "^1.0.17",
-    "postgres": "^2.0.0-beta.11",
-    "rate-limiter-flexible": "^2.3.4",
-    "ws": "^8.2.3"
+    "postgres": "^3.0.5",
+    "rate-limiter-flexible": "^2.3.4"
   },
   "devDependencies": {
     "@types/ioredis": "^4.27.1",
     "@types/node": "^16.7.1",
-    "@types/ws": "^8.2.0",
     "esbuild": "^0.14.1"
   },
   "license": "AGPL-3.0",

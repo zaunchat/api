@@ -1,6 +1,7 @@
 import { Controller, Context, Check, Limit } from '../Controller'
 import { Server, Channel, CreateServerSchema, Member, ChannelTypes } from '../../structures'
 import config from '../../config'
+import sql from '../../database'
 
 @Limit('5/5s')
 export class ServerController extends Controller('/servers') {
@@ -54,10 +55,14 @@ export class ServerController extends Controller('/servers') {
       server_id: server.id
     })
 
-    await server.save()
-    await chat.save()
-    await category.save()
-    await member.save()
+    // FIXME: Remove "as any"
+    
+    await sql.begin((sql) => [
+      sql`INSERT INTO ${sql(Server.tableName)} ${sql(server as any)}`,
+      sql`INSERT INTO ${sql(Channel.tableName)} ${sql(chat as any)}`,
+      sql`INSERT INTO ${sql(Channel.tableName)} ${sql(category as any)}`,
+      sql`INSERT INTO ${sql(Member.tableName)} ${sql(member as any)}`,
+    ])
 
     return server
   }

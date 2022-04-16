@@ -1,6 +1,5 @@
 import { Base, Role, Channel, Member, ServerChannel } from '.'
 import { DEFAULT_PERMISSION_EVERYONE, validator } from '../utils'
-import { getaway } from '../getaway'
 import sql from '../database'
 import config from '../config'
 
@@ -26,19 +25,6 @@ export class Server extends Base {
   banner: Nullable<string> = null
   owner_id!: string
   permissions = DEFAULT_PERMISSION_EVERYONE
-
-  static async onCreate(self: Server): Promise<void> {
-    await getaway.subscribe(self.owner_id, self.id)
-    await getaway.publish(self.id, 'SERVER_CREATE', self)
-  }
-
-  static async onUpdate(self: Server): Promise<void> {
-    await getaway.publish(self.id, 'SERVER_UPDATE', self)
-  }
-
-  static async onDelete(self: Server): Promise<void> {
-    await getaway.publish(self.id, 'SERVER_DELETE', { id: self.id })
-  }
 
   static from(opts: CreateServerOptions): Server {
     return Object.assign(new Server(), opts)

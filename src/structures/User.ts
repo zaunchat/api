@@ -1,6 +1,5 @@
 import { Base, Session, Server, Member } from '.'
-import { is, validator } from '../utils'
-import { getaway } from '../getaway'
+import { validator } from '../utils'
 import sql from '../database'
 import config from '../config'
 import { Bot } from './Bot'
@@ -94,19 +93,6 @@ export class User extends Base {
   badges = 0n
   avatar: Nullable<string> = null
   verified = false
-
-  static async onUpdate(self: User, keys: string[]): Promise<void> {
-    // Ignore other property updates such as (password, email, etc..)
-    if (!['username', 'avatar', 'badges', 'presence'].some(property => keys.includes(property))) return
-
-    await getaway.publish(self.id, 'USER_UPDATE', {
-      id: self.id,
-      avatar: self.avatar,
-      badges: self.badges,
-      username: self.username,
-      presence: self.presence
-    })
-  }
 
   static from(opts: CreateUserOptions): User {
     return Object.assign(new User(), opts)

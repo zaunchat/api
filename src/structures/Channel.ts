@@ -1,7 +1,6 @@
 import { Base, QueryBuilder, WhereCondition } from '.'
 import { DEFAULT_PERMISSION_DM, validator } from '../utils'
 import { APIErrors, HTTPError } from '../errors'
-import { getaway } from '../getaway'
 import sql from '../database'
 import config from '../config'
 
@@ -70,21 +69,6 @@ export type ServerChannel = TextChannel | CategoryChannel /* | VoiceChannel */
 
 export class Channel extends Base {
   readonly type!: ChannelTypes
-
-  static async onCreate(self: Channel): Promise<void> {
-    if (self.isGroup()) {
-      await Promise.all(self.recipients.map((id) => getaway.subscribe(id, self.id)))
-    }
-    await getaway.publish(self.id, 'CHANNEL_CREATE', self)
-  }
-
-  static async onUpdate(self: Channel): Promise<void> {
-    await getaway.publish(self.id, 'CHANNEL_UPDATE', self)
-  }
-
-  static async onDelete(self: Channel): Promise<void> {
-    await getaway.publish(self.id, 'CHANNEL_DELETE', { id: self.id })
-  }
 
   static async findOne<T = AnyChannel>(
     where: WhereCondition<T> | ((query: QueryBuilder<T>) => unknown)

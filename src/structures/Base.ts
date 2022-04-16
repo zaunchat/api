@@ -12,10 +12,6 @@ export { QueryConfig as QueryBuilder } from 'pg-query-config'
 export abstract class Base {
   readonly id = Snowflake.generate()
 
-  static onCreate?: (self: any) => Awaited<void>
-  static onUpdate?: (self: any, keys: string[]) => Awaited<void>
-  static onDelete?: (self: any) => Awaited<void>
-
   get tableName(): string {
     return (this.constructor as typeof Base).tableName
   }
@@ -55,28 +51,23 @@ export abstract class Base {
   }
 
   static async count(where: string): Promise<number> {
-    // TODO: We should return only the count.
-    const result = await sql.unsafe(`SELECT * FROM ${this.tableName} WHERE ${where} LIMIT = 1000`)
-    return result.count
+    const [{ count }] = await sql.unsafe(`SELECT COUNT(id) as count FROM ${this.tableName} WHERE ${where}`)
+    return count
   }
 
   async save(): Promise<void> {
-    await sql`INSERT INTO ${sql(this.tableName)} ${sql(this)}`;
-    (this.constructor as typeof Base).onCreate?.(this)
+    await sql`INSERT INTO ${sql(this.tableName)} ${sql(this as any)}`
   }
 
   async update(props: Partial<NonFunctionProperties<this>>): Promise<this> {
-    await sql`UPDATE ${sql(this.tableName)} SET ${sql(props)} WHERE id = ${this.id}`
+    await sql`UPDATE ${sql(this.tableName)} SET ${sql(props as any)} WHERE id = ${this.id}`
 
-    Object.assign(this, props);
-
-    (this.constructor as typeof Base).onUpdate?.(this, Object.keys(props))
+    Object.assign(this, props)
 
     return this
   }
 
-  async delete(): Promise<void> {
-    await sql`DELETE FROM ${sql(this.tableName)} WHERE id = ${this.id}`;
-    (this.constructor as typeof Base).onDelete?.(this)
+ async delete(): Promise<void> {
+    await sql`DELETE FROM ${sql(this.tableName)} WHERE id = ${this.id}`
   }
 }

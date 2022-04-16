@@ -1,6 +1,5 @@
 import { Base, Role } from '.'
 import { validator } from '../utils'
-import { getaway } from '../getaway'
 import sql from '../database'
 import config from '../config'
 
@@ -20,19 +19,6 @@ export class Member extends Base {
   joined_at = Date.now()
   server_id!: string
   roles: string[] = []
-
-  static async onCreate(self: Member): Promise<void> {
-    await getaway.subscribe(self.id, self.server_id)
-    await getaway.publish(self.server_id, 'SERVER_MEMBER_JOIN', self)
-  }
-
-  static async onUpdate(self: Member): Promise<void> {
-    await getaway.publish(self.server_id, 'SERVER_MEMBER_UPDATE', self)
-  }
-
-  static async onDelete(self: Member): Promise<void> {
-    await getaway.publish(self.server_id, 'SERVER_MEMBER_LEAVE', { id: self.id, server_id: self.server_id })
-  }
 
   fetchRoles(): Promise<Role[]> {
     return Role.find({ id: this.roles })

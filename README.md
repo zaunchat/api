@@ -8,7 +8,6 @@ Core Backend API
 - [TypeScript](https://wikipedia.org/wiki/TypeScript)
 - [PostgreSQL](https://wikipedia.org/wiki/PostgreSQL) ([Lib](https://github.com/porsager/postgres))
 - [Redis](https://wikipedia.org/wiki/Redis) ([Lib](https://github.com/luin/ioredis))
-- [WebSocket](https://wikipedia.org/wiki/WebSocket) ([Lib](https://github.com/websockets/ws))
 - [HTTP](https://wikipedia.org/wiki/Web_server) ([Lib](https://github.com/tinyhttp/tinyhttp))
 
 ## Development
