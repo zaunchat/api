@@ -6,7 +6,7 @@ import argon2 from 'argon2'
 
 //@AntiProxy()
 @Limit('30/1h --ip')
-export class AccountController extends Controller('/auth/accounts') {
+export class AccountController extends Controller {
   @Captcha()
   @Check(LoginUserSchema)
   async 'POST /login'(ctx: Context) {

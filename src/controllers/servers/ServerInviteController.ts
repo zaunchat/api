@@ -1,7 +1,7 @@
 import { Controller, Context, Next, Check, Permission } from '../Controller'
 import { Invite, Member } from '../../structures'
 
-export class ServerInviteController extends Controller('/servers/:server_id/invites') {
+export class ServerInviteController extends Controller {
   async 'USE /'(ctx: Context, next: Next) {
     const exists = await Member.findOne({
       id: ctx.user.id,

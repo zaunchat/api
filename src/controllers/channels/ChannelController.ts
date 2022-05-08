@@ -1,11 +1,12 @@
-import { Controller, Context, Check, Limit } from './Controller'
-import { Channel, ChannelTypes, CreateGroupSchema, GroupChannel, User } from '../structures'
-import { Permissions } from '../utils'
+import { Context, Check, Limit } from '../Controller'
+import { Channel, ChannelTypes, CreateGroupSchema, GroupChannel, User } from '../../structures'
+import { Permissions } from '../../utils'
 import { array } from 'pg-query-config'
-import config from '../config'
+import config from '../../config'
+import { Controller } from '@itchatt/controllers'
 
 @Limit('5/5s')
-export class ChannelController extends Controller('/channels/@me') {
+export class ChannelController extends Controller {
   'GET /'(ctx: Context) {
     return Channel.find({ recipients: array.lc([ctx.user.id]) })
   }

@@ -3,7 +3,7 @@ import { Channel, ChannelTypes, User, RelationshipStatus, DMChannel, PublicUser 
 import { array } from 'pg-query-config'
 
 @Limit('5/5s')
-export class UserController extends Controller('/users') {
+export class UserController extends Controller<Context> {
   'GET /:user_id'(ctx: Context): Promise<PublicUser> {
     return User.fetchPublicUser(ctx.params.user_id)
   }

@@ -2,7 +2,7 @@ import { Controller, Context, Check, Limit } from '../Controller'
 import { LogoutUserSchema, Session } from '../../structures'
 
 @Limit('30/1h')
-export class SessionController extends Controller('/auth/sessions') {
+export class SessionController extends Controller{
   'GET /'(ctx: Context): Promise<Session[]> {
     return Session.find(sql => sql.select(['id', 'info']).where({ user_id: ctx.user.id }))
   }

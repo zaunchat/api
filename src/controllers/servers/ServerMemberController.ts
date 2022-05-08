@@ -2,7 +2,7 @@ import { Controller, Context, Check, Next } from '../Controller'
 import { Member, UpdateMemberSchema, Role } from '../../structures'
 import { is, Permissions } from '../../utils'
 
-export class ServerMemberController extends Controller('/servers/:server_id/members') {
+export class ServerMemberController extends Controller {
   async 'USE /'(ctx: Context, next: Next) {
     const exists = await Member.findOne({
       id: ctx.user.id,

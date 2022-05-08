@@ -4,7 +4,7 @@ import config from '../../config'
 import sql from '../../database'
 
 @Limit('5/5s')
-export class ServerController extends Controller('/servers') {
+export class ServerController extends Controller {
   'GET /'(ctx: Context): Promise<Server[]> {
     return ctx.user.fetchServers()
   }

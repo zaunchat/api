@@ -3,7 +3,7 @@ import { Channel, CreateServerChannelSchema, ChannelTypes, Member, ServerChannel
 import config from '../../config'
 
 
-export class ServerChannelController extends Controller('/channels/:server_id') {
+export class ServerChannelController extends Controller {
   async 'USE /'(ctx: Context, next: Next) {
     const exists = await Member.findOne({
       id: ctx.user.id,

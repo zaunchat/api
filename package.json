@@ -11,6 +11,8 @@
   },
   "type": "module",
   "dependencies": {
+    "@itchatt/controllers": "1.0.1",
+    "@itchatt/utils": "^0.0.1",
     "@tinyhttp/app": "^2.0.12",
     "argon2": "^0.28.2",
     "dotenv": "^10.0.0",

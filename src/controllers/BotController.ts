@@ -2,7 +2,7 @@ import { Context, Controller, Check } from "./Controller"
 import { Bot, CreateBotSchema } from '../structures'
 import config from '../config';
 
-export class BotController extends Controller('/bots') {
+export class BotController extends Controller {
   'USE /'() {
     // Not Implemented yet.
     return 501

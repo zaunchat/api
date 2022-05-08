@@ -3,7 +3,7 @@ import { Role, CreateRoleSchema, Member } from '../../structures'
 import config from '../../config'
 
 
-export class ServerRoleController extends Controller('/servers/:server_id/roles') {
+export class ServerRoleController extends Controller {
   async 'USE /'(ctx: Context, next: Next) {
     const exists = await Member.findOne({
       id: ctx.user.id,

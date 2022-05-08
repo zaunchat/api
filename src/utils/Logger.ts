@@ -1,7 +1,6 @@
 import colors from 'kleur'
 import { format } from 'node:util'
 
-
 const time = new Date()
 
 class Logger {

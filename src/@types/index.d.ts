@@ -1,12 +1,27 @@
+import { URLParams, Request, Response } from '@tinyhttp/app'
+import { APIErrors } from 'src/errors'
 import { User } from '../structures'
 import { Permissions } from '../utils'
 
 declare module '@tinyhttp/app' {
   interface Request {
     user: User
-    private permissions?: Permissions
+    permissions?: Permissions
   }
 }
+
+declare module '@itchatt/controllers' {
+  export class Context {
+     user: User
+     body: any
+     query: ParsedUrlQuery 
+     params: URLParams
+     constructor(public readonly request: Request, public readonly response: Response)
+     throw(tag: keyof typeof APIErrors): void
+     header(name: string): string | null
+   }
+}
+
 
 declare global {
   type ID = string

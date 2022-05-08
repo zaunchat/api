@@ -1,4 +1,3 @@
-import { Payload, WSCodes } from '../getaway/Constants'
 import { validator } from './Validator'
 
 const isEmail = validator.compile({
@@ -6,20 +5,7 @@ const isEmail = validator.compile({
   type: 'email'
 })
 
-const isPayload = validator.compile({
-  code: {
-    type: 'enum',
-    values: Object.keys(WSCodes).filter(k => !isNaN(+k))
-  },
-  data: {
-    type: 'any',
-    optional: true
-  }
-})
-
 export const email = (str: string) => isEmail(str) === true
-
-export const payload = (obj: unknown): obj is Payload => isPayload(obj) === true
 
 export const snowflake = (id: unknown): id is ID => {
   if (typeof id !== 'string') return false

@@ -1,5 +1,4 @@
 import { App as HTTPServer } from '@tinyhttp/app'
-import { logger } from './utils'
 import * as middlewares from './middlewares'
 import * as controllers from './controllers'
 
@@ -28,14 +27,7 @@ class Server {
       .use('/auth', middlewares.cors({ origin, methods: ['GET', 'POST'] }))
       .use(middlewares.rateLimit('20/5s', 'global'))
 
-    for (const Controller of Object.values(controllers)) {
-      const controller = new Controller()
-      
-      const { routes, guards } = controller.register(this.http)
-      
-      logger
-        .log(`Loaded ${controller.name} with ${routes} route & ${guards} guard.`)
-    }
+    controllers.mount(this.http)
 
     const NON_AUTH_ROUTES = [
       '/auth/accounts',
