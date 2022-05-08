@@ -8,13 +8,17 @@ CREATE TABLE IF NOT EXISTS users (
     presence JSONB NOT NULL,
     relations JSONB NOT NULL,
     verified BOOLEAN DEFAULT FALSE
-) CREATE TABLE IF NOT EXISTS sessions (
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
     id BIGINT PRIMARY KEY,
     token VARCHAR(64) NOT NULL,
     user_id BIGINT NOT NULL,
     info JSONB,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) CREATE TABLE IF NOT EXISTS servers (
+);
+
+CREATE TABLE IF NOT EXISTS servers (
     id BIGINT PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     description VARCHAR(1000),
@@ -23,7 +27,9 @@ CREATE TABLE IF NOT EXISTS users (
     owner_id BIGINT NOT NULL,
     permissions BIGINT NOT NULL,
     FOREIGN KEY (owner_id) REFERENCES users(id)
-) CREATE TABLE IF NOT EXISTS channels (
+);
+
+CREATE TABLE IF NOT EXISTS channels (
     id BIGINT PRIMARY KEY,
     type INTEGER NOT NULL,
     name VARCHAR(50),
@@ -37,7 +43,9 @@ CREATE TABLE IF NOT EXISTS users (
     FOREIGN KEY (owner_id) REFERENCES users(id),
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
     FOREIGN KEY (parent_id) REFERENCES channels(id)
-) CREATE TABLE IF NOT EXISTS memebers (
+);
+
+CREATE TABLE IF NOT EXISTS memebers (
     id BIGINT PRIMARY KEY,
     joined_at TIMESTAMP NOT NULL,
     nickname VARCHAR(32),
@@ -45,7 +53,9 @@ CREATE TABLE IF NOT EXISTS users (
     roles JSONB NOT NULL,
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
     FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
-) CREATE TABLE IF NOT EXISTS invites (
+);
+
+CREATE TABLE IF NOT EXISTS invites (
     id BIGINT PRIMARY KEY,
     code VARCHAR(8) NOT NULL UNIQUE,
     uses INTEGER DEFAULT 0,
@@ -55,14 +65,18 @@ CREATE TABLE IF NOT EXISTS users (
     FOREIGN KEY (inviter_id) REFERENCES users(id),
     FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
-) CREATE TABLE IF NOT EXISTS roles (
+);
+
+CREATE TABLE IF NOT EXISTS roles (
     id BIGINT PRIMARY KEY,
     name VARCHAR(32) NOT NULL,
     permissions BIGINT NOT NULL,
     hoist BOOLEAN NOT NULL,
     server_id BIGINT NOT NULL,
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
-) CREATE TABLE IF NOT EXISTS messages (
+);
+
+CREATE TABLE IF NOT EXISTS messages (
     id BIGINT PRIMARY KEY,
     created_at TIMESTAMP DEFAULT current_timestamp,
     edited_at TIMESTAMP,
@@ -74,11 +88,13 @@ CREATE TABLE IF NOT EXISTS users (
     author_id BIGINT NOT NULL,
     FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
     FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-) CREATE TABLE IF NOT EXISTS bots (
+);
+
+CREATE TABLE IF NOT EXISTS bots (
     id BIGINT PRIMARY KEY,
     owner_id BIGINT NOT NULL,
     avatar VARCHAR(64),
     presence JSONB,
     verified BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (owner_id) REFERENCES users(id),
-)
+    FOREIGN KEY (owner_id) REFERENCES users(id)
+);

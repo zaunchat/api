@@ -1,4 +1,6 @@
 import postgres from 'postgres'
+import url from 'node:url'
+import { join } from 'node:path'
 import config from '../config'
 import {
   Invite,
@@ -12,6 +14,7 @@ import {
   Bot
 } from '../structures'
 
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const noop = () => { }
 
 const sql = postgres(config.database.uri, {
@@ -42,5 +45,11 @@ const sql = postgres(config.database.uri, {
   },
   onnotice: noop
 })
+
+const DATE = '2022-4'
+
+export const migrate = async () => {
+  await sql.file(join(__dirname, `../../assets/migrations/${DATE}.sql`))
+}
 
 export default sql

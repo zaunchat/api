@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node --es-module-specifier-resolution=node dist/index",
     "start:quick": "npm run build && npm run start",
-    "build": "node scripts/build",
+    "build": "tsc",
     "format": "echo \"Soon\"",
     "docs": "node docs/generate.js"
   },
@@ -31,7 +31,7 @@
   "devDependencies": {
     "@types/ioredis": "^4.27.1",
     "@types/node": "^16.7.1",
-    "esbuild": "^0.14.1"
+    "typescript": "^4.6.4"
   },
   "license": "AGPL-3.0",
   "engines": {
