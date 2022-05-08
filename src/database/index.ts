@@ -8,7 +8,8 @@ import {
   Session,
   Channel,
   Role,
-  Server
+  Server,
+  Bot
 } from '../structures'
 
 const noop = () => { }
@@ -34,6 +35,7 @@ const sql = postgres(config.database.uri, {
       if ('token' in x) return Session.from(x)
       if ('type' in x) return Channel.from(x)
       if ('hoist' in x) return Role.from(x)
+      if ('owner_id' in x && 'presence' in x) return Bot.from(x)
       if ('owner_id' in x) return Server.from(x)
       return x
     }

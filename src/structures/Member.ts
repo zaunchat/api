@@ -27,16 +27,4 @@ export class Member extends Base {
   static from(opts: CreateMemberOptions): Member {
     return Object.assign(new Member(), opts)
   }
-
-  static async init(): Promise<void> {
-    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
-            id BIGINT PRIMARY KEY,
-            joined_at TIMESTAMP NOT NULL,
-            nickname VARCHAR(${config.limits.member.nickname}),
-            server_id BIGINT NOT NULL,
-            roles JSONB NOT NULL,
-            FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
-            FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
-        )`)
-  }
 }

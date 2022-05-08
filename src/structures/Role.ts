@@ -24,15 +24,4 @@ export class Role extends Base {
   static from(opts: CreateRoleOptions): Role {
     return Object.assign(new Role(), opts)
   }
-
-  static async init(): Promise<void> {
-    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
-            id BIGINT PRIMARY KEY,
-            name VARCHAR(32) NOT NULL,
-            permissions BIGINT NOT NULL,
-            hoist BOOLEAN NOT NULL,
-            server_id BIGINT NOT NULL,
-            FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
-        )`)
-  }
 }

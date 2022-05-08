@@ -1,29 +1,9 @@
-import {
-  User,
-  Session,
-  Server,
-  Channel,
-  Member,
-  Invite,
-  Role,
-  Message
-} from '../../structures'
+import sql from '..';
 
-const COMMIT = 1;
+const DATE = '2022-4'
 
 const run = async (): Promise<void> => {
-  await User.init()
-  await Session.init()
-  await Server.init()
-  await Channel.init()
-  await Member.init()
-  await Invite.init()
-  await Role.init()
-  await Message.init()
-
-  if (COMMIT === 1) {
-    // TODO: Unknown
-  }
+  await sql.file(`./${DATE}.sql`)
 }
 
 export default { run }

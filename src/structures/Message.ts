@@ -71,20 +71,4 @@ export class Message extends Base {
   static from(opts: CreateMessageOptions): Message {
     return Object.assign(new Message(), opts)
   }
-
-  static async init(): Promise<void> {
-    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
-            id BIGINT PRIMARY KEY,
-            created_at TIMESTAMP DEFAULT current_timestamp,
-            edited_at TIMESTAMP,
-            content VARCHAR(${config.limits.message.length}),
-            embeds JSONB NOT NULL,
-            attachments JSON NOT NULL,
-            replies JSONB NOT NULL,
-            channel_id BIGINT NOT NULL,
-            author_id BIGINT NOT NULL,
-            FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
-            FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-        )`)
-  }
 }

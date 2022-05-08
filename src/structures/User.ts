@@ -138,18 +138,4 @@ export class User extends Base {
     `
     return user ?? null
   }
-
-  static async init(): Promise<void> {
-    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
-            id BIGINT PRIMARY KEY,
-            username VARCHAR(${config.limits.user.username}) NOT NULL,
-            password VARCHAR(32) NOT NULL,
-            email VARCHAR(255) NOT NULL UNIQUE,
-            avatar VARCHAR(64),
-            badges INTEGER NOT NULL,
-            presence JSONB NOT NULL,
-            relations JSONB NOT NULL,
-            verified BOOLEAN DEFAULT FALSE
-        )`)
-  }
 }

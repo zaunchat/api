@@ -41,17 +41,4 @@ export class Server extends Base {
   fetchChannels(): Promise<ServerChannel[]> {
     return Channel.find<ServerChannel>({ server_id: this.id })
   }
-
-  static async init(): Promise<void> {
-    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
-            id BIGINT PRIMARY KEY,
-            name VARCHAR(${config.limits.server.name}) NOT NULL,
-            description VARCHAR(${config.limits.server.description}),
-            icon VARCHAR(64),
-            banner VARCHAR(64),
-            owner_id BIGINT NOT NULL,
-            permissions BIGINT NOT NULL,
-            FOREIGN KEY (owner_id) REFERENCES users(id)
-        )`)
-  }
 }

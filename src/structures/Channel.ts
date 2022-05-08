@@ -151,24 +151,6 @@ export class Channel extends Base {
 
     return Object.assign(channel, opts)
   }
-
-  static async init(): Promise<void> {
-    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
-            id BIGINT PRIMARY KEY,
-            type INTEGER NOT NULL,
-            name VARCHAR(${config.limits.channel.name}),
-            topic VARCHAR(${config.limits.channel.topic}),
-            permissions BIGINT,
-            overwrites JSONB,
-            recipients JSONB,
-            parent_id BIGINT,
-            owner_id BIGINT,
-            server_id BIGINT,
-            FOREIGN KEY (owner_id) REFERENCES users(id),
-            FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
-            FOREIGN KEY (parent_id) REFERENCES channels(id)
-        )`)
-  }
 }
 
 

@@ -18,14 +18,4 @@ export class Session extends Base {
   static from(opts: CreateSessionOptions): Session {
     return Object.assign(new Session(), opts)
   }
-
-  static async init(): Promise<void> {
-    await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${this.tableName} (
-            id BIGINT PRIMARY KEY,
-            token VARCHAR(64) NOT NULL,
-            user_id BIGINT NOT NULL,
-            info JSONB,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`)
-  }
 }
