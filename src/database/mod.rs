@@ -1,15 +1,11 @@
+use rbatis::rbatis::Rbatis;
+use std::env;
+
 lazy_static! {
-    static ref CONNECTION: Rbatis = Rbatis::new();
+    pub static ref DB: Rbatis = Rbatis::new();
 }
 
 pub async fn connect() {
-    CONNECTION.link().await.unwrap();
-}
-
-pub fn query() {
-
-}
-
-pub fn get() {
-    CONNECTION
+    let uri = env::var("DATABASE_URI").expect("DATABASE_URI is required");
+    DB.link(uri.as_str()).await.unwrap();
 }
