@@ -4,6 +4,9 @@ extern crate rocket;
 extern crate rbatis;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate validator;
+
 
 pub mod database;
 pub mod routes;

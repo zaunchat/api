@@ -4,12 +4,15 @@ use crate::utils::snowflake::generate_id;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:users)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Validate, Serialize, Deserialize, Clone, Default)]
 pub struct User {
     pub id: i64,
+    #[validate(length(min = 3, max = 32))]
     pub username: String,
     pub avatar: Option<String>,
+    #[validate(length(min = 8, max = 32))]
     pub password: String,
+    #[validate(email)]
     pub email: String,
     pub badges: i64,
     pub verified: bool,

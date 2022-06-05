@@ -3,9 +3,10 @@ use crate::utils::snowflake::generate_id;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:roles)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Validate,Serialize, Deserialize, Clone, Default)]
 pub struct Role {
     pub id: i64,
+    #[validate(length(min = 1, max = 32))]
     pub name: String,
     pub permissions: i64,
     pub color: i32,

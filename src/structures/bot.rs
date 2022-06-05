@@ -4,9 +4,10 @@ use serde::{Deserialize, Serialize};
 use super::Base;
 
 #[crud_table(table_name:bots)]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Validate, Serialize, Deserialize, Clone)]
 pub struct Bot {
     pub id: i64,
+    #[validate(length(min = 3, max = 32))]
     pub username: String,
     pub owner_id: i64,
     pub verified: bool,
