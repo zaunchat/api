@@ -6,7 +6,7 @@ use crate::util::permissions::Permissions;
 pub struct Role {
    pub id: i64,
    pub name: String,
-   pub permissions: Permissions,
+   pub permissions: i64,
    pub color: i32,
    pub hoist: bool,
    pub server_id: i64

@@ -12,6 +12,13 @@ pub struct User {
 }
 
 impl User {
+    pub async fn fetch_sessions(&self) {}
+    pub async fn fetch_servers(&self) {}
+    pub async fn fetch_bots(&self) {}
+    pub async fn fetch_relations(&self) {}
+    pub async fn fetch_by_token(token: &str) {}
+   
     pub async fn save(&self) {}
     pub async fn delete(&self) {}
+    pub fn to_public(&self) {}
 }

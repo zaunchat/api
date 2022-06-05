@@ -12,6 +12,7 @@ pub struct Member {
 }
 
 impl Member {
+   pub async fn fetch_roles(&self) {}
    pub async fn save(&self) {}
    pub async fn delete(&self) {}
 }

@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Session {
     pub id: i64,
+    pub token: String,
+    pub user_id: i64
 }
 
 impl Session {

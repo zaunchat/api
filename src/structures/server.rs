@@ -12,10 +12,13 @@ pub struct Server {
     pub icon: Option<String>,
     pub banner: Option<String>,
     pub owner_id: i64,
-    pub permissions: Permissions,
+    pub permissions: i64,
 }
 
 impl Server {
+    pub async fn fetch_members(&self) {}
+    pub async fn fetch_roles(&self) {}
+    pub async fn fetch_channels(&self) {}
     pub async fn save(&self) {}
     pub async fn delete(&self) {}
 }
