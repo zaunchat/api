@@ -1,3 +1,4 @@
+pub mod base;
 pub mod bot;
 pub mod channel;
 pub mod invite;
@@ -7,3 +8,14 @@ pub mod role;
 pub mod server;
 pub mod session;
 pub mod user;
+
+pub use base::*;
+pub use bot::*;
+pub use channel::*;
+pub use invite::*;
+pub use member::*;
+pub use message::*;
+pub use role::*;
+pub use server::*;
+pub use session::*;
+pub use user::*;
