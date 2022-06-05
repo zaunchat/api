@@ -2,9 +2,10 @@ use super::{Base, Role};
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:members)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Validate, Serialize, Deserialize, Clone, Default)]
 pub struct Member {
     pub id: i64,
+    #[validate(length(max = 32))]
     pub nickname: Option<String>,
     pub joined_at: i64,
     pub server_id: i64,

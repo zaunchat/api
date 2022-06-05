@@ -3,9 +3,10 @@ use crate::utils::snowflake::generate_id;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:messages)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Validate,Serialize, Deserialize, Clone, Default)]
 pub struct Message {
     pub id: i64,
+    #[validate(length(min = 1, max = 2000))]
     pub content: Option<String>,
     pub channel_id: i64,
     pub author_id: i64,

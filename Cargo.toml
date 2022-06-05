@@ -16,3 +16,4 @@ serde = { version = "1", features = ["derive"] }
 async-trait = "0.1.56"
 nanoid = "0.4.0"
 rs-snowflake = "0.6.0"
+validator = { version = "0.15", features = ["derive"] }
