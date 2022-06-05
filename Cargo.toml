@@ -3,15 +3,16 @@ name = "api"
 version = "0.1.0"
 edition = "2021"
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 [dependencies]
-dotenv = "0.15.0"
-log = "0.4.17"
-serde = { version = "1.0.137", features = ["derive"] }
-serde_json = "1.0.81"
-lazy_static = "1.4.0"
-async-trait = "0.1.53"
-futures-util = "0.3.21"
-rand = "0.8.5"
+rocket = "0.5.0-rc.2"
 async-std = { version = "1.11.0", features = ["attributes", "tokio1"] }
+dotenv = "0.15.0"
+rbson = "2.0"
+lazy_static = "1.4.0"
+rbatis = { version = "3.1" }
+serde = { version = "1", features = ["derive"] }
+async-trait = "0.1.56"
 nanoid = "0.4.0"
-bitflags = "1.3.2"
+rs-snowflake = "0.6.0"
