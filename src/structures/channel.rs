@@ -26,12 +26,11 @@ pub struct Overwrite {
 }
 
 #[crud_table(table_name:channels)]
-#[derive(Debug, Validate, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
     pub id: i64,
     pub r#type: ChannelType,
 
-    #[validate(length(min = 1, max = 50))]
     pub name: Option<String>,
     // DM/Group
     pub recipients: Option<Vec<i64>>,
@@ -49,8 +48,7 @@ pub struct Channel {
     pub owner_id: Option<i64>,
 
     // Text
-    #[validate(length(min = 1, max = 1000))]
-    pub topic: Option<String>
+    pub topic: Option<String>,
 }
 
 impl Base for Channel {}
@@ -66,7 +64,7 @@ impl Channel {
             owner_id: None,
             parent_id: None,
             server_id: None,
-            topic: None
+            topic: None,
         }
     }
 
@@ -80,7 +78,7 @@ impl Channel {
             owner_id: None,
             parent_id: None,
             server_id: None,
-            topic: None
+            topic: None,
         }
     }
 
@@ -94,7 +92,7 @@ impl Channel {
             recipients: None,
             owner_id: None,
             parent_id: None,
-            topic: None
+            topic: None,
         }
     }
 
@@ -108,7 +106,7 @@ impl Channel {
             recipients: None,
             owner_id: None,
             parent_id: None,
-            topic: None
+            topic: None,
         }
     }
 
@@ -122,7 +120,7 @@ impl Channel {
             recipients: None,
             owner_id: None,
             parent_id: None,
-            topic: None
+            topic: None,
         }
     }
 }
