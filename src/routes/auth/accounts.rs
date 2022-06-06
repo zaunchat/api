@@ -1,8 +1,8 @@
+use crate::guards::captcha::Captcha;
 use crate::structures::{Base, User};
 use crate::utils::error::{Error, Result};
 use crate::SMTP_ENABLED;
 use argon2::Config;
-use nanoid::nanoid;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
@@ -17,7 +17,7 @@ pub struct RegisterSchema<'r> {
 }
 
 #[post("/register", data = "<data>")]
-pub async fn register(data: Json<RegisterSchema<'_>>) -> Result<Json<User>> {
+pub async fn register(_captcha: Captcha, data: Json<RegisterSchema<'_>>) -> Result<Json<User>> {
     let data = data.into_inner();
 
     data.validate()
@@ -32,7 +32,7 @@ pub async fn register(data: Json<RegisterSchema<'_>>) -> Result<Json<User>> {
     }
 
     let config = Config::default();
-    let salt = nanoid!(24);
+    let salt = nanoid::nanoid!(24);
     let hashed_password = argon2::hash_encoded(
         data.password.to_string().as_bytes(),
         salt.as_bytes(),

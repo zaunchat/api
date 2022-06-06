@@ -15,6 +15,7 @@ use std::env;
 
 lazy_static! {
     pub static ref SMTP_ENABLED: bool = env::var("SMTP_ENABLED").is_ok();
+    pub static ref CAPTCHA_ENABLED: bool = env::var("CAPTCHA_ENABLED").is_ok();
 }
 
 #[async_std::main]
