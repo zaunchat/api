@@ -6,9 +6,9 @@ use super::Base;
 #[crud_table(table_name:bots)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Bot {
-    pub id: i64,
+    pub id: u64,
     pub username: String,
-    pub owner_id: i64,
+    pub owner_id: u64,
     pub verified: bool,
 }
 
@@ -16,7 +16,7 @@ pub struct Bot {
 impl Base for Bot {}
 
 impl Bot {
-    pub fn new(username: String, owner_id: i64) -> Self {
+    pub fn new(username: String, owner_id: u64) -> Self {
         Self {
             id: generate_id(),
             username,

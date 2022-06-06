@@ -19,33 +19,33 @@ pub enum OverwriteTypes {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Overwrite {
-    pub id: i64,
+    pub id: u64,
     pub r#type: OverwriteTypes,
-    pub allow: i64,
-    pub deny: i64,
+    pub allow: u64,
+    pub deny: u64,
 }
 
 #[crud_table(table_name:channels)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
-    pub id: i64,
+    pub id: u64,
     pub r#type: ChannelTypes,
 
     pub name: Option<String>,
     // DM/Group
-    pub recipients: Option<Vec<i64>>,
+    pub recipients: Option<Vec<u64>>,
 
     // Group/Text/Voice/Category
     pub overwrites: Option<Vec<Overwrite>>,
 
     // For server channels
-    pub server_id: Option<i64>,
+    pub server_id: Option<u64>,
 
     // Server channels
-    pub parent_id: Option<i64>,
+    pub parent_id: Option<u64>,
 
     // Group
-    pub owner_id: Option<i64>,
+    pub owner_id: Option<u64>,
 
     // Text
     pub topic: Option<String>,
@@ -54,7 +54,7 @@ pub struct Channel {
 impl Base for Channel {}
 
 impl Channel {
-    pub fn new_dm(user: i64, target: i64) -> Self {
+    pub fn new_dm(user: u64, target: u64) -> Self {
         Self {
             id: generate_id(),
             r#type: ChannelTypes::Direct,
@@ -68,7 +68,7 @@ impl Channel {
         }
     }
 
-    pub fn new_group(user: i64) -> Self {
+    pub fn new_group(user: u64) -> Self {
         Self {
             id: generate_id(),
             r#type: ChannelTypes::Group,
@@ -82,7 +82,7 @@ impl Channel {
         }
     }
 
-    pub fn new_text(name: String, server_id: i64) -> Self {
+    pub fn new_text(name: String, server_id: u64) -> Self {
         Self {
             id: generate_id(),
             r#type: ChannelTypes::Text,
@@ -96,7 +96,7 @@ impl Channel {
         }
     }
 
-    pub fn new_voice(name: String, server_id: i64) -> Self {
+    pub fn new_voice(name: String, server_id: u64) -> Self {
         Self {
             id: generate_id(),
             r#type: ChannelTypes::Voice,
@@ -110,7 +110,7 @@ impl Channel {
         }
     }
 
-    pub fn new_category(name: String, server_id: i64) -> Self {
+    pub fn new_category(name: String, server_id: u64) -> Self {
         Self {
             id: generate_id(),
             r#type: ChannelTypes::Category,

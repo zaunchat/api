@@ -7,15 +7,15 @@ use nanoid::nanoid;
 #[crud_table(table_name:sessions)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Session {
-    pub id: i64,
+    pub id: u64,
     pub token: String,
-    pub user_id: i64,
+    pub user_id: u64,
 }
 
 impl Base for Session {}
 
 impl Session {
-    pub fn new(user_id: i64) -> Self {
+    pub fn new(user_id: u64) -> Self {
         Self {
             id: generate_id(),
             token: nanoid!(64),

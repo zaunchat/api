@@ -4,17 +4,17 @@ use serde::{Deserialize, Serialize};
 #[crud_table(table_name:members)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Member {
-    pub id: i64,
+    pub id: u64,
     pub nickname: Option<String>,
-    pub joined_at: i64,
-    pub server_id: i64,
-    pub roles: Vec<i64>,
+    pub joined_at: u64,
+    pub server_id: u64,
+    pub roles: Vec<u64>,
 }
 
 impl Base for Member {}
 
 impl Member {
-    pub fn new(user_id: i64, server_id: i64) -> Self {
+    pub fn new(user_id: u64, server_id: u64) -> Self {
         Self {
             id: user_id,
             server_id,

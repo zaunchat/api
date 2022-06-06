@@ -6,12 +6,12 @@ use serde::{Deserialize, Serialize};
 #[crud_table(table_name:users)]
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct User {
-    pub id: i64,
+    pub id: u64,
     pub username: String,
     pub avatar: Option<String>,
     pub password: String,
     pub email: String,
-    pub badges: i64,
+    pub badges: u64,
     pub verified: bool,
 }
 
