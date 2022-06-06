@@ -4,14 +4,18 @@ extern crate rocket;
 extern crate rbatis;
 #[macro_use]
 extern crate lazy_static;
-#[macro_use]
-extern crate validator;
-
 
 pub mod database;
+pub mod guards;
 pub mod routes;
 pub mod structures;
 pub mod utils;
+
+use std::env;
+
+lazy_static! {
+    pub static ref SMTP_ENABLED: bool = env::var("SMTP_ENABLED").is_ok();
+}
 
 #[async_std::main]
 async fn main() {
