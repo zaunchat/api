@@ -1,10 +1,8 @@
-use crate::utils::error::Error;
-use crate::CAPTCHA_ENABLED;
-use rocket::http::Status;
-use rocket::request::{FromRequest, Outcome, Request};
+use rocket::{request::{FromRequest, Outcome, Request}, http::Status};
 use serde::Deserialize;
 use serde_json::json;
-use std::env;
+use crate::utils::error::*;
+use crate::config;
 
 #[derive(Deserialize)]
 pub struct Captcha {
@@ -16,7 +14,7 @@ impl<'r> FromRequest<'r> for Captcha {
     type Error = Error;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        if *CAPTCHA_ENABLED == false {
+        if *config::CAPTCHA_ENABLED == false {
             return Outcome::Success(Captcha { success: true });
         }
 
@@ -29,8 +27,8 @@ impl<'r> FromRequest<'r> for Captcha {
         let client = reqwest::Client::new();
         let body = json!({
             "response": key,
-            "secret": env::var("CAPTCHA_TOKEN").expect("CAPTCHA_TOKEN is required"),
-            "sitekey": env::var("CAPTCHA_KEY").expect("CAPTCHA_KEY is required")
+            "secret": *config::CAPTCHA_TOKEN,
+            "sitekey": *config::CAPTCHA_KEY
         });
 
         let res = client
