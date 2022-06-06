@@ -4,15 +4,12 @@ use crate::utils::snowflake::generate_id;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:users)]
-#[derive(Debug, Validate, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct User {
     pub id: i64,
-    #[validate(length(min = 3, max = 32))]
     pub username: String,
     pub avatar: Option<String>,
-    #[validate(length(min = 8, max = 32))]
     pub password: String,
-    #[validate(email)]
     pub email: String,
     pub badges: i64,
     pub verified: bool,
@@ -47,7 +44,7 @@ impl User {
     // pub async fn fetch_relations(&self) {}
 
     #[sql(crate::database::DB, "SELECT * FROM users LEFT JOIN sessions ON sessions.user_id = users.id WHERE verified = TRUE AND sessions.token = $1")]
-    pub async fn fetch_by_token(_token: &str) -> User {}
+    pub async fn fetch_by_token(_token: &str) -> Result<User, rbatis::Error> {}
 
     pub fn to_public(&self) -> Self {
         Self {
