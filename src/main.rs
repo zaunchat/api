@@ -7,26 +7,21 @@ extern crate lazy_static;
 
 pub mod database;
 pub mod guards;
+pub mod fairings;
 pub mod routes;
 pub mod structures;
 pub mod utils;
+pub mod config;
 
-use std::env;
-
-lazy_static! {
-    pub static ref SMTP_ENABLED: bool = env::var("SMTP_ENABLED").is_ok();
-    pub static ref CAPTCHA_ENABLED: bool = env::var("CAPTCHA_ENABLED").is_ok();
-}
 
 #[async_std::main]
 async fn main() {
     dotenv::dotenv().ok();
 
-    println!("Connecting to database...");
-
+    log::info!("Connecting to database...");
     database::connect().await;
 
-    let auth = guards::Auth {
+    let auth = fairings::auth::Auth {
         ignore: vec![
             "/".into(),
             "/auth/accounts/register".into(),
@@ -35,10 +30,17 @@ async fn main() {
         ],
     };
 
-    let _ = rocket::build()
+    let ratelimit = fairings::ratelimit::RateLimiter {
+        // TODO:
+    };
+
+    let rocket = rocket::build();
+
+    routes::mount(rocket)
+        .mount("/", fairings::auth::routes())
+        .mount("/", fairings::ratelimit::routes())
+        .attach(ratelimit)
         .attach(auth)
-        .mount("/", guards::auth::routes())
-        .mount("/", routes![routes::root])
         .launch()
         .await;
 }

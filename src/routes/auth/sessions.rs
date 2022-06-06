@@ -1,6 +1,6 @@
 use crate::guards::captcha::Captcha;
 use crate::structures::{Base, Session, User};
-use crate::utils::error::{Error, Result};
+use crate::utils::error::*;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
@@ -73,4 +73,10 @@ pub async fn delete_session(user: User, session_id: u64, token: &str) -> Result<
     } else {
         Err(Error::SessionNotFound)
     }
+}
+
+
+
+pub fn routes() -> Vec<rocket::Route> {
+    routes![login, fetch_session, fetch_sessions, delete_session]
 }
