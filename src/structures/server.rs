@@ -5,6 +5,7 @@ use super::channel::Channel;
 use super::member::Member;
 use super::role::Role;
 use super::Base;
+use crate::utils::permissions::DEFAULT_PERMISSION_EVERYONE;
 
 #[crud_table(table_name:servers)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -26,12 +27,17 @@ impl Server {
             id: generate_id(),
             name,
             owner_id,
+            permissions: DEFAULT_PERMISSION_EVERYONE.bits() as i64,
             ..Default::default()
         }
     }
 
     pub async fn fetch_members(&self) -> Vec<Member> {
         Member::find(|q| q.eq("server_id", &self.id)).await
+    }
+
+    pub async fn fetch_member(&self, user_id: i64) -> Option<Member> {
+        Member::find_one(|q| q.eq("id", user_id).eq("server_id", &self.id)).await
     }
 
     pub async fn fetch_roles(&self) -> Vec<Role> {

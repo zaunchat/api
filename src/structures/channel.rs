@@ -2,8 +2,8 @@ use super::Base;
 use crate::utils::snowflake::generate_id;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
-pub enum ChannelType {
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
+pub enum ChannelTypes {
     Direct,
     Group,
     Text,
@@ -11,7 +11,7 @@ pub enum ChannelType {
     Category,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub enum OverwriteTypes {
     Role,
     Member,
@@ -29,7 +29,7 @@ pub struct Overwrite {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
     pub id: i64,
-    pub r#type: ChannelType,
+    pub r#type: ChannelTypes,
 
     pub name: Option<String>,
     // DM/Group
@@ -57,7 +57,7 @@ impl Channel {
     pub fn new_dm(user: i64, target: i64) -> Self {
         Self {
             id: generate_id(),
-            r#type: ChannelType::Direct,
+            r#type: ChannelTypes::Direct,
             recipients: vec![user, target].into(),
             overwrites: None,
             name: None,
@@ -71,7 +71,7 @@ impl Channel {
     pub fn new_group(user: i64) -> Self {
         Self {
             id: generate_id(),
-            r#type: ChannelType::Group,
+            r#type: ChannelTypes::Group,
             recipients: vec![user].into(),
             overwrites: None,
             name: None,
@@ -85,7 +85,7 @@ impl Channel {
     pub fn new_text(name: String, server_id: i64) -> Self {
         Self {
             id: generate_id(),
-            r#type: ChannelType::Text,
+            r#type: ChannelTypes::Text,
             overwrites: vec![].into(),
             name: name.into(),
             server_id: server_id.into(),
@@ -99,7 +99,7 @@ impl Channel {
     pub fn new_voice(name: String, server_id: i64) -> Self {
         Self {
             id: generate_id(),
-            r#type: ChannelType::Voice,
+            r#type: ChannelTypes::Voice,
             overwrites: vec![].into(),
             name: name.into(),
             server_id: server_id.into(),
@@ -113,7 +113,7 @@ impl Channel {
     pub fn new_category(name: String, server_id: i64) -> Self {
         Self {
             id: generate_id(),
-            r#type: ChannelType::Category,
+            r#type: ChannelTypes::Category,
             overwrites: vec![].into(),
             name: name.into(),
             server_id: server_id.into(),
@@ -122,5 +122,25 @@ impl Channel {
             parent_id: None,
             topic: None,
         }
+    }
+
+    pub fn is_group(&self) -> bool {
+        self.r#type == ChannelTypes::Group
+    }
+  
+    pub fn is_text(&self) -> bool {
+        self.r#type == ChannelTypes::Text
+    }
+  
+    pub fn is_dm(&self) -> bool {
+        self.r#type == ChannelTypes::Direct
+    }
+  
+    pub fn is_category(&self) -> bool {
+        self.r#type == ChannelTypes::Category
+    }
+  
+    pub fn is_voice(&self) -> bool {
+        self.r#type == ChannelTypes::Voice
     }
 }

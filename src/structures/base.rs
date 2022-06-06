@@ -22,6 +22,10 @@ pub trait Base: CRUDTable + DeserializeOwned {
         db.fetch_by_wrapper(query).await.ok()
     }
 
+    async fn find_one_by_id(id: i64) -> Option<Self> {
+        db.fetch_by_column("id", &id).await.ok()
+    }
+
     async fn save(&self) {
         db.save(&self, &[])
             .await
