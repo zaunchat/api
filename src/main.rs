@@ -26,7 +26,18 @@ async fn main() {
 
     database::connect().await;
 
+    let auth = guards::Auth {
+        ignore: vec![
+            "/".into(),
+            "/auth/accounts/register".into(),
+            "/auth/accounts/verify".into(),
+            "/auth/sessions/login".into(),
+        ],
+    };
+
     let _ = rocket::build()
+        .attach(auth)
+        .mount("/", guards::auth::routes())
         .mount("/", routes![routes::root])
         .launch()
         .await;
