@@ -24,9 +24,17 @@ pub enum Error {
     FailedCaptcha,
     MissingPermissions,
 
-    // Not Found
-    AccountNotFound,
-    SessionNotFound,
+    // Unknown
+    UnknownAccount,
+    UnknownSession,
+    UnknownUser,
+    UnknownMessage,
+    UnknownServer,
+    UnknownMember,
+    UnknownRole,
+    UnknownBot,
+    UnknownChannel,
+    UnknownInvite
 }
 
 impl<'r> Responder<'r, 'static> for Error {

@@ -64,7 +64,7 @@ pub async fn verify(user_id: u64, code: &str) -> Result<()> {
         user.save().await;
         Ok(())
     } else {
-        Err(Error::AccountNotFound)
+        Err(Error::UnknownAccount)
     }
 }
 

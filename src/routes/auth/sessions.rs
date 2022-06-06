@@ -38,7 +38,7 @@ pub async fn login(_captcha: Captcha, data: Json<LoginSchema<'_>>) -> Result<Jso
 
         return Ok(Json(session));
     } else {
-        return Err(Error::AccountNotFound);
+        return Err(Error::UnknownAccount);
     }
 }
 
