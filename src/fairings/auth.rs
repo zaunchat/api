@@ -1,5 +1,5 @@
 use crate::structures::User;
-use crate::utils::error::{Error, Result};
+use crate::utils::error::*;
 use rocket::{
     fairing::{Fairing, Info, Kind},
     http::{uri::Origin, Method},
