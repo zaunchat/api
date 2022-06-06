@@ -7,12 +7,10 @@ use super::role::Role;
 use super::Base;
 
 #[crud_table(table_name:servers)]
-#[derive(Debug, Validate, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Server {
     pub id: i64,
-    #[validate(length(min = 1, max = 50))]
     pub name: String,
-    #[validate(length(min = 1, max = 1000))]
     pub description: Option<String>,
     pub icon: Option<String>,
     pub banner: Option<String>,
