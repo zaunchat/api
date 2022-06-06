@@ -1,3 +1,4 @@
+use crate::guards::captcha::Captcha;
 use crate::structures::{Base, Session, User};
 use crate::utils::error::{Error, Result};
 use rocket::serde::{json::Json, Deserialize};
@@ -12,7 +13,7 @@ pub struct LoginSchema<'r> {
 }
 
 #[post("/login", data = "<data>")]
-pub async fn login(data: Json<LoginSchema<'_>>) -> Result<Json<Session>> {
+pub async fn login(_captcha: Captcha, data: Json<LoginSchema<'_>>) -> Result<Json<Session>> {
     let data = data.into_inner();
 
     data.validate()
