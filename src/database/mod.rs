@@ -1,11 +1,10 @@
 use rbatis::rbatis::Rbatis;
-use std::env;
+use crate::config::DATABASE_URI;
 
 lazy_static! {
     pub static ref DB: Rbatis = Rbatis::new();
 }
 
 pub async fn connect() {
-    let uri = env::var("DATABASE_URI").expect("DATABASE_URI is required");
-    DB.link(uri.as_str()).await.unwrap();
+    DB.link((*DATABASE_URI).as_str()).await.expect("Couldn't connect to database");
 }
