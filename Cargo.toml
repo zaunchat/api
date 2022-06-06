@@ -6,14 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocket = "0.5.0-rc.2"
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
 async-std = { version = "1.11.0", features = ["attributes", "tokio1"] }
 dotenv = "0.15.0"
 rbson = "2.0"
 lazy_static = "1.4.0"
 rbatis = { version = "3.1" }
 serde = { version = "1", features = ["derive"] }
+serde_json = "1.0.81"
 async-trait = "0.1.56"
 nanoid = "0.4.0"
 rs-snowflake = "0.6.0"
 validator = { version = "0.15", features = ["derive"] }
+rust-argon2 = "1.0.0"
