@@ -1,4 +1,7 @@
-use std::{env, time::{Duration, SystemTime, UNIX_EPOCH}};
+use std::{
+    env,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
 lazy_static! {
     // Fri, 01 Jan 2021 00:00:00 GMT

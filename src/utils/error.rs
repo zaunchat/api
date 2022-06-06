@@ -34,7 +34,7 @@ pub enum Error {
     UnknownRole,
     UnknownBot,
     UnknownChannel,
-    UnknownInvite
+    UnknownInvite,
 }
 
 impl<'r> Responder<'r, 'static> for Error {

@@ -1,10 +1,9 @@
-use crate::structures::{Base, User. Server, Member};
+use crate::structures::{Base, Server, User};
 use crate::utils::error::*;
-use rocket::serde::{json::Json};
-
+use rocket::serde::json::Json;
 
 #[get("/")]
-async fn fetch_servers(user: User) -> Json<Vec<Server>>{
+async fn fetch_servers(user: User) -> Json<Vec<Server>> {
     Json(user.fetch_servers().await)
 }
 
@@ -33,18 +32,16 @@ async fn delete_server(user: User, server_id: u64) -> Result<()> {
             }
         }
 
-        return Ok(())
+        return Ok(());
     }
 
     Err(Error::UnknownServer)
 }
 
-
 #[post("/")]
-async fn create_server(user: User) {
+async fn create_server(_user: User) {
     todo!();
 }
-
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![fetch_servers, fetch_server, delete_server, create_server]
