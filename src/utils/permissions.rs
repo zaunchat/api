@@ -85,7 +85,6 @@ impl Permissions {
                 || channel.is_voice()
                 || channel.is_category()
             {
-
                 // for group owners
                 if channel.owner_id == Some(user.id) {
                     return admin();
