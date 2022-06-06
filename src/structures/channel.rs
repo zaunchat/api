@@ -1,6 +1,7 @@
 use super::Base;
 use crate::utils::snowflake::generate_id;
 use serde::{Deserialize, Serialize};
+use crate::utils::permissions::DEFAULT_PERMISSION_DM;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub enum ChannelTypes {
@@ -49,6 +50,9 @@ pub struct Channel {
 
     // Text
     pub topic: Option<String>,
+
+    // Group
+    pub permissions: Option<u64>
 }
 
 impl Base for Channel {}
@@ -59,6 +63,7 @@ impl Channel {
             id: generate_id(),
             r#type: ChannelTypes::Direct,
             recipients: vec![user, target].into(),
+            permissions: None,
             overwrites: None,
             name: None,
             owner_id: None,
@@ -73,6 +78,7 @@ impl Channel {
             id: generate_id(),
             r#type: ChannelTypes::Group,
             recipients: vec![user].into(),
+            permissions: *DEFAULT_PERMISSION_DM.bits(),
             overwrites: None,
             name: None,
             owner_id: None,
@@ -89,6 +95,7 @@ impl Channel {
             overwrites: vec![].into(),
             name: name.into(),
             server_id: server_id.into(),
+            permissions: None,
             recipients: None,
             owner_id: None,
             parent_id: None,
@@ -103,6 +110,7 @@ impl Channel {
             overwrites: vec![].into(),
             name: name.into(),
             server_id: server_id.into(),
+            permissions: None,
             recipients: None,
             owner_id: None,
             parent_id: None,
@@ -117,6 +125,7 @@ impl Channel {
             overwrites: vec![].into(),
             name: name.into(),
             server_id: server_id.into(),
+            permissions: None,
             recipients: None,
             owner_id: None,
             parent_id: None,
