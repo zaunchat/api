@@ -1,7 +1,6 @@
 use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
 
-
 bitflags! {
     #[derive(Serialize, Deserialize)]
     pub struct Badges: u64 {

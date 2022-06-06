@@ -127,19 +127,19 @@ impl Channel {
     pub fn is_group(&self) -> bool {
         self.r#type == ChannelTypes::Group
     }
-  
+
     pub fn is_text(&self) -> bool {
         self.r#type == ChannelTypes::Text
     }
-  
+
     pub fn is_dm(&self) -> bool {
         self.r#type == ChannelTypes::Direct
     }
-  
+
     pub fn is_category(&self) -> bool {
         self.r#type == ChannelTypes::Category
     }
-  
+
     pub fn is_voice(&self) -> bool {
         self.r#type == ChannelTypes::Voice
     }
