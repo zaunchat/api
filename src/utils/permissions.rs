@@ -111,15 +111,15 @@ impl Permissions {
 
                 for overwrite in overwrites {
                     if overwrite.r#type == OverwriteTypes::Member && overwrite.id == user.id {
-                        p.insert(Permissions::from_bits(overwrite.allow as u64).unwrap());
-                        p.remove(Permissions::from_bits(overwrite.deny as u64).unwrap());
+                        p.insert(Permissions::from_bits(overwrite.allow).unwrap());
+                        p.remove(Permissions::from_bits(overwrite.deny).unwrap());
                     }
 
                     if overwrite.r#type == OverwriteTypes::Role
                         && member.as_ref().unwrap().roles.contains(&overwrite.id)
                     {
-                        p.insert(Permissions::from_bits(overwrite.allow as u64).unwrap());
-                        p.remove(Permissions::from_bits(overwrite.deny as u64).unwrap());
+                        p.insert(Permissions::from_bits(overwrite.allow).unwrap());
+                        p.remove(Permissions::from_bits(overwrite.deny).unwrap());
                     }
                 }
             }
