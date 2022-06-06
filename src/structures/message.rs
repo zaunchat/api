@@ -5,16 +5,16 @@ use serde::{Deserialize, Serialize};
 #[crud_table(table_name:messages)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Message {
-    pub id: i64,
+    pub id: u64,
     pub content: Option<String>,
-    pub channel_id: i64,
-    pub author_id: i64,
-    // pub created_at: i64,
-    pub edited_at: Option<i64>, /*
+    pub channel_id: u64,
+    pub author_id: u64,
+    // pub created_at: u64,
+    pub edited_at: Option<u64>, /*
                                 TODO:
                                 pub embeds: Vec<Embed>
                                 pub attachments: Vec<Attachment>
-                                pub mentions: Vec<i64>
+                                pub mentions: Vec<u64>
                                 pub replies: Vec<Reply>
                                 */
 }
@@ -22,7 +22,7 @@ pub struct Message {
 impl Base for Message {}
 
 impl Message {
-    pub fn new(channel_id: i64, author_id: i64) -> Self {
+    pub fn new(channel_id: u64, author_id: u64) -> Self {
         Self {
             id: generate_id(),
             channel_id,
@@ -31,7 +31,7 @@ impl Message {
         }
     }
 
-    pub fn created_at() -> i64 {
+    pub fn created_at() -> u64 {
         // TODO: extract time from id
         0
     }

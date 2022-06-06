@@ -22,7 +22,7 @@ pub trait Base: CRUDTable + DeserializeOwned {
         db.fetch_by_wrapper(query).await.ok()
     }
 
-    async fn find_one_by_id(id: i64) -> Option<Self> {
+    async fn find_one_by_id(id: u64) -> Option<Self> {
         db.fetch_by_column("id", &id).await.ok()
     }
 
@@ -32,7 +32,7 @@ pub trait Base: CRUDTable + DeserializeOwned {
             .expect("Couldn't save this target");
     }
 
-    async fn delete(&self, id: i64) -> bool {
-        db.remove_by_column::<Self, &i64>("id", &id).await.is_ok()
+    async fn delete(&self, id: u64) -> bool {
+        db.remove_by_column::<Self, &u64>("id", &id).await.is_ok()
     }
 }

@@ -7,17 +7,17 @@ use serde::{Deserialize, Serialize};
 #[crud_table(table_name:invites)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Invite {
-    pub id: i64,
+    pub id: u64,
     pub code: String,
-    pub inviter_id: i64,
-    pub channel_id: i64,
-    pub server_id: Option<i64>,
+    pub inviter_id: u64,
+    pub channel_id: u64,
+    pub server_id: Option<u64>,
 }
 
 impl Base for Invite {}
 
 impl Invite {
-    pub fn new(inviter_id: i64, channel_id: i64, server_id: Option<i64>) -> Self {
+    pub fn new(inviter_id: u64, channel_id: u64, server_id: Option<u64>) -> Self {
         Self {
             id: generate_id(),
             code: nanoid!(8),

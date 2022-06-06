@@ -40,7 +40,7 @@ lazy_static! {
 }
 
 impl Permissions {
-    pub async fn fetch(user: User, server_id: Option<i64>, channel_id: Option<i64>) -> Permissions {
+    pub async fn fetch(user: User, server_id: Option<u64>, channel_id: Option<u64>) -> Permissions {
         let mut p = Permissions::DEFAULT;
         let admin = || Permissions::ADMINISTRATOR;
 
@@ -52,7 +52,7 @@ impl Permissions {
             }
 
             p.set(Permissions::ADMINISTRATOR, server.owner_id == user.id);
-            p.insert(Permissions::from_bits(server.permissions as u64).unwrap());
+            p.insert(Permissions::from_bits(server.permissions).unwrap());
 
             if p.contains(Permissions::ADMINISTRATOR) {
                 return p;
@@ -63,7 +63,7 @@ impl Permissions {
 
             for role in roles {
                 if member.roles.contains(&role.id) {
-                    p.insert(Permissions::from_bits(role.permissions as u64).unwrap())
+                    p.insert(Permissions::from_bits(role.permissions).unwrap())
                 }
             }
         }

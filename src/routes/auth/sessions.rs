@@ -43,7 +43,7 @@ pub async fn login(_captcha: Captcha, data: Json<LoginSchema<'_>>) -> Result<Jso
 }
 
 #[get("/<session_id>")]
-pub async fn fetch_session(user: User, session_id: i64) -> Result<Json<Session>> {
+pub async fn fetch_session(user: User, session_id: u64) -> Result<Json<Session>> {
     let session = Session::find_one(|q| q.eq("user_id", &user.id).eq("id", &session_id)).await;
 
     if let Some(session) = session {
@@ -59,7 +59,7 @@ pub async fn fetch_sessions(user: User) -> Json<Vec<Session>> {
 }
 
 #[delete("/<session_id>/<token>")]
-pub async fn delete_session(user: User, session_id: i64, token: &str) -> Result<()> {
+pub async fn delete_session(user: User, session_id: u64, token: &str) -> Result<()> {
     let session = Session::find_one(|q| {
         q.eq("user_id", &user.id)
             .eq("id", &session_id)

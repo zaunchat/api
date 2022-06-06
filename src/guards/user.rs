@@ -14,7 +14,9 @@ impl<'r> FromRequest<'r> for User {
             return Outcome::Failure((Status::BadRequest, Error::InvalidToken));
         }
 
-        let user = req.local_cache_async(User::fetch_by_token(&token.unwrap())).await;
+        let user = req
+            .local_cache_async(User::fetch_by_token(&token.unwrap()))
+            .await;
 
         if let Ok(user) = user {
             return Outcome::Success(user.clone());

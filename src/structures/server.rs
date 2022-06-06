@@ -10,24 +10,24 @@ use crate::utils::permissions::DEFAULT_PERMISSION_EVERYONE;
 #[crud_table(table_name:servers)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Server {
-    pub id: i64,
+    pub id: u64,
     pub name: String,
     pub description: Option<String>,
     pub icon: Option<String>,
     pub banner: Option<String>,
-    pub owner_id: i64,
-    pub permissions: i64,
+    pub owner_id: u64,
+    pub permissions: u64,
 }
 
 impl Base for Server {}
 
 impl Server {
-    pub fn new(name: String, owner_id: i64) -> Self {
+    pub fn new(name: String, owner_id: u64) -> Self {
         Self {
             id: generate_id(),
             name,
             owner_id,
-            permissions: DEFAULT_PERMISSION_EVERYONE.bits() as i64,
+            permissions: DEFAULT_PERMISSION_EVERYONE.bits(),
             ..Default::default()
         }
     }
@@ -36,7 +36,7 @@ impl Server {
         Member::find(|q| q.eq("server_id", &self.id)).await
     }
 
-    pub async fn fetch_member(&self, user_id: i64) -> Option<Member> {
+    pub async fn fetch_member(&self, user_id: u64) -> Option<Member> {
         Member::find_one(|q| q.eq("id", user_id).eq("server_id", &self.id)).await
     }
 
