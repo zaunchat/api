@@ -1,4 +1,5 @@
-// pub mod permissions;
+pub mod permissions;
+pub mod badges;
 pub mod snowflake;
-// pub mod email;
 pub mod error;
+// pub mod email;

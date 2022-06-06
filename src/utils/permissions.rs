@@ -1,7 +1,6 @@
-use serde::{Deserialize, Serialize};
+use crate::structures::{Base, Channel, Member, OverwriteTypes, Server, User};
 use bitflags::bitflags;
-
-use crate::structures::{user::*, server::*};
+use serde::{Deserialize, Serialize};
 
 bitflags! {
     #[derive(Serialize, Deserialize)]
@@ -25,35 +24,107 @@ bitflags! {
     }
 }
 
+lazy_static! {
+    pub static ref DEFAULT_PERMISSION_DM: Permissions = Permissions::DEFAULT
+        | Permissions::VIEW_CHANNEL
+        | Permissions::SEND_MESSAGES
+        | Permissions::EMBED_LINKS
+        | Permissions::UPLOAD_FILES
+        | Permissions::READ_MESSAGE_HISTORY;
+    pub static ref DEFAULT_PERMISSION_EVERYONE: Permissions = Permissions::DEFAULT
+        | Permissions::VIEW_CHANNEL
+        | Permissions::SEND_MESSAGES
+        | Permissions::EMBED_LINKS
+        | Permissions::UPLOAD_FILES
+        | Permissions::READ_MESSAGE_HISTORY;
+}
+
 impl Permissions {
     pub async fn fetch(user: User, server_id: Option<i64>, channel_id: Option<i64>) -> Permissions {
         let mut p = Permissions::DEFAULT;
+        let admin = || Permissions::ADMINISTRATOR;
 
         if let Some(id) = server_id {
-            let server = Server::fetch(&id).await;
-            
-            p.set(Permissions::ADMINISTRATOR, server.owner_id == user.id);
-            p.insert(server.permissions);
+            let server = Server::find_one_by_id(id).await.unwrap();
 
-            if p.contains(Permissions::ADMINISTRATOR) {
-                return p
+            if server.owner_id == user.id {
+                return admin();
             }
 
-            let member = server.fetch_member(&user.id).await;
+            p.set(Permissions::ADMINISTRATOR, server.owner_id == user.id);
+            p.insert(Permissions::from_bits(server.permissions as u64).unwrap());
+
+            if p.contains(Permissions::ADMINISTRATOR) {
+                return p;
+            }
+
+            let member = server.fetch_member(user.id).await.unwrap();
             let roles = server.fetch_roles().await;
 
             for role in roles {
                 if member.roles.contains(&role.id) {
-                    p.insert(role.permissions)
+                    p.insert(Permissions::from_bits(role.permissions as u64).unwrap())
                 }
             }
         }
 
         if p.contains(Permissions::ADMINISTRATOR) {
-            return p
+            return p;
         }
 
-        // TODO: Add channel check
+        if let Some(id) = channel_id {
+            let channel = Channel::find_one_by_id(id).await.unwrap();
+
+            if channel.is_dm() {
+                p.insert(*DEFAULT_PERMISSION_DM);
+                // TODO: Check user relations
+            }
+
+            if channel.is_group()
+                || channel.is_text()
+                || channel.is_voice()
+                || channel.is_category()
+            {
+
+                // for group owners
+                if channel.owner_id == Some(user.id) {
+                    return admin();
+                }
+
+                let mut member: Option<Member> = None;
+
+                if !channel.is_group() {
+                    member = Member::find_one(|q| {
+                        q.eq("id", user.id)
+                            .eq("server_id", channel.server_id.unwrap())
+                    })
+                    .await;
+                }
+
+                let mut overwrites = channel.overwrites.unwrap();
+
+                if let Some(parent_id) = channel.parent_id {
+                    let category = Channel::find_one_by_id(parent_id).await;
+                    if let Some(category) = category {
+                        overwrites.append(category.overwrites.unwrap().as_mut());
+                    }
+                }
+
+                for overwrite in overwrites {
+                    if overwrite.r#type == OverwriteTypes::Member && overwrite.id == user.id {
+                        p.insert(Permissions::from_bits(overwrite.allow as u64).unwrap());
+                        p.remove(Permissions::from_bits(overwrite.deny as u64).unwrap());
+                    }
+
+                    if overwrite.r#type == OverwriteTypes::Role
+                        && member.as_ref().unwrap().roles.contains(&overwrite.id)
+                    {
+                        p.insert(Permissions::from_bits(overwrite.allow as u64).unwrap());
+                        p.remove(Permissions::from_bits(overwrite.deny as u64).unwrap());
+                    }
+                }
+            }
+        }
 
         p
     }
