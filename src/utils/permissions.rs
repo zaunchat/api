@@ -96,12 +96,11 @@ impl Permissions {
                     p.insert(Permissions::from_bits(channel.permissions.unwrap()).unwrap());
                 } else {
                     member = Member::find_one(|q| {
-                        q
-                        .eq("id", user.id)
-                        .eq("server_id", channel.server_id.unwrap())
-                    }).await;
+                        q.eq("id", user.id)
+                            .eq("server_id", channel.server_id.unwrap())
+                    })
+                    .await;
                 }
-
 
                 let mut overwrites = channel.overwrites.unwrap();
 

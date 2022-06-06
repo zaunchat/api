@@ -1,8 +1,11 @@
-use rocket::{request::{FromRequest, Outcome, Request}, http::Status};
+use crate::config;
+use crate::utils::error::*;
+use rocket::{
+    http::Status,
+    request::{FromRequest, Outcome, Request},
+};
 use serde::Deserialize;
 use serde_json::json;
-use crate::utils::error::*;
-use crate::config;
 
 #[derive(Deserialize)]
 pub struct Captcha {

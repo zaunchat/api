@@ -49,7 +49,7 @@ pub async fn fetch_session(user: User, session_id: u64) -> Result<Json<Session>>
     if let Some(session) = session {
         Ok(Json(session))
     } else {
-        Err(Error::SessionNotFound)
+        Err(Error::UnknownSession)
     }
 }
 
@@ -71,11 +71,9 @@ pub async fn delete_session(user: User, session_id: u64, token: &str) -> Result<
         session.delete(session.id).await;
         Ok(())
     } else {
-        Err(Error::SessionNotFound)
+        Err(Error::UnknownSession)
     }
 }
-
-
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![login, fetch_session, fetch_sessions, delete_session]

@@ -1,7 +1,7 @@
+use crate::config::SMTP_ENABLED;
 use crate::guards::captcha::Captcha;
 use crate::structures::{Base, User};
 use crate::utils::error::*;
-use crate::config::SMTP_ENABLED;
 use argon2::Config;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
@@ -67,7 +67,6 @@ pub async fn verify(user_id: u64, code: &str) -> Result<()> {
         Err(Error::UnknownAccount)
     }
 }
-
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![register, verify]

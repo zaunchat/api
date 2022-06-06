@@ -1,7 +1,7 @@
 use super::Base;
+use crate::utils::permissions::DEFAULT_PERMISSION_DM;
 use crate::utils::snowflake::generate_id;
 use serde::{Deserialize, Serialize};
-use crate::utils::permissions::DEFAULT_PERMISSION_DM;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub enum ChannelTypes {
@@ -52,7 +52,7 @@ pub struct Channel {
     pub topic: Option<String>,
 
     // Group
-    pub permissions: Option<u64>
+    pub permissions: Option<u64>,
 }
 
 impl Base for Channel {}
@@ -78,7 +78,7 @@ impl Channel {
             id: generate_id(),
             r#type: ChannelTypes::Group,
             recipients: vec![user].into(),
-            permissions: *DEFAULT_PERMISSION_DM.bits(),
+            permissions: Some(DEFAULT_PERMISSION_DM.bits()),
             overwrites: None,
             name: None,
             owner_id: None,
