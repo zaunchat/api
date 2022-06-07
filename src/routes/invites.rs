@@ -30,7 +30,7 @@ async fn join_invite(user: User, code: &str) -> Result<()> {
 
             invite.uses = invite.uses + 1;
             member.save().await;
-            invite.save().await;
+            invite.update().await;
 
             Ok(())
         }
@@ -46,7 +46,7 @@ async fn join_invite(user: User, code: &str) -> Result<()> {
                 unreachable!()
             }
 
-            group.save().await;
+            group.update().await;
 
             Ok(())
         }

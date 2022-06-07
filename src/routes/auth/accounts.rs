@@ -61,7 +61,7 @@ pub async fn verify(user_id: u64, code: &str) -> Result<()> {
 
     if let Some(mut user) = user {
         user.verified = true;
-        user.save().await;
+        user.update().await;
         Ok(())
     } else {
         Err(Error::UnknownAccount)
