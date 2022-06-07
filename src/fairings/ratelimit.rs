@@ -41,7 +41,7 @@ fn limit_of(key: &String) -> (u32, u64) {
 }
 
 impl RateLimiter {
-    fn of_route(&self, req: &Request<'_>) -> Ref<String, SharedRateLimiter> {
+    fn limiter_of(&self, req: &Request<'_>) -> Ref<String, SharedRateLimiter> {
         let key = "/".to_owned() + req.routed_segment(0).unwrap_or_default();
 
         if let Some(value) = MAP.get(&key) {
@@ -82,7 +82,7 @@ impl RateLimiter {
                 req.remote().map(|x| x.ip().to_string()).unwrap_or_default()
             };
 
-            let limiter = self.of_route(req);
+            let limiter = self.limiter_of(req);
 
             match limiter.check_key(&key) {
                 Ok(snapshot) => RateLimitInfo {
@@ -144,6 +144,7 @@ impl Fairing for RateLimiter {
             .to_string();
             res.set_header(ContentType::JSON);
             res.set_sized_body(body.len(), Cursor::new(body));
+            res.set_status(Status::TooManyRequests);
         }
     }
 }
