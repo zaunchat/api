@@ -24,6 +24,7 @@ pub enum Error {
     FailedCaptcha,
     MissingPermissions,
     MissingAccess,
+    EmptyMessage,
 
     // Unknown
     UnknownAccount,
