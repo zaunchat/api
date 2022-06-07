@@ -13,7 +13,7 @@ pub struct LoginSchema<'r> {
 }
 
 #[post("/login", data = "<data>")]
-pub async fn login(_captcha: Captcha, data: Json<LoginSchema<'_>>) -> Result<Json<Session>> {
+async fn create(_captcha: Captcha, data: Json<LoginSchema<'_>>) -> Result<Json<Session>> {
     let data = data.into_inner();
 
     data.validate()
@@ -43,7 +43,7 @@ pub async fn login(_captcha: Captcha, data: Json<LoginSchema<'_>>) -> Result<Jso
 }
 
 #[get("/<session_id>")]
-pub async fn fetch_session(user: User, session_id: u64) -> Result<Json<Session>> {
+async fn fetch_one(user: User, session_id: u64) -> Result<Json<Session>> {
     let session = Session::find_one(|q| q.eq("user_id", &user.id).eq("id", &session_id)).await;
 
     if let Some(session) = session {
@@ -54,12 +54,12 @@ pub async fn fetch_session(user: User, session_id: u64) -> Result<Json<Session>>
 }
 
 #[get("/")]
-pub async fn fetch_sessions(user: User) -> Json<Vec<Session>> {
+pub async fn fetch_many(user: User) -> Json<Vec<Session>> {
     Json(Session::find(|q| q.eq("user_id", &user.id)).await)
 }
 
 #[delete("/<session_id>/<token>")]
-pub async fn delete_session(user: User, session_id: u64, token: &str) -> Result<()> {
+pub async fn delete(user: User, session_id: u64, token: &str) -> Result<()> {
     let session = Session::find_one(|q| {
         q.eq("user_id", &user.id)
             .eq("id", &session_id)
@@ -76,5 +76,6 @@ pub async fn delete_session(user: User, session_id: u64, token: &str) -> Result<
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![login, fetch_session, fetch_sessions, delete_session]
+    // TODO: Add route to edit sessions
+    routes![create, delete, fetch_one, fetch_many]
 }
