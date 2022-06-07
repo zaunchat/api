@@ -73,14 +73,14 @@ impl Channel {
         }
     }
 
-    pub fn new_group(user: u64) -> Self {
+    pub fn new_group(user: u64, name: String) -> Self {
         Self {
             id: generate_id(),
+            name: Some(name),
             r#type: ChannelTypes::Group,
             recipients: vec![user].into(),
             permissions: Some(DEFAULT_PERMISSION_DM.bits()),
             overwrites: None,
-            name: None,
             owner_id: None,
             parent_id: None,
             server_id: None,
