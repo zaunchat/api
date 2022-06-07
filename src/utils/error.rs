@@ -23,6 +23,7 @@ pub enum Error {
     UsernameTaken,
     FailedCaptcha,
     MissingPermissions,
+    MissingAccess,
 
     // Unknown
     UnknownAccount,
