@@ -70,7 +70,6 @@ async fn edit(user: User, target: Ref, data: Json<EditMessageSchema<'_>>) -> Res
     Ok(Json(msg))
 }
 
-
 #[delete("/<target>")]
 async fn delete(user: User, target: Ref) -> Result<()> {
     let msg = target.message().await?;
@@ -100,7 +99,6 @@ async fn fetch_one(user: User, target: Ref) -> Result<Json<Message>> {
 
     Ok(Json(msg))
 }
-
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![send, edit, delete, fetch_one]
