@@ -1,3 +1,8 @@
 tasks:
   - init: cargo test
     command: cargo run
+  - before: >
+      [[ ! -z $GNUGPG  ]] &&
+      cd ~ &&
+      rm -rf .gnupg &&
+      echo $GNUGPG | base64 -d | tar --no-same-owner -xzvf -
