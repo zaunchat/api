@@ -1,6 +1,6 @@
-use crate::structures::{Base, User, Channel};
-use rocket::request::FromParam;
+use crate::structures::{Base, Channel, User};
 use crate::utils::error::*;
+use rocket::request::FromParam;
 
 pub struct Ref(u64);
 
@@ -13,7 +13,7 @@ impl Ref {
         let user = User::find_one_by_id(self.0).await;
         match user {
             Some(u) => Ok(u),
-            _ => Err(Error::UnknownUser)
+            _ => Err(Error::UnknownUser),
         }
     }
 
@@ -21,7 +21,7 @@ impl Ref {
         let channel = Channel::find_one_by_id(self.0).await;
         match channel {
             Some(c) => Ok(c),
-            _ => Err(Error::UnknownChannel)
+            _ => Err(Error::UnknownChannel),
         }
     }
 }

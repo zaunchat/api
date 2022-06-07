@@ -1,4 +1,5 @@
 use crate::database::DB as db;
+use crate::guards::r#ref::Ref;
 use crate::structures::{Base, Channel, User};
 use crate::utils::error::*;
 use crate::utils::permissions::Permissions;
@@ -55,8 +56,8 @@ async fn create_group(user: User, data: Json<CreateGroupSchema<'_>>) -> Result<J
     Ok(Json(group))
 }
 
-#[put("/<group_id>/<user_id>")]
-async fn add_user_to_group(user: User, group_id: u64, user_id: u64) -> Result<()> {
+#[put("/<group_id>/<target>")]
+async fn add_user_to_group(user: User, group_id: u64, target: Ref) -> Result<()> {
     let channel: Option<Channel> = db
         .fetch(
             "SELECT * FROM channels WHERE recipients::jsonb ? $1 AND id = $2",
@@ -65,10 +66,10 @@ async fn add_user_to_group(user: User, group_id: u64, user_id: u64) -> Result<()
         .await
         .unwrap();
 
-    let target = User::find_one_by_id(user_id).await;
+    let target = target.user().await?;
 
-    match (channel, target) {
-        (Some(mut channel), Some(target)) => {
+    match channel {
+        Some(mut channel) => {
             if let Some(recipients) = channel.recipients.as_mut() {
                 if recipients.contains(&target.id) {
                     return Err(Error::MissingAccess);
@@ -80,14 +81,12 @@ async fn add_user_to_group(user: User, group_id: u64, user_id: u64) -> Result<()
 
             Ok(())
         }
-        (None, Some(_)) => Err(Error::UnknownChannel),
-        (Some(_), None) => Err(Error::UnknownUser),
-        _ => Err(Error::MissingAccess),
+        None => Err(Error::UnknownChannel),
     }
 }
 
-#[delete("/<group_id>/<user_id>")]
-async fn remove_user_to_group(user: User, group_id: u64, user_id: u64) -> Result<()> {
+#[delete("/<group_id>/<target>")]
+async fn remove_user_to_group(user: User, group_id: u64, target: Ref) -> Result<()> {
     let channel: Option<Channel> = db
         .fetch(
             "SELECT * FROM channels WHERE recipients::jsonb ? $1 AND id = $2",
@@ -96,10 +95,10 @@ async fn remove_user_to_group(user: User, group_id: u64, user_id: u64) -> Result
         .await
         .unwrap();
 
-    let target = User::find_one_by_id(user_id).await;
+    let target = target.user().await?;
 
-    match (channel, target) {
-        (Some(mut channel), Some(target)) => {
+    match channel {
+        Some(mut channel) => {
             if let Some(recipients) = channel.recipients.as_mut() {
                 if !recipients.contains(&target.id) {
                     return Err(Error::UnknownMember);
@@ -128,9 +127,7 @@ async fn remove_user_to_group(user: User, group_id: u64, user_id: u64) -> Result
 
             Ok(())
         }
-        (None, Some(_)) => Err(Error::UnknownChannel),
-        (Some(_), None) => Err(Error::UnknownUser),
-        _ => Err(Error::MissingAccess),
+        _ => Err(Error::UnknownChannel),
     }
 }
 
