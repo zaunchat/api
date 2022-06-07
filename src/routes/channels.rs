@@ -19,21 +19,10 @@ async fn fetch_channels(user: User) -> Json<Vec<Channel>> {
     Json(channels)
 }
 
-#[get("/<channel_id>")]
-async fn fetch_channel(user: User, channel_id: u64) -> Result<Json<Channel>> {
-    let channel: Option<Channel> = db
-        .fetch(
-            "SELECT * FROM channels WHERE recipients::jsonb ? $1 AND id = $2",
-            vec![user.id.into(), channel_id.into()],
-        )
-        .await
-        .unwrap();
-
-    if let Some(channel) = channel {
-        return Ok(Json(channel));
-    } else {
-        return Err(Error::UnknownChannel);
-    }
+#[get("/<target>")]
+async fn fetch_channel(user: User, target: Ref) -> Result<Json<Channel>> {
+    let channel = target.channel(user.id.into()).await?;
+    Ok(Json(channel))
 }
 
 #[derive(Debug, Deserialize, Validate, Clone, Copy)]
@@ -56,79 +45,56 @@ async fn create_group(user: User, data: Json<CreateGroupSchema<'_>>) -> Result<J
     Ok(Json(group))
 }
 
-#[put("/<group_id>/<target>")]
-async fn add_user_to_group(user: User, group_id: u64, target: Ref) -> Result<()> {
-    let channel: Option<Channel> = db
-        .fetch(
-            "SELECT * FROM channels WHERE recipients::jsonb ? $1 AND id = $2",
-            vec![user.id.into(), group_id.into()],
-        )
-        .await
-        .unwrap();
-
+#[put("/<group>/<target>")]
+async fn add_user_to_group(user: User, group: Ref, target: Ref) -> Result<()> {
     let target = target.user().await?;
+    let mut channel = group.channel(user.id.into()).await?;
 
-    match channel {
-        Some(mut channel) => {
-            if let Some(recipients) = channel.recipients.as_mut() {
-                if recipients.contains(&target.id) {
-                    return Err(Error::MissingAccess);
-                }
-                recipients.push(target.id);
-            }
-
-            channel.update().await;
-
-            Ok(())
+    if let Some(recipients) = channel.recipients.as_mut() {
+        if recipients.contains(&target.id) {
+            return Err(Error::MissingAccess);
         }
-        None => Err(Error::UnknownChannel),
+        recipients.push(target.id);
     }
+
+    channel.update().await;
+
+    Ok(())
 }
 
-#[delete("/<group_id>/<target>")]
-async fn remove_user_to_group(user: User, group_id: u64, target: Ref) -> Result<()> {
-    let channel: Option<Channel> = db
-        .fetch(
-            "SELECT * FROM channels WHERE recipients::jsonb ? $1 AND id = $2",
-            vec![user.id.into(), group_id.into()],
-        )
-        .await
-        .unwrap();
-
+#[delete("/<group>/<target>")]
+async fn remove_user_from_group(user: User, group: Ref, target: Ref) -> Result<()> {
     let target = target.user().await?;
+    let mut channel = group.channel(user.id.into()).await?;
 
-    match channel {
-        Some(mut channel) => {
-            if let Some(recipients) = channel.recipients.as_mut() {
-                if !recipients.contains(&target.id) {
-                    return Err(Error::UnknownMember);
-                }
-                // FIXME: Do the same thing in more efficient way
-
-                let mut index: Option<usize> = None;
-
-                for (i, id) in recipients.into_iter().enumerate() {
-                    if *id == target.id {
-                        index = Some(i);
-                        break;
-                    }
-                }
-
-                recipients.remove(index.unwrap());
-            }
-
-            let permissions = Permissions::fetch(&user, None, Some(channel.id)).await?;
-
-            if !permissions.contains(Permissions::KICK_MEMBERS) {
-                return Err(Error::MissingPermissions);
-            }
-
-            channel.update().await;
-
-            Ok(())
+    if let Some(recipients) = channel.recipients.as_mut() {
+        if !recipients.contains(&target.id) {
+            return Err(Error::UnknownMember);
         }
-        _ => Err(Error::UnknownChannel),
+
+        // FIXME: Do the same thing in more efficient way
+
+        let mut index: Option<usize> = None;
+
+        for (i, id) in recipients.into_iter().enumerate() {
+            if *id == target.id {
+                index = Some(i);
+                break;
+            }
+        }
+
+        recipients.remove(index.unwrap());
     }
+
+    let permissions = Permissions::fetch(&user, None, Some(channel.id)).await?;
+
+    if !permissions.contains(Permissions::KICK_MEMBERS) {
+        return Err(Error::MissingPermissions);
+    }
+
+    channel.update().await;
+
+    Ok(())
 }
 
 #[delete("/<group_id>")]
@@ -157,7 +123,7 @@ pub fn routes() -> Vec<rocket::Route> {
         fetch_channel,
         create_group,
         add_user_to_group,
-        remove_user_to_group,
+        remove_user_from_group,
         delete_group
     ]
 }
