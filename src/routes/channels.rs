@@ -111,7 +111,7 @@ async fn remove_user_to_group(user: User, group_id: u64, user_id: u64) -> Result
                 for (i, id) in recipients.into_iter().enumerate() {
                     if *id == target.id {
                         index = Some(i);
-                        break
+                        break;
                     }
                 }
 
@@ -134,7 +134,6 @@ async fn remove_user_to_group(user: User, group_id: u64, user_id: u64) -> Result
     }
 }
 
-
 #[delete("/<group_id>")]
 async fn delete_group(user: User, group_id: u64) -> Result<()> {
     let channel: Option<Channel> = db
@@ -149,11 +148,10 @@ async fn delete_group(user: User, group_id: u64) -> Result<()> {
         Some(channel) if channel.owner_id == Some(user.id) => {
             channel.delete(channel.id).await;
             Ok(())
-        },
+        }
         Some(_) => Err(Error::MissingPermissions),
-        _ => Err(Error::UnknownChannel)
+        _ => Err(Error::UnknownChannel),
     }
-
 }
 
 pub fn routes() -> Vec<rocket::Route> {

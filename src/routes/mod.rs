@@ -2,11 +2,11 @@ use rocket::{Build, Rocket};
 
 mod auth;
 mod bots;
+mod channels;
 mod invites;
 mod messages;
 mod servers;
 mod users;
-mod channels;
 
 #[get("/")]
 pub fn root() -> String {

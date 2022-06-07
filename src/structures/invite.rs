@@ -25,7 +25,7 @@ impl Invite {
             inviter_id,
             channel_id,
             server_id,
-            uses: 0
+            uses: 0,
         }
     }
 }
