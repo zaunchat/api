@@ -1,4 +1,5 @@
-use crate::structures::{Base, Channel, User, Message, Role, Server};
+use crate::database::DB as db;
+use crate::structures::{Base, Channel, Message, Role, Server, User};
 use crate::utils::error::*;
 use rocket::request::FromParam;
 
@@ -17,8 +18,18 @@ impl Ref {
         }
     }
 
-    pub async fn channel(&self) -> Result<Channel> {
-        let channel = Channel::find_one_by_id(self.0).await;
+    pub async fn channel(&self, recipient: Option<u64>) -> Result<Channel> {
+        let channel = if let Some(recipient) = recipient {
+            db.fetch(
+                "SELECT * FROM channels WHERE recipients::jsonb ? $1 AND id = $2",
+                vec![recipient.into(), self.0.into()],
+            )
+            .await
+            .unwrap()
+        } else {
+            Channel::find_one_by_id(self.0).await
+        };
+
         match channel {
             Some(c) => Ok(c),
             _ => Err(Error::UnknownChannel),
