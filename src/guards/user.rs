@@ -1,5 +1,5 @@
 use crate::structures::User;
-use crate::utils::error::Error;
+use crate::utils::error::*;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 

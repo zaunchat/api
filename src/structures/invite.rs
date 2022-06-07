@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 pub struct Invite {
     pub id: u64,
     pub code: String,
+    pub uses: u64,
     pub inviter_id: u64,
     pub channel_id: u64,
     pub server_id: Option<u64>,
@@ -24,6 +25,7 @@ impl Invite {
             inviter_id,
             channel_id,
             server_id,
+            uses: 0
         }
     }
 }

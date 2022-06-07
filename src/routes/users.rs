@@ -2,6 +2,7 @@ use crate::structures::{Base, User};
 use crate::utils::error::*;
 use rocket::serde::json::Json;
 
+
 #[get("/@me")]
 fn fetch_me(user: User) -> Json<User> {
     Json(user.to_public())
