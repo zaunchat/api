@@ -6,6 +6,7 @@ mod invites;
 mod messages;
 mod servers;
 mod users;
+mod channels;
 
 #[get("/")]
 pub fn root() -> String {
@@ -20,6 +21,7 @@ pub fn mount(rocket: Rocket<Build>) -> Rocket<Build> {
         .mount("/users", users::routes())
         .mount("/invites", invites::routes())
         .mount("/bots", bots::routes())
+        .mount("/channels", channels::routes())
         .mount("/messages", messages::routes())
         .mount("/servers", servers::servers::routes())
         .mount("/servers/channels", servers::channels::routes())
