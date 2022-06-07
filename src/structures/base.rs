@@ -33,7 +33,9 @@ pub trait Base: CRUDTable + DeserializeOwned {
     }
 
     async fn update(&self) {
-        db.update_by_column("id", &self).await.expect("Could'nt update thus target");
+        db.update_by_column("id", &self)
+            .await
+            .expect("Could'nt update thus target");
     }
 
     async fn delete(&self, id: u64) -> bool {
