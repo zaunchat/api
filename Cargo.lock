@@ -73,6 +73,7 @@ dependencies = [
  "async-std",
  "async-trait",
  "bitflags",
+ "dashmap 5.3.4",
  "dotenv",
  "env_logger",
  "governor",

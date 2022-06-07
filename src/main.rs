@@ -36,8 +36,7 @@ async fn main() {
     let rocket = rocket::build();
 
     let _ = routes::mount(rocket)
-        // Global Rate limit is 50 requests per 5 seconds
-        .attach(ratelimit::RateLimit::new(50, 1000 * 5))
+        .attach(ratelimit::RateLimiter)
         .attach(auth)
         .mount("/", ratelimit::routes())
         .mount("/", auth::routes())
