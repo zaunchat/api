@@ -3,7 +3,7 @@ use crate::utils::error::*;
 use rocket::serde::json::Json;
 
 #[get("/<code>")]
-async fn fetch_invite(code: &str) -> Result<Json<Invite>> {
+async fn fetch_one(code: &str) -> Result<Json<Invite>> {
     let invite = Invite::find_one(|q| q.eq("code", &code)).await;
 
     if let Some(invite) = invite {
@@ -14,7 +14,7 @@ async fn fetch_invite(code: &str) -> Result<Json<Invite>> {
 }
 
 #[post("/<code>")]
-async fn join_invite(user: User, code: &str) -> Result<()> {
+async fn join(user: User, code: &str) -> Result<()> {
     let invite = Invite::find_one(|q| q.eq("code", &code)).await;
 
     match invite {
@@ -55,5 +55,5 @@ async fn join_invite(user: User, code: &str) -> Result<()> {
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![fetch_invite, join_invite]
+    routes![fetch_one, join]
 }
