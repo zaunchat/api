@@ -117,7 +117,7 @@ async fn remove_user_to_group(user: User, group_id: u64, target: Ref) -> Result<
                 recipients.remove(index.unwrap());
             }
 
-            let permissions = Permissions::fetch(user, None, Some(channel.id)).await;
+            let permissions = Permissions::fetch(&user, None, Some(channel.id)).await?;
 
             if !permissions.contains(Permissions::KICK_MEMBERS) {
                 return Err(Error::MissingPermissions);
