@@ -1,6 +1,7 @@
 use crate::structures::{Base, Channel, Member, OverwriteTypes, Server, User};
 use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
+use crate::utils::error::*;
 
 bitflags! {
     #[derive(Serialize, Deserialize)]
@@ -40,22 +41,28 @@ lazy_static! {
 }
 
 impl Permissions {
-    pub async fn fetch(user: User, server_id: Option<u64>, channel_id: Option<u64>) -> Permissions {
+    pub async fn fetch(user: &User, server_id: Option<u64>, channel_id: Option<u64>) -> Result<Permissions> {
         let mut p = Permissions::DEFAULT;
         let admin = || Permissions::ADMINISTRATOR;
 
         if let Some(id) = server_id {
-            let server = Server::find_one_by_id(id).await.unwrap();
+            let server = Server::find_one_by_id(id).await;
+
+            if server.is_none() {
+                return Err(Error::UnknownServer);
+            }
+
+            let server = server.unwrap();
 
             if server.owner_id == user.id {
-                return admin();
+                return Ok(admin())
             }
 
             p.set(Permissions::ADMINISTRATOR, server.owner_id == user.id);
             p.insert(Permissions::from_bits(server.permissions).unwrap());
 
             if p.contains(Permissions::ADMINISTRATOR) {
-                return p;
+                return Ok(p)
             }
 
             let member = server.fetch_member(user.id).await.unwrap();
@@ -69,11 +76,17 @@ impl Permissions {
         }
 
         if p.contains(Permissions::ADMINISTRATOR) {
-            return p;
+            return Ok(p)
         }
 
         if let Some(id) = channel_id {
-            let channel = Channel::find_one_by_id(id).await.unwrap();
+            let channel = Channel::find_one_by_id(id).await;
+
+            if channel.is_none() {
+                return Err(Error::UnknownChannel);
+            }
+
+            let channel = channel.unwrap();
 
             if channel.is_dm() {
                 p.insert(*DEFAULT_PERMISSION_DM);
@@ -87,7 +100,7 @@ impl Permissions {
             {
                 // for group owners
                 if channel.owner_id == Some(user.id) {
-                    return admin();
+                    return Ok(admin());
                 }
 
                 let mut member: Option<Member> = None;
@@ -127,6 +140,6 @@ impl Permissions {
             }
         }
 
-        p
+        Ok(p)
     }
 }
