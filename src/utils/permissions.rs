@@ -1,7 +1,7 @@
 use crate::structures::{Base, Channel, Member, OverwriteTypes, Server, User};
+use crate::utils::error::*;
 use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
-use crate::utils::error::*;
 
 bitflags! {
     #[derive(Serialize, Deserialize)]
@@ -41,7 +41,11 @@ lazy_static! {
 }
 
 impl Permissions {
-    pub async fn fetch(user: &User, server_id: Option<u64>, channel_id: Option<u64>) -> Result<Permissions> {
+    pub async fn fetch(
+        user: &User,
+        server_id: Option<u64>,
+        channel_id: Option<u64>,
+    ) -> Result<Permissions> {
         let mut p = Permissions::DEFAULT;
         let admin = || Permissions::ADMINISTRATOR;
 
@@ -55,14 +59,14 @@ impl Permissions {
             let server = server.unwrap();
 
             if server.owner_id == user.id {
-                return Ok(admin())
+                return Ok(admin());
             }
 
             p.set(Permissions::ADMINISTRATOR, server.owner_id == user.id);
             p.insert(Permissions::from_bits(server.permissions).unwrap());
 
             if p.contains(Permissions::ADMINISTRATOR) {
-                return Ok(p)
+                return Ok(p);
             }
 
             let member = server.fetch_member(user.id).await.unwrap();
@@ -76,7 +80,7 @@ impl Permissions {
         }
 
         if p.contains(Permissions::ADMINISTRATOR) {
-            return Ok(p)
+            return Ok(p);
         }
 
         if let Some(id) = channel_id {
