@@ -17,7 +17,7 @@ pub struct RegisterSchema<'r> {
 }
 
 #[post("/register", data = "<data>")]
-pub async fn register(_captcha: Captcha, data: Json<RegisterSchema<'_>>) -> Result<Json<User>> {
+async fn register(_captcha: Captcha, data: Json<RegisterSchema<'_>>) -> Result<Json<User>> {
     let data = data.into_inner();
 
     data.validate()
@@ -54,7 +54,7 @@ pub async fn register(_captcha: Captcha, data: Json<RegisterSchema<'_>>) -> Resu
 }
 
 #[get("/verify/<user_id>/<code>")]
-pub async fn verify(user_id: u64, code: &str) -> Result<()> {
+async fn verify(user_id: u64, code: &str) -> Result<()> {
     let user = User::find_one(|q| q.eq("id", &user_id).eq("verified", false)).await;
 
     // TODO: Check verification code.
