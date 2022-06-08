@@ -1,10 +1,8 @@
 use crate::structures::{Base, Channel, Member, OverwriteTypes, Server, User};
 use crate::utils::error::*;
 use bitflags::bitflags;
-use serde::{Deserialize, Serialize};
 
 bitflags! {
-    #[derive(Serialize, Deserialize)]
     pub struct Permissions: u64 {
           const ADMINISTRATOR = 1 << 0;
           const VIEW_CHANNEL = 1 << 1;
@@ -63,7 +61,7 @@ impl Permissions {
             }
 
             p.set(Permissions::ADMINISTRATOR, server.owner_id == user.id);
-            p.insert(Permissions::from_bits(server.permissions).unwrap());
+            p.insert(server.permissions);
 
             if p.contains(Permissions::ADMINISTRATOR) {
                 return Ok(p);
@@ -74,7 +72,7 @@ impl Permissions {
 
             for role in roles {
                 if member.roles.contains(&role.id) {
-                    p.insert(Permissions::from_bits(role.permissions).unwrap())
+                    p.insert(role.permissions);
                 }
             }
         }
@@ -110,7 +108,7 @@ impl Permissions {
                 let mut member: Option<Member> = None;
 
                 if channel.is_group() {
-                    p.insert(Permissions::from_bits(channel.permissions.unwrap()).unwrap());
+                    p.insert(channel.permissions.unwrap());
                 } else {
                     member = Member::find_one(|q| {
                         q.eq("id", user.id)
@@ -130,20 +128,68 @@ impl Permissions {
 
                 for overwrite in overwrites {
                     if overwrite.r#type == OverwriteTypes::Member && overwrite.id == user.id {
-                        p.insert(Permissions::from_bits(overwrite.allow).unwrap());
-                        p.remove(Permissions::from_bits(overwrite.deny).unwrap());
+                        p.insert(overwrite.allow);
+                        p.remove(overwrite.deny);
                     }
 
                     if overwrite.r#type == OverwriteTypes::Role
                         && member.as_ref().unwrap().roles.contains(&overwrite.id)
                     {
-                        p.insert(Permissions::from_bits(overwrite.allow).unwrap());
-                        p.remove(Permissions::from_bits(overwrite.deny).unwrap());
+                        p.insert(overwrite.allow);
+                        p.remove(overwrite.deny);
                     }
                 }
             }
         }
 
         Ok(p)
+    }
+}
+
+impl Default for Permissions {
+    fn default() -> Self {
+        Permissions::DEFAULT
+    }
+}
+
+use serde::de::{Deserialize, Deserializer, Visitor};
+use serde::{Serialize, Serializer};
+use std::fmt;
+
+impl Serialize for Permissions {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u64(self.bits())
+    }
+}
+
+struct PermissionsVisitor;
+
+impl<'de> Visitor<'de> for PermissionsVisitor {
+    type Value = Permissions;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a valid permissions")
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        if let Some(p) = Permissions::from_bits(v) {
+            return Ok(p);
+        }
+        Err(E::custom("Invalid Permissions"))
+    }
+}
+
+impl<'de> Deserialize<'de> for Permissions {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_identifier(PermissionsVisitor)
     }
 }
