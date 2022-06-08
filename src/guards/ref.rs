@@ -84,8 +84,13 @@ impl Ref {
         }
     }
 
-    pub async fn invite(&self) -> Result<Invite> {
-        let invite = Invite::find_one_by_id(self.0).await;
+    pub async fn invite(&self, server_id: Option<u64>) -> Result<Invite> {
+        let invite = if let Some(server_id) = server_id {
+            Invite::find_one(|q| q.eq("id", self.0).eq("server_id", server_id)).await
+        } else {
+            Invite::find_one_by_id(self.0).await
+        };
+
         match invite {
             Some(i) => Ok(i),
             _ => Err(Error::UnknownInvite),
