@@ -29,7 +29,7 @@ async fn fetch_one(user: User, server_id: u64, role_id: Ref) -> Result<Json<Role
         return Err(Error::UnknownServer);
     }
 
-    Ok(Json(role_id.role().await?))
+    Ok(Json(role_id.role(server_id).await?))
 }
 
 #[get("/<server_id>")]
@@ -95,7 +95,7 @@ async fn update(
         return Err(Error::MissingPermissions);
     }
 
-    let mut role = role_id.role().await?;
+    let mut role = role_id.role(server_id).await?;
 
     if let Some(name) = data.name {
         role.name = name.into();
@@ -130,7 +130,7 @@ async fn delete(user: User, server_id: u64, role_id: Ref) -> Result<()> {
         return Err(Error::MissingPermissions);
     }
 
-    role_id.role().await?.delete(role_id.0).await;
+    role_id.role(server_id).await?.delete(role_id.0).await;
 
     Ok(())
 }
