@@ -23,6 +23,9 @@ async fn main() {
     log::info!("Connecting to database...");
     database::connect().await;
 
+    log::info!("Run migration...");
+    utils::migration::migrate().await;
+
     let auth = fairings::auth::Auth {
         ignore: vec![
             "/".into(),
