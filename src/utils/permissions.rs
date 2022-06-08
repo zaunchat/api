@@ -1,7 +1,7 @@
 use crate::structures::*;
 use crate::utils::error::*;
 use bitflags::bitflags;
-use serde::{Deserialize, Serialize, Serializer, Deserializer, de::Visitor};
+use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
 bitflags! {
