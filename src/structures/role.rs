@@ -8,7 +8,7 @@ pub struct Role {
     pub id: u64,
     pub name: String,
     pub permissions: u64,
-    pub color: i32,
+    pub color: u8,
     pub hoist: bool,
     pub server_id: u64,
 }

@@ -27,4 +27,5 @@ pub fn mount(rocket: Rocket<Build>) -> Rocket<Build> {
         .mount("/servers/channels", servers::channels::routes())
         .mount("/servers/members", servers::members::routes())
         .mount("/servers/invites", servers::invites::routes())
+        .mount("/servers/roles", servers::roles::routes())
 }
