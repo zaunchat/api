@@ -10,7 +10,7 @@ struct CreateRoleSchema<'a> {
     #[validate(length(min = 1, max = 32))]
     name: &'a str,
     color: u8,
-    permissions: u64,
+    permissions: Permissions,
     hoist: bool,
 }
 
@@ -19,7 +19,7 @@ struct UpdateRoleSchema<'a> {
     #[validate(length(min = 1, max = 32))]
     name: Option<&'a str>,
     color: Option<u8>,
-    permissions: Option<u64>,
+    permissions: Option<Permissions>,
     hoist: Option<bool>,
 }
 
@@ -64,10 +64,6 @@ async fn create(
         return Err(Error::MissingPermissions);
     }
 
-    if Permissions::from_bits(data.permissions).is_none() {
-        return Err(Error::MissingAccess);
-    }
-
     let mut role = Role::new(data.name.into(), server_id);
 
     role.permissions = data.permissions;
@@ -106,9 +102,6 @@ async fn update(
     }
 
     if let Some(permissions) = data.permissions {
-        if Permissions::from_bits(permissions).is_none() {
-            return Err(Error::MissingAccess);
-        }
         role.permissions = permissions;
     }
 
