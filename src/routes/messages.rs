@@ -45,14 +45,14 @@ struct EditMessageSchema<'r> {
     content: &'r str,
 }
 
-#[patch("/<target>", data = "<data>")]
-async fn edit(user: User, target: Ref, data: Json<EditMessageSchema<'_>>) -> Result<Json<Message>> {
+#[patch("/<message_id>", data = "<data>")]
+async fn edit(user: User, message_id: Ref, data: Json<EditMessageSchema<'_>>) -> Result<Json<Message>> {
     let data = data.into_inner();
 
     data.validate()
         .map_err(|error| Error::InvalidBody { error })?;
 
-    let mut msg = target.message().await?;
+    let mut msg = message_id.message().await?;
 
     if msg.author_id != user.id {
         return Err(Error::MissingPermissions);
@@ -70,9 +70,9 @@ async fn edit(user: User, target: Ref, data: Json<EditMessageSchema<'_>>) -> Res
     Ok(Json(msg))
 }
 
-#[delete("/<target>")]
-async fn delete(user: User, target: Ref) -> Result<()> {
-    let msg = target.message().await?;
+#[delete("/<message_id>")]
+async fn delete(user: User, message_id: Ref) -> Result<()> {
+    let msg = message_id.message().await?;
     let p = Permissions::fetch(&user, None, Some(msg.channel_id)).await?;
 
     if !p.contains(Permissions::VIEW_CHANNEL) {
@@ -88,9 +88,9 @@ async fn delete(user: User, target: Ref) -> Result<()> {
     Ok(())
 }
 
-#[get("/<target>")]
-async fn fetch_one(user: User, target: Ref) -> Result<Json<Message>> {
-    let msg = target.message().await?;
+#[get("/<message_id>")]
+async fn fetch_one(user: User, message_id: Ref) -> Result<Json<Message>> {
+    let msg = message_id.message().await?;
     let p = Permissions::fetch(&user, None, msg.channel_id.into()).await?;
 
     if !p.contains(Permissions::VIEW_CHANNEL) || !p.contains(Permissions::READ_MESSAGE_HISTORY) {
