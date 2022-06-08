@@ -21,7 +21,7 @@ impl Ref {
     pub async fn channel(&self, recipient: Option<u64>) -> Result<Channel> {
         let channel = if let Some(recipient) = recipient {
             db.fetch(
-                "SELECT * FROM channels WHERE recipients::jsonb ? $1 AND id = $2",
+                "SELECT * FROM channels WHERE recipients::jsonb ? $1 AND id = $2 LIMIT 1",
                 vec![recipient.into(), self.0.into()],
             )
             .await
@@ -64,7 +64,15 @@ impl Ref {
         let session = Session::find_one(|q| q.eq("id", self.0).eq("user_id", user_id)).await;
         match session {
             Some(s) => Ok(s),
-            _ => Err(Error::UnknownSession)
+            _ => Err(Error::UnknownSession),
+        }
+    }
+
+    pub async fn bot(&self) -> Result<Bot> {
+        let bot = Bot::find_one(|q| q.eq("id", self.0)).await;
+        match bot {
+            Some(b) => Ok(b),
+            _ => Err(Error::UnknownBot),
         }
     }
 }
