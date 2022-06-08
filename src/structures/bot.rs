@@ -1,6 +1,6 @@
+use super::*;
 use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
-use super::*;
 
 #[crud_table(table_name:bots)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
