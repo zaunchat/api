@@ -13,7 +13,9 @@ pub struct Bot {
 
 #[async_trait]
 impl Base for Bot {
-    fn id(&self) -> u64 { self.id }
+    fn id(&self) -> u64 {
+        self.id
+    }
 }
 
 impl Bot {

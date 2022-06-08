@@ -20,7 +20,9 @@ pub struct Message {
 }
 
 impl Base for Message {
-    fn id(&self) -> u64 { self.id }
+    fn id(&self) -> u64 {
+        self.id
+    }
 }
 
 impl Message {

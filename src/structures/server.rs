@@ -16,7 +16,9 @@ pub struct Server {
 }
 
 impl Base for Server {
-    fn id(&self) -> u64 { self.id }
+    fn id(&self) -> u64 {
+        self.id
+    }
 }
 
 impl Server {

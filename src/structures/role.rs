@@ -15,7 +15,9 @@ pub struct Role {
 }
 
 impl Base for Role {
-    fn id(&self) -> u64 { self.id }
+    fn id(&self) -> u64 {
+        self.id
+    }
 }
 
 impl Role {

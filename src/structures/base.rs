@@ -45,6 +45,8 @@ pub trait Base: CRUDTable + DeserializeOwned {
     }
 
     async fn delete(&self) -> bool {
-        db.remove_by_column::<Self, u64>("id", self.id()).await.is_ok()
+        db.remove_by_column::<Self, u64>("id", self.id())
+            .await
+            .is_ok()
     }
 }

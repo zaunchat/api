@@ -16,7 +16,9 @@ pub struct User {
 }
 
 impl Base for User {
-    fn id(&self) -> u64 { self.id }
+    fn id(&self) -> u64 {
+        self.id
+    }
 }
 
 impl User {

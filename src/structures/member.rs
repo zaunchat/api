@@ -12,7 +12,9 @@ pub struct Member {
 }
 
 impl Base for Member {
-    fn id(&self) -> u64 { self.id }
+    fn id(&self) -> u64 {
+        self.id
+    }
 }
 
 impl Member {
