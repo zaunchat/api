@@ -5,15 +5,9 @@ use crate::utils::permissions::Permissions;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
-async fn is_in_server(user: &User, server_id: u64) -> bool {
-    Member::find_one(|q| q.eq("id", user.id).eq("server_id", server_id))
-        .await
-        .is_some()
-}
-
 #[get("/<server_id>/<member_id>")]
 async fn fetch_one(user: User, server_id: u64, member_id: Ref) -> Result<Json<Member>> {
-    if !is_in_server(&user, server_id).await {
+    if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
     }
 
@@ -24,7 +18,7 @@ async fn fetch_one(user: User, server_id: u64, member_id: Ref) -> Result<Json<Me
 
 #[get("/<server_id>?<limit>")]
 async fn fetch_many(user: User, server_id: u64, limit: Option<u32>) -> Result<Json<Vec<Member>>> {
-    if !is_in_server(&user, server_id).await {
+    if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
     }
 
@@ -42,7 +36,7 @@ async fn fetch_many(user: User, server_id: u64, limit: Option<u32>) -> Result<Js
 
 #[delete("/<server_id>/<member_id>")]
 async fn kick(user: User, server_id: u64, member_id: Ref) -> Result<()> {
-    if !is_in_server(&user, server_id).await {
+    if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
     }
 
@@ -77,7 +71,7 @@ async fn update(
     data.validate()
         .map_err(|error| Error::InvalidBody { error })?;
 
-    if !is_in_server(&user, server_id).await {
+    if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
     }
 
