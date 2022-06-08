@@ -16,11 +16,12 @@ bitflags! {
           const MANAGE_CHANNELS = 1 << 7;
           const MANAGE_MESSAGES = 1 << 8;
           const MANAGE_ROLES = 1 << 9;
-          const MANAGE_NICKNAMES = 1 << 10;
-          const BAN_MEMBERS = 1 << 11;
-          const KICK_MEMBERS = 1 << 12;
-          const CHANGE_NICKNAME = 1 << 13;
-          const INVITE_OTHERS = 1 << 14;
+          const MANAGE_INVITES = 1 << 10;
+          const MANAGE_NICKNAMES = 1 << 11;
+          const BAN_MEMBERS = 1 << 12;
+          const KICK_MEMBERS = 1 << 13;
+          const CHANGE_NICKNAME = 1 << 14;
+          const INVITE_OTHERS = 1 << 15;
           const DEFAULT = 0;
     }
 }
