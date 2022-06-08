@@ -1,4 +1,5 @@
 use crate::guards::captcha::Captcha;
+use crate::guards::r#ref::Ref;
 use crate::structures::{Base, Session, User};
 use crate::utils::error::*;
 use rocket::serde::{json::Json, Deserialize};
@@ -21,36 +22,32 @@ async fn create(_captcha: Captcha, data: Json<LoginSchema<'_>>) -> Result<Json<S
 
     let user = User::find_one(|q| q.eq("email", &data.email)).await;
 
-    if let Some(user) = user {
-        if user.verified == false {
-            return Err(Error::NotVerified);
+    match user {
+        Some(user) => {
+            if !user.verified {
+                return Err(Error::NotVerified);
+            }
+
+            if argon2::verify_encoded(user.password.as_str(), data.password.to_string().as_bytes())
+                .is_err()
+            {
+                return Err(Error::Unauthorized);
+            }
+
+            let session = Session::new(user.id);
+
+            session.save().await;
+
+            Ok(Json(session))
         }
-
-        if argon2::verify_encoded(user.password.as_str(), data.password.to_string().as_bytes())
-            .is_err()
-        {
-            return Err(Error::Unauthorized);
-        }
-
-        let session = Session::new(user.id);
-
-        session.save().await;
-
-        return Ok(Json(session));
-    } else {
-        return Err(Error::UnknownAccount);
+        _ => Err(Error::UnknownAccount),
     }
 }
 
-#[get("/<session_id>")]
-async fn fetch_one(user: User, session_id: u64) -> Result<Json<Session>> {
-    let session = Session::find_one(|q| q.eq("user_id", &user.id).eq("id", &session_id)).await;
-
-    if let Some(session) = session {
-        Ok(Json(session))
-    } else {
-        Err(Error::UnknownSession)
-    }
+#[get("/<target>")]
+async fn fetch_one(user: User, target: Ref) -> Result<Json<Session>> {
+    let session = target.session(user.id).await?;
+    Ok(Json(session))
 }
 
 #[get("/")]
@@ -58,21 +55,17 @@ pub async fn fetch_many(user: User) -> Json<Vec<Session>> {
     Json(Session::find(|q| q.eq("user_id", &user.id)).await)
 }
 
-#[delete("/<session_id>/<token>")]
-pub async fn delete(user: User, session_id: u64, token: &str) -> Result<()> {
-    let session = Session::find_one(|q| {
-        q.eq("user_id", &user.id)
-            .eq("id", &session_id)
-            .eq("token", &token)
-    })
-    .await;
+#[delete("/<target>/<token>")]
+pub async fn delete(user: User, target: Ref, token: &str) -> Result<()> {
+    let session = target.session(user.id).await?;
 
-    if let Some(session) = session {
-        session.delete(session.id).await;
-        Ok(())
-    } else {
-        Err(Error::UnknownSession)
+    if session.token != token {
+        return Err(Error::InvalidToken);
     }
+
+    session.delete(session.id).await;
+
+    Ok(())
 }
 
 pub fn routes() -> Vec<rocket::Route> {

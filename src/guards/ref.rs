@@ -1,5 +1,5 @@
 use crate::database::DB as db;
-use crate::structures::{Base, Channel, Message, Role, Server, User};
+use crate::structures::*;
 use crate::utils::error::*;
 use rocket::request::FromParam;
 
@@ -57,6 +57,14 @@ impl Ref {
         match role {
             Some(r) => Ok(r),
             _ => Err(Error::UnknownRole),
+        }
+    }
+
+    pub async fn session(&self, user_id: u64) -> Result<Session> {
+        let session = Session::find_one(|q| q.eq("id", self.0).eq("user_id", user_id)).await;
+        match session {
+            Some(s) => Ok(s),
+            _ => Err(Error::UnknownSession)
         }
     }
 }
