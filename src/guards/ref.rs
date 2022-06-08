@@ -52,7 +52,7 @@ impl Ref {
         }
     }
 
-    pub async fn role(&self) -> Result<Role> {
+    pub async fn role(&self, server_id: u64) -> Result<Role> {
         let role = Role::find_one_by_id(self.0).await;
         match role {
             Some(r) => Ok(r),
