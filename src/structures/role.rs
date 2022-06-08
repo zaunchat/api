@@ -1,7 +1,7 @@
 use super::*;
+use crate::utils::permissions::*;
 use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
-use crate::utils::permissions::*;
 
 #[crud_table(table_name:roles)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

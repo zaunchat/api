@@ -2,8 +2,7 @@ use crate::guards::r#ref::Ref;
 use crate::structures::*;
 use crate::utils::error::*;
 use crate::utils::permissions::Permissions;
-use rocket::serde::{json::Json};
-
+use rocket::serde::json::Json;
 
 #[get("/<server_id>/<invite_id>")]
 async fn fetch_one(user: User, server_id: u64, invite_id: Ref) -> Result<Json<Invite>> {
@@ -37,11 +36,14 @@ async fn delete(user: User, server_id: u64, invite_id: Ref) -> Result<()> {
         return Err(Error::MissingPermissions);
     }
 
-    invite_id.invite(server_id.into()).await?.delete(invite_id.0).await;
+    invite_id
+        .invite(server_id.into())
+        .await?
+        .delete(invite_id.0)
+        .await;
 
     Ok(())
 }
-
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![fetch_one, fetch_many, delete]
