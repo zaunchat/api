@@ -1,6 +1,6 @@
 use super::*;
 use crate::database::DB as db;
-use crate::utils::snowflake;
+use crate::utils::{badges::Badges, snowflake};
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:users)]
@@ -11,7 +11,7 @@ pub struct User {
     pub avatar: Option<String>,
     pub password: String,
     pub email: String,
-    pub badges: u64,
+    pub badges: Badges,
     pub verified: bool,
 }
 
