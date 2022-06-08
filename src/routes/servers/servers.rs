@@ -1,48 +1,70 @@
-use crate::structures::{Base, Server, User};
+use crate::database::DB as db;
+use crate::guards::r#ref::Ref;
+use crate::structures::*;
 use crate::utils::error::*;
-use rocket::serde::json::Json;
+use rbatis::crud::CRUDMut;
+use rocket::serde::{json::Json, Deserialize};
+use validator::Validate;
 
 #[get("/")]
-async fn fetch_servers(user: User) -> Json<Vec<Server>> {
+async fn fetch_many(user: User) -> Json<Vec<Server>> {
     Json(user.fetch_servers().await)
 }
 
 #[get("/<server_id>")]
-async fn fetch_server(server_id: u64) -> Result<Json<Server>> {
-    let server = Server::find_one_by_id(server_id).await;
+async fn fetch_one(server_id: Ref) -> Result<Json<Server>> {
+    Ok(Json(server_id.server().await?))
+}
 
-    if let Some(server) = server {
-        return Ok(Json(server));
-    }
+#[derive(Deserialize, Validate)]
+struct CreateServerSchema<'a> {
+    #[validate(length(min = 1, max = 50))]
+    name: &'a str,
+}
 
-    Err(Error::UnknownServer)
+#[post("/", data = "<data>")]
+async fn create(user: User, data: Json<CreateServerSchema<'_>>) -> Result<Json<Server>> {
+    let data = data.into_inner();
+
+    data.validate()
+        .map_err(|error| Error::InvalidBody { error })?;
+
+    let server = Server::new(data.name.into(), user.id);
+    let member = Member::new(user.id, server.id);
+    let category = Channel::new_category("General".into(), server.id);
+    let mut chat = Channel::new_text("general".into(), server.id);
+
+    chat.parent_id = Some(category.id);
+
+    let mut tx = db.acquire_begin().await.unwrap();
+
+    tx.save(&server, &[]).await.unwrap();
+    tx.save(&category, &[]).await.unwrap();
+    tx.save(&chat, &[]).await.unwrap();
+    tx.save(&member, &[]).await.unwrap();
+
+    tx.commit().await.unwrap();
+
+    Ok(Json(server))
 }
 
 #[delete("/<server_id>")]
-async fn delete_server(user: User, server_id: u64) -> Result<()> {
-    let server = Server::find_one_by_id(server_id).await;
+async fn delete(user: User, server_id: Ref) -> Result<()> {
+    let server = server_id.server().await?;
 
-    if let Some(server) = server {
-        if server.owner_id == user.id {
-            server.delete(server.id).await;
+    if server.owner_id == user.id {
+        server.delete(server.id).await;
+    } else {
+        if let Some(member) = server.fetch_member(user.id).await {
+            member.delete(member.id).await;
         } else {
-            let member = server.fetch_member(user.id).await;
-            if let Some(member) = member {
-                member.delete(member.id).await;
-            }
+            return Err(Error::UnknownMember);
         }
-
-        return Ok(());
     }
 
-    Err(Error::UnknownServer)
-}
-
-#[post("/")]
-async fn create_server(_user: User) {
-    todo!();
+    Ok(())
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![fetch_servers, fetch_server, delete_server, create_server]
+    routes![fetch_many, fetch_one, create, delete]
 }
