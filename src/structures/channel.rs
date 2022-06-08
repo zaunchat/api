@@ -56,7 +56,9 @@ pub struct Channel {
 }
 
 impl Base for Channel {
-    fn id(&self) -> u64 { self.id }
+    fn id(&self) -> u64 {
+        self.id
+    }
 }
 
 impl Channel {

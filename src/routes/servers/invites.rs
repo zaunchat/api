@@ -36,11 +36,7 @@ async fn delete(user: User, server_id: u64, invite_id: Ref) -> Result<()> {
         return Err(Error::MissingPermissions);
     }
 
-    invite_id
-        .invite(server_id.into())
-        .await?
-        .delete()
-        .await;
+    invite_id.invite(server_id.into()).await?.delete().await;
 
     Ok(())
 }

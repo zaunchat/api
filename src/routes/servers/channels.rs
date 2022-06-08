@@ -108,7 +108,7 @@ async fn create_invite(user: User, server_id: u64, channel_id: Ref) -> Result<Js
     }
 
     let invite = Invite::new(user.id, channel.id, server_id.into());
-    
+
     invite.save().await;
 
     Ok(Json(invite))

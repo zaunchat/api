@@ -16,7 +16,9 @@ pub struct Invite {
 }
 
 impl Base for Invite {
-    fn id(&self) -> u64 { self.id }
+    fn id(&self) -> u64 {
+        self.id
+    }
 }
 
 impl Invite {

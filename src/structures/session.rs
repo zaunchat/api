@@ -13,7 +13,9 @@ pub struct Session {
 }
 
 impl Base for Session {
-    fn id(&self) -> u64 { self.id }
+    fn id(&self) -> u64 {
+        self.id
+    }
 }
 
 impl Session {
