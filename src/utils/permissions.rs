@@ -1,6 +1,8 @@
-use crate::structures::{Base, Channel, Member, OverwriteTypes, Server, User};
+use crate::structures::*;
 use crate::utils::error::*;
 use bitflags::bitflags;
+use serde::{Deserialize, Serialize, Serializer, Deserializer, de::Visitor};
+use std::fmt;
 
 bitflags! {
     pub struct Permissions: u64 {
@@ -151,10 +153,6 @@ impl Default for Permissions {
         Permissions::DEFAULT
     }
 }
-
-use serde::de::{Deserialize, Deserializer, Visitor};
-use serde::{Serialize, Serializer};
-use std::fmt;
 
 impl Serialize for Permissions {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
