@@ -1,5 +1,5 @@
-use super::Base;
-use crate::utils::permissions::DEFAULT_PERMISSION_DM;
+use super::*;
+use crate::utils::permissions::*;
 use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
@@ -22,8 +22,8 @@ pub enum OverwriteTypes {
 pub struct Overwrite {
     pub id: u64,
     pub r#type: OverwriteTypes,
-    pub allow: u64,
-    pub deny: u64,
+    pub allow: Permissions,
+    pub deny: Permissions,
 }
 
 #[crud_table(table_name:channels)]
@@ -52,7 +52,7 @@ pub struct Channel {
     pub topic: Option<String>,
 
     // Group
-    pub permissions: Option<u64>,
+    pub permissions: Option<Permissions>,
 }
 
 impl Base for Channel {}
@@ -79,7 +79,7 @@ impl Channel {
             name: Some(name),
             r#type: ChannelTypes::Group,
             recipients: vec![user].into(),
-            permissions: Some(DEFAULT_PERMISSION_DM.bits()),
+            permissions: Some(*DEFAULT_PERMISSION_DM),
             overwrites: None,
             owner_id: None,
             parent_id: None,

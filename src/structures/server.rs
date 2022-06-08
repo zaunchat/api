@@ -1,11 +1,7 @@
 use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
-
-use super::channel::Channel;
-use super::member::Member;
-use super::role::Role;
-use super::Base;
-use crate::utils::permissions::DEFAULT_PERMISSION_EVERYONE;
+use super::*;
+use crate::utils::permissions::*;
 
 #[crud_table(table_name:servers)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -16,7 +12,7 @@ pub struct Server {
     pub icon: Option<String>,
     pub banner: Option<String>,
     pub owner_id: u64,
-    pub permissions: u64,
+    pub permissions: Permissions,
 }
 
 impl Base for Server {}
@@ -27,7 +23,7 @@ impl Server {
             id: snowflake::generate(),
             name,
             owner_id,
-            permissions: DEFAULT_PERMISSION_EVERYONE.bits(),
+            permissions: *DEFAULT_PERMISSION_EVERYONE,
             ..Default::default()
         }
     }
