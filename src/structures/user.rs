@@ -29,6 +29,12 @@ impl User {
         }
     }
 
+    pub async fn is_in_server(&self, server_id: u64) -> bool {
+        Member::find_one(|q| q.eq("id", self.id).eq("server_id", server_id))
+            .await
+            .is_some()
+    }
+
     pub async fn fetch_sessions(&self) -> Vec<Session> {
         Session::find(|q| q.eq("user_id", &self.id)).await
     }
