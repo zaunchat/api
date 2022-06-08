@@ -75,6 +75,14 @@ impl Ref {
             _ => Err(Error::UnknownBot),
         }
     }
+
+    pub async fn member(&self, server_id: u64) -> Result<Member> {
+        let member = Member::find_one(|q| q.eq("id", self.0).eq("server_id", server_id)).await;
+        match member {
+            Some(m) => Ok(m),
+            _ => Err(Error::UnknownMember),
+        }
+    }
 }
 
 impl<'r> FromParam<'r> for Ref {
