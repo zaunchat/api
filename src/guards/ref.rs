@@ -83,6 +83,14 @@ impl Ref {
             _ => Err(Error::UnknownMember),
         }
     }
+
+    pub async fn invite(&self) -> Result<Invite> {
+        let invite = Invite::find_one_by_id(self.0).await;
+        match invite {
+            Some(i) => Ok(i),
+            _ => Err(Error::UnknownInvite),
+        }
+    }
 }
 
 impl<'r> FromParam<'r> for Ref {
