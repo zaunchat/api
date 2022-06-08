@@ -1,6 +1,6 @@
+use crate::guards::r#ref::Ref;
 use crate::structures::*;
 use crate::utils::error::*;
-use crate::guards::r#ref::Ref;
 use rocket::serde::json::Json;
 
 #[get("/@me")]

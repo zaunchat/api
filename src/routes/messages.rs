@@ -46,7 +46,11 @@ struct EditMessageSchema<'r> {
 }
 
 #[patch("/<message_id>", data = "<data>")]
-async fn edit(user: User, message_id: Ref, data: Json<EditMessageSchema<'_>>) -> Result<Json<Message>> {
+async fn edit(
+    user: User,
+    message_id: Ref,
+    data: Json<EditMessageSchema<'_>>,
+) -> Result<Json<Message>> {
     let data = data.into_inner();
 
     data.validate()
