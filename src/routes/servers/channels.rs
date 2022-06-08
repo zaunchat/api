@@ -93,6 +93,27 @@ async fn update(user: User, server_id: u64, channel_id: Ref) -> Result<Json<Chan
     todo!("Update channels route")
 }
 
+#[post("/<server_id>/<channel_id>/invite")]
+async fn create_invite(user: User, server_id: u64, channel_id: Ref) -> Result<Json<Invite>> {
+    if !user.is_in_server(server_id).await {
+        return Err(Error::UnknownServer);
+    }
+
+    let channel = channel_id.channel(user.id.into()).await?;
+
+    let p = Permissions::fetch(&user, server_id.into(), channel.id.into()).await?;
+
+    if !p.contains(Permissions::INVITE_OTHERS) {
+        return Err(Error::MissingPermissions);
+    }
+
+    let invite = Invite::new(user.id, channel.id, server_id.into());
+    
+    invite.save().await;
+
+    Ok(Json(invite))
+}
+
 pub fn routes() -> Vec<rocket::Route> {
-    routes![fetch_one, fetch_many, create, update, delete]
+    routes![fetch_one, fetch_many, create, update, delete, create_invite]
 }
