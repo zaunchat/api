@@ -1,11 +1,14 @@
-use snowflake::SnowflakeIdGenerator;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use once_cell::sync::Lazy;
+use rbatis::snowflake::Snowflake;
 
-lazy_static! {
-    static ref ITCHAT_EPOCH: SystemTime = UNIX_EPOCH + Duration::from_millis(1609459200000);
-}
+const ITCHAT_EPOCH: i64 = 1609459200000;
+
+static SNOWFLAKE: Lazy<Snowflake> = Lazy::new(|| {
+    let mut snowflake = Snowflake::default();
+    snowflake.set_epoch(ITCHAT_EPOCH);
+    snowflake
+});
 
 pub fn generate() -> u64 {
-    let mut generator = SnowflakeIdGenerator::with_epoch(1, 1, *ITCHAT_EPOCH);
-    generator.generate() as u64
+    SNOWFLAKE.generate() as u64
 }
