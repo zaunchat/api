@@ -3,7 +3,7 @@ use crate::structures::*;
 use crate::utils::error::*;
 use rocket::request::FromParam;
 
-pub struct Ref(u64);
+pub struct Ref(pub u64);
 
 impl Ref {
     pub fn from_unchecked(id: String) -> Ref {
