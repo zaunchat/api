@@ -1,6 +1,5 @@
-use crate::database::DB as db;
 use crate::guards::r#ref::Ref;
-use crate::structures::{Base, Channel, User};
+use crate::structures::*;
 use crate::utils::error::*;
 use crate::utils::permissions::Permissions;
 use rocket::form::validate::Contains;
@@ -8,20 +7,13 @@ use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
 #[get("/")]
-async fn fetch_channels(user: User) -> Json<Vec<Channel>> {
-    let channels: Vec<Channel> = db
-        .fetch(
-            "SELECT * FROM channels WHERE recipients::jsonb ? $1",
-            vec![user.id.into()],
-        )
-        .await
-        .unwrap();
-    Json(channels)
+async fn fetch_many(user: User) -> Json<Vec<Channel>> {
+    Json(user.fetch_channels().await)
 }
 
-#[get("/<target>")]
-async fn fetch_channel(user: User, target: Ref) -> Result<Json<Channel>> {
-    let channel = target.channel(user.id.into()).await?;
+#[get("/<channel_id>")]
+async fn fetch_one(user: User, channel_id: Ref) -> Result<Json<Channel>> {
+    let channel = channel_id.channel(user.id.into()).await?;
     Ok(Json(channel))
 }
 
@@ -45,29 +37,29 @@ async fn create_group(user: User, data: Json<CreateGroupSchema<'_>>) -> Result<J
     Ok(Json(group))
 }
 
-#[put("/<group>/<target>")]
-async fn add_user_to_group(user: User, group: Ref, target: Ref) -> Result<()> {
+#[put("/<group_id>/<target>")]
+async fn add_user_to_group(user: User, group_id: Ref, target: Ref) -> Result<()> {
     let target = target.user().await?;
-    let mut channel = group.channel(user.id.into()).await?;
+    let mut group = group_id.channel(user.id.into()).await?;
 
-    if let Some(recipients) = channel.recipients.as_mut() {
+    if let Some(recipients) = group.recipients.as_mut() {
         if recipients.contains(&target.id) {
             return Err(Error::MissingAccess);
         }
         recipients.push(target.id);
     }
 
-    channel.update().await;
+    group.update().await;
 
     Ok(())
 }
 
-#[delete("/<group>/<target>")]
-async fn remove_user_from_group(user: User, group: Ref, target: Ref) -> Result<()> {
+#[delete("/<group_id>/<target>")]
+async fn remove_user_from_group(user: User, group_id: Ref, target: Ref) -> Result<()> {
     let target = target.user().await?;
-    let mut channel = group.channel(user.id.into()).await?;
+    let mut group = group_id.channel(user.id.into()).await?;
 
-    if let Some(recipients) = channel.recipients.as_mut() {
+    if let Some(recipients) = group.recipients.as_mut() {
         if !recipients.contains(&target.id) {
             return Err(Error::UnknownMember);
         }
@@ -86,44 +78,37 @@ async fn remove_user_from_group(user: User, group: Ref, target: Ref) -> Result<(
         recipients.remove(index.unwrap());
     }
 
-    let permissions = Permissions::fetch(&user, None, Some(channel.id)).await?;
+    let permissions = Permissions::fetch(&user, None, Some(group.id)).await?;
 
     if !permissions.contains(Permissions::KICK_MEMBERS) {
         return Err(Error::MissingPermissions);
     }
 
-    channel.update().await;
+    group.update().await;
 
     Ok(())
 }
 
 #[delete("/<group_id>")]
-async fn delete_group(user: User, group_id: u64) -> Result<()> {
-    let channel: Option<Channel> = db
-        .fetch(
-            "SELECT * FROM channels WHERE recipients::jsonb ? $1 AND id = $2",
-            vec![user.id.into(), group_id.into()],
-        )
-        .await
-        .unwrap();
+async fn delete_group(user: User, group_id: Ref) -> Result<()> {
+    let group = group_id.channel(user.id.into()).await?;
 
-    match channel {
-        Some(channel) if channel.owner_id == Some(user.id) => {
-            channel.delete(channel.id).await;
-            Ok(())
-        }
-        Some(_) => Err(Error::MissingPermissions),
-        _ => Err(Error::UnknownChannel),
+    if group.owner_id != Some(user.id) {
+        return Err(Error::MissingPermissions);
     }
+
+    group.delete(group.id).await;
+
+    Ok(())
 }
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![
-        fetch_channels,
-        fetch_channel,
+        fetch_one,
+        fetch_many,
         create_group,
+        delete_group,
         add_user_to_group,
         remove_user_from_group,
-        delete_group
     ]
 }
