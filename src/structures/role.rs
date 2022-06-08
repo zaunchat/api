@@ -14,7 +14,9 @@ pub struct Role {
     pub server_id: u64,
 }
 
-impl Base for Role {}
+impl Base for Role {
+    fn id(&self) -> u64 { self.id }
+}
 
 impl Role {
     pub fn new(name: String, server_id: u64) -> Self {

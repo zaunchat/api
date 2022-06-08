@@ -73,7 +73,7 @@ async fn delete(user: User, server_id: u64, channel_id: Ref) -> Result<()> {
         return Err(Error::MissingPermissions);
     }
 
-    channel_id.channel(None).await?.delete(channel_id.0).await;
+    channel_id.channel(None).await?.delete().await;
 
     Ok(())
 }

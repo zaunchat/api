@@ -19,7 +19,9 @@ pub struct Message {
                                 */
 }
 
-impl Base for Message {}
+impl Base for Message {
+    fn id(&self) -> u64 { self.id }
+}
 
 impl Message {
     pub fn new(channel_id: u64, author_id: u64) -> Self {
@@ -29,11 +31,6 @@ impl Message {
             author_id,
             ..Default::default()
         }
-    }
-
-    pub fn created_at() -> u64 {
-        // TODO: extract time from id
-        0
     }
 
     pub fn is_empty(&self) -> bool {

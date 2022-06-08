@@ -55,7 +55,9 @@ pub struct Channel {
     pub permissions: Option<Permissions>,
 }
 
-impl Base for Channel {}
+impl Base for Channel {
+    fn id(&self) -> u64 { self.id }
+}
 
 impl Channel {
     pub fn new_dm(user: u64, target: u64) -> Self {

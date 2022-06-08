@@ -47,7 +47,7 @@ async fn kick(user: User, server_id: u64, member_id: Ref) -> Result<()> {
         }
     }
 
-    member_id.member(server_id).await?.delete(member_id.0).await;
+    member_id.member(server_id).await?.delete().await;
 
     Ok(())
 }

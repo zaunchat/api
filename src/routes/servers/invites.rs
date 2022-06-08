@@ -39,7 +39,7 @@ async fn delete(user: User, server_id: u64, invite_id: Ref) -> Result<()> {
     invite_id
         .invite(server_id.into())
         .await?
-        .delete(invite_id.0)
+        .delete()
         .await;
 
     Ok(())

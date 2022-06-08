@@ -63,7 +63,7 @@ pub async fn delete(user: User, target: Ref, token: &str) -> Result<()> {
         return Err(Error::InvalidToken);
     }
 
-    session.delete(session.id).await;
+    session.delete().await;
 
     Ok(())
 }

@@ -87,7 +87,7 @@ async fn delete(user: User, message_id: Ref) -> Result<()> {
         return Err(Error::MissingPermissions);
     }
 
-    msg.delete(msg.id).await;
+    msg.delete().await;
 
     Ok(())
 }

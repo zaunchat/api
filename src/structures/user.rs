@@ -15,7 +15,9 @@ pub struct User {
     pub verified: bool,
 }
 
-impl Base for User {}
+impl Base for User {
+    fn id(&self) -> u64 { self.id }
+}
 
 impl User {
     pub fn new(username: String, email: String, password: String) -> Self {

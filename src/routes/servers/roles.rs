@@ -130,7 +130,7 @@ async fn delete(user: User, server_id: u64, role_id: Ref) -> Result<()> {
         return Err(Error::MissingPermissions);
     }
 
-    role_id.role(server_id).await?.delete(role_id.0).await;
+    role_id.role(server_id).await?.delete().await;
 
     Ok(())
 }

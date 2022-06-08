@@ -11,7 +11,9 @@ pub struct Member {
     pub roles: Vec<u64>,
 }
 
-impl Base for Member {}
+impl Base for Member {
+    fn id(&self) -> u64 { self.id }
+}
 
 impl Member {
     pub fn new(user_id: u64, server_id: u64) -> Self {
