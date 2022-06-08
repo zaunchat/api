@@ -1,4 +1,4 @@
-use crate::utils::snowflake::generate_id;
+use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
 use super::channel::Channel;
@@ -24,7 +24,7 @@ impl Base for Server {}
 impl Server {
     pub fn new(name: String, owner_id: u64) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             name,
             owner_id,
             permissions: DEFAULT_PERMISSION_EVERYONE.bits(),

@@ -1,6 +1,6 @@
 use super::Base;
 use crate::utils::permissions::DEFAULT_PERMISSION_DM;
-use crate::utils::snowflake::generate_id;
+use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
@@ -60,7 +60,7 @@ impl Base for Channel {}
 impl Channel {
     pub fn new_dm(user: u64, target: u64) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             r#type: ChannelTypes::Direct,
             recipients: vec![user, target].into(),
             permissions: None,
@@ -75,7 +75,7 @@ impl Channel {
 
     pub fn new_group(user: u64, name: String) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             name: Some(name),
             r#type: ChannelTypes::Group,
             recipients: vec![user].into(),
@@ -90,7 +90,7 @@ impl Channel {
 
     pub fn new_text(name: String, server_id: u64) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             r#type: ChannelTypes::Text,
             overwrites: vec![].into(),
             name: name.into(),
@@ -105,7 +105,7 @@ impl Channel {
 
     pub fn new_voice(name: String, server_id: u64) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             r#type: ChannelTypes::Voice,
             overwrites: vec![].into(),
             name: name.into(),
@@ -120,7 +120,7 @@ impl Channel {
 
     pub fn new_category(name: String, server_id: u64) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             r#type: ChannelTypes::Category,
             overwrites: vec![].into(),
             name: name.into(),

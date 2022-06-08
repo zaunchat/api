@@ -1,6 +1,6 @@
-use super::{Base, Bot, Server, Session};
+use super::*;
 use crate::database::DB as db;
-use crate::utils::snowflake::generate_id;
+use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:users)]
@@ -20,7 +20,7 @@ impl Base for User {}
 impl User {
     pub fn new(username: String, email: String, password: String) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             username,
             email,
             password,
@@ -41,9 +41,18 @@ impl User {
         Bot::find(|q| q.eq("owner_id", &self.id)).await
     }
 
+    pub async fn fetch_channels(&self) -> Vec<Channel> {
+        db.fetch(
+            "SELECT * FROM channels WHERE recipients::jsonb ? $1",
+            vec![self.id.into()],
+        )
+        .await
+        .unwrap()
+    }
+
     // pub async fn fetch_relations(&self) {}
 
-    #[sql(crate::database::DB, "SELECT * FROM users LEFT JOIN sessions ON sessions.user_id = users.id WHERE verified = TRUE AND sessions.token = $1")]
+    #[sql(crate::database::DB, "SELECT * FROM users LEFT JOIN sessions ON sessions.user_id = users.id WHERE verified = TRUE AND sessions.token = $1 LIMIT 1")]
     pub async fn fetch_by_token(_token: &str) -> Result<User, rbatis::Error> {}
 
     pub fn to_public(&self) -> Self {

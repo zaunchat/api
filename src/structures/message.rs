@@ -1,5 +1,5 @@
 use super::Base;
-use crate::utils::snowflake::generate_id;
+use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:messages)]
@@ -24,7 +24,7 @@ impl Base for Message {}
 impl Message {
     pub fn new(channel_id: u64, author_id: u64) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             channel_id,
             author_id,
             ..Default::default()
