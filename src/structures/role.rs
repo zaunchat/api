@@ -1,5 +1,5 @@
 use super::Base;
-use crate::utils::snowflake::generate_id;
+use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:roles)]
@@ -18,7 +18,7 @@ impl Base for Role {}
 impl Role {
     pub fn new(name: String, server_id: u64) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             name,
             server_id,
             ..Default::default()

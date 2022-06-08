@@ -1,4 +1,4 @@
-use crate::utils::snowflake::generate_id;
+use crate::utils::snowflake;
 
 use super::Base;
 use nanoid::nanoid;
@@ -20,7 +20,7 @@ impl Base for Invite {}
 impl Invite {
     pub fn new(inviter_id: u64, channel_id: u64, server_id: Option<u64>) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             code: nanoid!(8),
             inviter_id,
             channel_id,

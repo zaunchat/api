@@ -1,4 +1,4 @@
-use crate::utils::snowflake::generate_id;
+use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
 use super::Base;
@@ -17,7 +17,7 @@ impl Base for Session {}
 impl Session {
     pub fn new(user_id: u64) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             token: nanoid!(64),
             user_id,
         }

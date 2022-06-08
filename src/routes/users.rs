@@ -1,5 +1,6 @@
-use crate::structures::{Base, User};
+use crate::structures::*;
 use crate::utils::error::*;
+use crate::guards::r#ref::Ref;
 use rocket::serde::json::Json;
 
 #[get("/@me")]
@@ -8,16 +9,11 @@ fn fetch_me(user: User) -> Json<User> {
 }
 
 #[get("/<user_id>")]
-async fn fetch_user(user_id: u64) -> Result<Json<User>> {
-    let user = User::find_one_by_id(user_id).await;
-
-    if let Some(user) = user {
-        return Ok(Json(user.to_public()));
-    }
-
-    Err(Error::UnknownUser)
+async fn fetch_one(user_id: Ref) -> Result<Json<User>> {
+    let user = user_id.user().await?;
+    Ok(Json(user.to_public()))
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![fetch_me, fetch_user]
+    routes![fetch_me, fetch_one]
 }

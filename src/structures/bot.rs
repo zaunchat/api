@@ -1,7 +1,6 @@
-use crate::utils::snowflake::generate_id;
+use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
-
-use super::Base;
+use super::*;
 
 #[crud_table(table_name:bots)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -18,7 +17,7 @@ impl Base for Bot {}
 impl Bot {
     pub fn new(username: String, owner_id: u64) -> Self {
         Self {
-            id: generate_id(),
+            id: snowflake::generate(),
             username,
             owner_id,
             verified: false,
