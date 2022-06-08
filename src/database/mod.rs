@@ -1,9 +1,8 @@
 use crate::config::DATABASE_URI;
+use once_cell::sync::Lazy;
 use rbatis::rbatis::Rbatis;
 
-lazy_static! {
-    pub static ref DB: Rbatis = Rbatis::new();
-}
+pub static DB: Lazy<Rbatis> = Lazy::new(|| Rbatis::new());
 
 pub async fn connect() {
     DB.link((*DATABASE_URI).as_str())
