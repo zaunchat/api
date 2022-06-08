@@ -12,7 +12,9 @@ pub struct Session {
     pub user_id: u64,
 }
 
-impl Base for Session {}
+impl Base for Session {
+    fn id(&self) -> u64 { self.id }
+}
 
 impl Session {
     pub fn new(user_id: u64) -> Self {

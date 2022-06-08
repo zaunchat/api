@@ -6,6 +6,12 @@ use rocket::serde::DeserializeOwned;
 
 #[async_trait]
 pub trait Base: CRUDTable + DeserializeOwned {
+    fn id(&self) -> u64;
+
+    fn created_at(&self) -> u64 {
+        todo!("Extract date from id")
+    }
+
     async fn find<F>(query: F) -> Vec<Self>
     where
         F: Send + Fn(Wrapper) -> Wrapper,
@@ -38,7 +44,7 @@ pub trait Base: CRUDTable + DeserializeOwned {
             .expect("Could'nt update thus target");
     }
 
-    async fn delete(&self, id: u64) -> bool {
-        db.remove_by_column::<Self, &u64>("id", &id).await.is_ok()
+    async fn delete(&self) -> bool {
+        db.remove_by_column::<Self, u64>("id", self.id()).await.is_ok()
     }
 }

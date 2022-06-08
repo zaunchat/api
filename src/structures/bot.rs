@@ -12,7 +12,9 @@ pub struct Bot {
 }
 
 #[async_trait]
-impl Base for Bot {}
+impl Base for Bot {
+    fn id(&self) -> u64 { self.id }
+}
 
 impl Bot {
     pub fn new(username: String, owner_id: u64) -> Self {

@@ -28,6 +28,8 @@ async fn delete(user: User, bot_id: Ref) -> Result<()> {
         return Err(Error::MissingAccess);
     }
 
+    bot.delete().await;
+
     Ok(())
 }
 

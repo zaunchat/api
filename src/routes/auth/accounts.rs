@@ -1,6 +1,6 @@
 use crate::config::SMTP_ENABLED;
 use crate::guards::captcha::Captcha;
-use crate::structures::{Base, User};
+use crate::structures::*;
 use crate::utils::error::*;
 use argon2::Config;
 use rocket::serde::{json::Json, Deserialize};

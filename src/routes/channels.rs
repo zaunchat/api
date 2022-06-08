@@ -97,9 +97,25 @@ async fn delete_group(user: User, group_id: Ref) -> Result<()> {
         return Err(Error::MissingPermissions);
     }
 
-    group.delete(group.id).await;
+    group.delete().await;
 
     Ok(())
+}
+
+#[post("/<group_id>/invite")]
+async fn create_invite(user: User, group_id: Ref) -> Result<Json<Invite>> {
+    let group = group_id.channel(user.id.into()).await?;
+
+    let p = Permissions::fetch(&user, None, Some(group.id)).await?;
+
+    if !p.contains(Permissions::INVITE_OTHERS) {
+        return Err(Error::MissingPermissions);
+    }
+
+    let invite = Invite::new(user.id, group.id, None);
+    invite.save().await;
+
+    Ok(Json(invite))
 }
 
 pub fn routes() -> Vec<rocket::Route> {
@@ -110,5 +126,6 @@ pub fn routes() -> Vec<rocket::Route> {
         delete_group,
         add_user_to_group,
         remove_user_from_group,
+        create_invite
     ]
 }

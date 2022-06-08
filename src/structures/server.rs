@@ -15,7 +15,9 @@ pub struct Server {
     pub permissions: Permissions,
 }
 
-impl Base for Server {}
+impl Base for Server {
+    fn id(&self) -> u64 { self.id }
+}
 
 impl Server {
     pub fn new(name: String, owner_id: u64) -> Self {
