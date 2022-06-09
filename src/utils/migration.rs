@@ -61,22 +61,7 @@ pub async fn migrate() {
 }
 
 async fn ensure_table() {
-    let exists = db
-        .exec("select 'migrations'::regclass", vec![])
-        .await
-        .is_ok();
-
-    if !exists {
-        db.exec(
-            "create table migrations (
-            id serial primary key,
-            created_at timestamp with time zone not null default now(),
-            name text,
-            path text
-          )",
-            vec![],
-        )
-        .await
-        .unwrap();
-    }
+    db.exec("CREATE TABLE IF NOT EXISTS migrations ( id SERIAL PRIMARY KEY, created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), name TEXT, path TEXT )", vec![])
+    .await
+    .unwrap();
 }
