@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/itchatapp/api/compare/v1.0.0...v1.0.1) (2022-06-09)
+
+
+### Bug Fixes
+
+* bumping versions ([ccec7b7](https://github.com/itchatapp/api/commit/ccec7b74243d9f11d6151ee1290c5548642ec115))
+
 # 1.0.0 (2022-06-09)
 
 
