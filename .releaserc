@@ -6,6 +6,12 @@
         "@semantic-release/commit-analyzer",
         "@semantic-release/release-notes-generator",
         "@semantic-release/changelog",
+        [
+            "@semantic-release/exec",
+            {
+                "publishCmd": "node ./version-bump.mjs ${nextRelease.version}"
+            }
+        ],
         "@semantic-release/github",
         [
             "@semantic-release/git",
@@ -14,12 +20,6 @@
                     "CHANGELOG.md",
                     "Cargo.toml"
                 ]
-            }
-        ],
-        [
-            "@semantic-release/exec",
-            {
-                "publishCmd": "node ./version-bump.mjs ${nextRelease.version}"
             }
         ]
     ]

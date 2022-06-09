@@ -4,24 +4,36 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rocket = { version = "0.5.0-rc.2", features = ["json"] }
+# Async
 async-std = { version = "1.11.0", features = ["attributes", "tokio1"] }
-dotenv = "0.15.0"
-rbson = "2.0"
-lazy_static = "1.4.0"
+async-trait = "0.1.56"
+
+
+# Database
 rbatis = { version = "3.1", default-features = false, features = ["postgres", "runtime-async-std-native-tls", "upper_case_sql_keyword"] }
+rbson = "2.0"
+
+
+# HTTP
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
+reqwest = { version = "0.11", features = ["json"] }
+
+# Serde
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0.81"
-async-trait = "0.1.56"
-nanoid = "0.4.0"
-once_cell = "1.12.0"
-validator = { version = "0.15", features = ["derive"] }
-rust-argon2 = "1.0.0"
-reqwest = { version = "0.11", features = ["json"] }
-lettre = "0.9"
-lettre_email = "0.9"
-bitflags = "1.3.2"
+
+# Logging
 log = "0.4.17"
 env_logger = "0.9.0"
+
+
+# Utility
+dotenv = "0.15.0"
+lazy_static = "1.4.0"
+once_cell = "1.12.0"
+nanoid = "0.4.0"
+validator = { version = "0.15", features = ["derive"] }
+rust-argon2 = "1.0.0"
+bitflags = "1.3.2"
 governor = "0.4.2"
 dashmap = "5.3.4"
