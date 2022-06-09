@@ -5,7 +5,6 @@ use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
 bitflags! {
-    #[derive(JsonSchema)]
     pub struct Permissions: u64 {
           const ADMINISTRATOR = 1 << 0;
           const VIEW_CHANNEL = 1 << 1;
@@ -191,5 +190,21 @@ impl<'de> Deserialize<'de> for Permissions {
         D: Deserializer<'de>,
     {
         deserializer.deserialize_identifier(PermissionsVisitor)
+    }
+}
+
+use schemars::schema::{InstanceType, Schema, SchemaObject, SingleOrVec};
+use schemars::JsonSchema;
+
+impl JsonSchema for Permissions {
+    fn schema_name() -> String {
+        "Permissions".to_string()
+    }
+
+    fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> Schema {
+        Schema::Object(SchemaObject {
+            instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::Integer))),
+            ..Default::default()
+        })
     }
 }

@@ -3,7 +3,6 @@ use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
 bitflags! {
-    #[derive(JsonSchema)]
     pub struct Badges: u64 {
        const STAFF = 1 << 1;
        const DEVELOPER = 1 << 2;
@@ -54,5 +53,21 @@ impl<'de> Deserialize<'de> for Badges {
         D: Deserializer<'de>,
     {
         deserializer.deserialize_identifier(BadgesVisitor)
+    }
+}
+
+use schemars::schema::{InstanceType, Schema, SchemaObject, SingleOrVec};
+use schemars::JsonSchema;
+
+impl JsonSchema for Badges {
+    fn schema_name() -> String {
+        "Badges".to_string()
+    }
+
+    fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> Schema {
+        Schema::Object(SchemaObject {
+            instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::Integer))),
+            ..Default::default()
+        })
     }
 }
