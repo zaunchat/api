@@ -1,3 +1,16 @@
+# [1.2.0](https://github.com/itchatapp/api/compare/v1.1.3...v1.2.0) (2022-06-09)
+
+
+### Bug Fixes
+
+* **Auth:** Ignore paths correctly ([236124e](https://github.com/itchatapp/api/commit/236124e93604fafb8bcf17925dea47e98c7aa565))
+* serialize nullable property on structs ([52cbea9](https://github.com/itchatapp/api/commit/52cbea97e5d5730db3cdea08f0006a97d48e765f))
+
+
+### Features
+
+* OpenAPI v3 is here! ([3711d6a](https://github.com/itchatapp/api/commit/3711d6aa1bcb603849b230f04c44d1f54f9888f2))
+
 ## [1.1.3](https://github.com/itchatapp/api/compare/v1.1.2...v1.1.3) (2022-06-09)
 
 
