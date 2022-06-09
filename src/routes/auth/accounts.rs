@@ -1,6 +1,8 @@
-use crate::config::SMTP_ENABLED;
+use crate::config::EMAIL_VERIFICATION;
 use crate::guards::captcha::Captcha;
+use crate::guards::r#ref::Ref;
 use crate::structures::*;
+use crate::utils::email;
 use crate::utils::error::*;
 use argon2::Config;
 use rocket::serde::{json::Json, Deserialize};
@@ -42,11 +44,14 @@ async fn register(_captcha: Captcha, data: Json<RegisterSchema<'_>>) -> Result<J
 
     let mut user = User::new(data.username.into(), data.email.into(), hashed_password);
 
-    if *SMTP_ENABLED {
-        todo!("Send email verification")
-    } else {
-        user.verified = true;
-    }
+    match *EMAIL_VERIFICATION {
+        true if email::send(&user).await => {
+            log::debug!("Email have been sent to: {}", user.email);
+        } // If email sending failed for any reason just verify the account.
+        _ => {
+            user.verified = true;
+        }
+    };
 
     user.save().await;
 
@@ -54,12 +59,11 @@ async fn register(_captcha: Captcha, data: Json<RegisterSchema<'_>>) -> Result<J
 }
 
 #[get("/verify/<user_id>/<code>")]
-async fn verify(user_id: u64, code: &str) -> Result<()> {
-    let user = User::find_one(|q| q.eq("id", &user_id).eq("verified", false)).await;
+async fn verify(user_id: Ref, code: &str) -> Result<()> {
+    let verified = email::verify(user_id.0, code).await;
 
-    // TODO: Check verification code.
-
-    if let Some(mut user) = user {
+    if verified {
+        let mut user = user_id.user().await?;
         user.verified = true;
         user.update().await;
         Ok(())
