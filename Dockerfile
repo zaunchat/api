@@ -13,5 +13,7 @@ RUN cargo install --locked --path .
 FROM debian:buster-slim
 RUN apt-get update && apt-get install -y ca-certificates
 COPY --from=builder /usr/local/cargo/bin/api ./
-EXPOSE 8000
+EXPOSE 8080
+ENV ROCKET_ADDRESS 0.0.0.0
+ENV ROCKET_PORT 8080
 CMD ["./api"]
