@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/itchatapp/api/compare/v1.2.1...v1.3.0) (2022-06-09)
+
+
+### Features
+
+* **docker:** Add Dockerfile ([5fdd09c](https://github.com/itchatapp/api/commit/5fdd09c439b41c843ba1f610ecaf890124f3b70a))
+
 ## [1.2.1](https://github.com/itchatapp/api/compare/v1.2.0...v1.2.1) (2022-06-09)
 
 
