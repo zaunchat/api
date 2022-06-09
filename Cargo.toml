@@ -28,7 +28,7 @@ env_logger = "0.9.0"
 
 
 # Security
-rocket_cors = "0.6.0-alpha1"
+rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", rev = "54fae0701dffbe5df686465780218644ee3fae5f" }
 rust-argon2 = "1.0.0"
 governor = "0.4.2"
 validator = { version = "0.15", features = ["derive"] }
