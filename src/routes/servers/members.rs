@@ -87,7 +87,7 @@ async fn update(
             return Err(Error::MissingPermissions);
         }
 
-        if nickname.len() == 0 {
+        if nickname.is_empty() {
             member.nickname = None;
         } else {
             member.nickname = Some(nickname.into())
@@ -106,7 +106,7 @@ async fn update(
         member.roles = vec![];
 
         for id in ids {
-            if roles.find(|r| r.id == id).is_none() {
+            if !roles.any(|r| r.id == id) {
                 return Err(Error::UnknownRole);
             }
             member.roles.push(id);

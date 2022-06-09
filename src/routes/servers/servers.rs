@@ -58,12 +58,10 @@ async fn delete(user: User, server_id: Ref) -> Result<()> {
 
     if server.owner_id == user.id {
         server.delete().await;
+    } else if let Some(member) = server.fetch_member(user.id).await {
+        member.delete().await;
     } else {
-        if let Some(member) = server.fetch_member(user.id).await {
-            member.delete().await;
-        } else {
-            return Err(Error::UnknownMember);
-        }
+        return Err(Error::UnknownMember);
     }
 
     Ok(())

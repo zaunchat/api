@@ -73,7 +73,7 @@ async fn remove_user_from_group(user: User, group_id: Ref, target: Ref) -> Resul
 
         let mut index: Option<usize> = None;
 
-        for (i, id) in recipients.into_iter().enumerate() {
+        for (i, id) in recipients.iter_mut().enumerate() {
             if *id == target.id {
                 index = Some(i);
                 break;

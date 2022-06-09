@@ -20,7 +20,7 @@ pub async fn migrate() {
         migrations.push(Migration {
             id: id.parse().unwrap(),
             name: name.into(),
-            path: path.into(),
+            path,
         });
     }
 
