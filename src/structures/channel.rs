@@ -10,6 +10,13 @@ pub enum ChannelTypes {
     Text,
     Voice,
     Category,
+    Unknown
+}
+
+impl Default for ChannelTypes {
+    fn default() -> Self {
+        Self::Unknown
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
@@ -27,31 +34,39 @@ pub struct Overwrite {
 }
 
 #[crud_table(table_name:channels)]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Channel {
     pub id: u64,
     pub r#type: ChannelTypes,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     // DM/Group
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub recipients: Option<Vec<u64>>,
 
     // Group/Text/Voice/Category
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub overwrites: Option<Vec<Overwrite>>,
 
     // For server channels
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub server_id: Option<u64>,
 
     // Server channels
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub parent_id: Option<u64>,
 
     // Group
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub owner_id: Option<u64>,
 
     // Text
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub topic: Option<String>,
 
     // Group
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub permissions: Option<Permissions>,
 }
 
@@ -61,19 +76,14 @@ impl Base for Channel {
     }
 }
 
+
 impl Channel {
     pub fn new_dm(user: u64, target: u64) -> Self {
         Self {
             id: snowflake::generate(),
             r#type: ChannelTypes::Direct,
             recipients: vec![user, target].into(),
-            permissions: None,
-            overwrites: None,
-            name: None,
-            owner_id: None,
-            parent_id: None,
-            server_id: None,
-            topic: None,
+            ..Default::default()
         }
     }
 
@@ -84,11 +94,7 @@ impl Channel {
             r#type: ChannelTypes::Group,
             recipients: vec![user].into(),
             permissions: Some(*DEFAULT_PERMISSION_DM),
-            overwrites: None,
-            owner_id: None,
-            parent_id: None,
-            server_id: None,
-            topic: None,
+            ..Default::default()
         }
     }
 
@@ -99,11 +105,7 @@ impl Channel {
             overwrites: vec![].into(),
             name: name.into(),
             server_id: server_id.into(),
-            permissions: None,
-            recipients: None,
-            owner_id: None,
-            parent_id: None,
-            topic: None,
+            ..Default::default()
         }
     }
 
@@ -114,11 +116,7 @@ impl Channel {
             overwrites: vec![].into(),
             name: name.into(),
             server_id: server_id.into(),
-            permissions: None,
-            recipients: None,
-            owner_id: None,
-            parent_id: None,
-            topic: None,
+            ..Default::default()
         }
     }
 
@@ -129,11 +127,7 @@ impl Channel {
             overwrites: vec![].into(),
             name: name.into(),
             server_id: server_id.into(),
-            permissions: None,
-            recipients: None,
-            owner_id: None,
-            parent_id: None,
-            topic: None,
+            ..Default::default()
         }
     }
 

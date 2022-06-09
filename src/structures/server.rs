@@ -8,8 +8,11 @@ use serde::{Deserialize, Serialize};
 pub struct Server {
     pub id: u64,
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub icon: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub banner: Option<String>,
     pub owner_id: u64,
     pub permissions: Permissions,
