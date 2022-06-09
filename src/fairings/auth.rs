@@ -21,7 +21,7 @@ fn is_ignored(path: &str) -> bool {
 pub struct Auth;
 
 #[rocket::async_trait]
-impl Fairing for Auth<'static> {
+impl Fairing for Auth {
     fn info(&self) -> Info {
         Info {
             name: "Authentication",
@@ -43,7 +43,7 @@ impl Fairing for Auth<'static> {
     }
 }
 
-pub fn new(ignore: Vec<&'a str>) -> Auth {
+pub fn new() -> Auth {
     Auth {}
 }
 
