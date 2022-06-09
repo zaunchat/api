@@ -7,6 +7,7 @@ WORKDIR /home/rust/src/api
 RUN apt-get update && apt-get install -y libssl-dev pkg-config
 
 COPY Cargo.toml Cargo.lock ./
+COPY assets ./assets
 COPY src ./src
 RUN cargo install --locked --path .
 
