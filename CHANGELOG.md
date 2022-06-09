@@ -1,3 +1,11 @@
+## [1.3.2](https://github.com/itchatapp/api/compare/v1.3.1...v1.3.2) (2022-06-09)
+
+
+### Bug Fixes
+
+* **docker:** Move assets to working dir ([6375162](https://github.com/itchatapp/api/commit/6375162d05d12bb744ddfdfb522756329f89bcb2))
+* Follow clippy guide ([049b085](https://github.com/itchatapp/api/commit/049b085c3f1d28e78063bb3cbaaa8d0d9bce525a))
+
 ## [1.3.1](https://github.com/itchatapp/api/compare/v1.3.0...v1.3.1) (2022-06-09)
 
 
