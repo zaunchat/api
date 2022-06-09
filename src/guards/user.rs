@@ -40,13 +40,13 @@ impl<'r> OpenApiFromRequest<'r> for User {
         requirements.insert("token".to_owned(), vec![]);
 
         Ok(RequestHeaderInput::Security(
-            "Authentication Token".to_owned(),
+            "token".to_owned(),
             SecurityScheme {
                 data: SecuritySchemeData::ApiKey {
                     name: "authorization".to_owned(),
                     location: "header".to_owned(),
                 },
-                description: Some("Token".to_owned()),
+                description: Some("Session authentication token".to_owned()),
                 extensions: schemars::Map::new(),
             },
             requirements,
