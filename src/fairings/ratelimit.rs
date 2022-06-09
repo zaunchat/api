@@ -28,13 +28,13 @@ lazy_static! {
     static ref MAP: DashMap<String, SharedRateLimiter> = DashMap::new();
 }
 
-fn limit_of(key: &String) -> (u32, u64) {
-    match key.as_str() {
+fn limit_of(path: &str) -> (u32, u64) {
+    match path {
         "/auth" => (10, 1000 * 60 * 60 * 3),
         "/channels" => (15, 1000 * 5),
         "/users" => (20, 1000 * 5),
         "/servers" => (10, 1000 * 5),
-        _ => (50, 1000 * 60 * 1),
+        _ => (50, 1000 * 60),
     }
 }
 

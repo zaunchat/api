@@ -17,13 +17,13 @@ impl<'r> FromRequest<'r> for Captcha {
     type Error = Error;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        if *config::CAPTCHA_ENABLED == false {
+        if !(*config::CAPTCHA_ENABLED) {
             return Outcome::Success(Captcha { success: true });
         }
 
         let key = req.headers().get_one("X-Captcha-Key");
 
-        if let None = key {
+        if key.is_none() {
             return Outcome::Failure((Status::BadRequest, Error::FailedCaptcha));
         }
 

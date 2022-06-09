@@ -30,7 +30,7 @@ async fn join(user: User, code: &str) -> Result<()> {
 
             let member = Member::new(user.id, invite.server_id.unwrap());
 
-            invite.uses = invite.uses + 1;
+            invite.uses += 1;
             member.save().await;
             invite.update().await;
 
