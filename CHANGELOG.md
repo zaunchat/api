@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/itchatapp/api/compare/v1.1.2...v1.1.3) (2022-06-09)
+
+
+### Bug Fixes
+
+* use correct version of rocket_cors ([0328172](https://github.com/itchatapp/api/commit/0328172072156e6d3b63b01345e02ce5e1a8fe4f))
+
 ## [1.1.2](https://github.com/itchatapp/api/compare/v1.1.1...v1.1.2) (2022-06-09)
 
 
