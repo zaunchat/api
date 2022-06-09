@@ -5,6 +5,7 @@ use crate::utils::permissions::Permissions;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
+#[openapi]
 #[get("/<server_id>/<member_id>")]
 async fn fetch_one(user: User, server_id: u64, member_id: Ref) -> Result<Json<Member>> {
     if !user.is_in_server(server_id).await {
@@ -16,6 +17,7 @@ async fn fetch_one(user: User, server_id: u64, member_id: Ref) -> Result<Json<Me
     Ok(Json(member))
 }
 
+#[openapi]
 #[get("/<server_id>?<limit>")]
 async fn fetch_many(user: User, server_id: u64, limit: Option<u32>) -> Result<Json<Vec<Member>>> {
     if !user.is_in_server(server_id).await {
@@ -34,6 +36,7 @@ async fn fetch_many(user: User, server_id: u64, limit: Option<u32>) -> Result<Js
     Ok(Json(members))
 }
 
+#[openapi]
 #[delete("/<server_id>/<member_id>")]
 async fn kick(user: User, server_id: u64, member_id: Ref) -> Result<()> {
     if !user.is_in_server(server_id).await {
@@ -52,13 +55,14 @@ async fn kick(user: User, server_id: u64, member_id: Ref) -> Result<()> {
     Ok(())
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, JsonSchema)]
 struct UpdateMemberSchema<'a> {
     #[validate(length(min = 1, max = 32))]
     nickname: Option<&'a str>,
     roles: Option<Vec<u64>>,
 }
 
+#[openapi]
 #[patch("/<server_id>/<member_id>", data = "<data>")]
 async fn update(
     user: User,
@@ -114,6 +118,6 @@ async fn update(
     Ok(Json(member))
 }
 
-pub fn routes() -> Vec<rocket::Route> {
-    routes![fetch_one, fetch_many, update, kick]
+pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
+    openapi_get_routes_spec![fetch_one, fetch_many, update, kick]
 }

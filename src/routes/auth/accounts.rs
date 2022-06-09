@@ -8,7 +8,7 @@ use argon2::Config;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
-#[derive(Debug, Deserialize, Validate, Clone, Copy)]
+#[derive(Debug, Deserialize, Validate, Clone, Copy, JsonSchema)]
 pub struct RegisterSchema<'r> {
     #[validate(length(min = 3, max = 32))]
     pub username: &'r str,
@@ -18,6 +18,7 @@ pub struct RegisterSchema<'r> {
     pub email: &'r str,
 }
 
+#[openapi]
 #[post("/register", data = "<data>")]
 async fn register(_captcha: Captcha, data: Json<RegisterSchema<'_>>) -> Result<Json<User>> {
     let data = data.into_inner();
@@ -58,6 +59,7 @@ async fn register(_captcha: Captcha, data: Json<RegisterSchema<'_>>) -> Result<J
     Ok(Json(user))
 }
 
+#[openapi]
 #[get("/verify/<user_id>/<code>")]
 async fn verify(user_id: Ref, code: &str) -> Result<()> {
     let verified = email::verify(user_id.0, code).await;
@@ -72,6 +74,6 @@ async fn verify(user_id: Ref, code: &str) -> Result<()> {
     }
 }
 
-pub fn routes() -> Vec<rocket::Route> {
-    routes![register, verify]
+pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
+    openapi_get_routes_spec![register, verify]
 }

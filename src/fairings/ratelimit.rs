@@ -93,7 +93,6 @@ impl RateLimiter {
     }
 }
 
-
 #[derive(Clone, Copy)]
 struct RateLimitInfo {
     pub limit: u32,
@@ -101,7 +100,6 @@ struct RateLimitInfo {
     pub retry_after: u64,
     pub reset: u64,
 }
-
 
 #[rocket::async_trait]
 impl Fairing for RateLimiter {

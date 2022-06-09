@@ -55,3 +55,19 @@ impl<'r> Responder<'r, 'static> for Error {
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 pub type Success = Result<()>;
+
+use rocket_okapi::okapi::openapi3::Responses;
+use rocket_okapi::okapi::openapi3::{RefOr, Response as OpenApiReponse};
+use rocket_okapi::{gen::OpenApiGenerator, response::OpenApiResponderInner, OpenApiError};
+
+impl OpenApiResponderInner for Error {
+    fn responses(_gen: &mut OpenApiGenerator) -> std::result::Result<Responses, OpenApiError> {
+        Ok(Responses {
+            default: Some(RefOr::Object(OpenApiReponse {
+                description: "An Error".to_string(),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
+    }
+}

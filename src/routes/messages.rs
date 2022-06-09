@@ -5,13 +5,14 @@ use crate::utils::permissions::*;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, JsonSchema)]
 struct CreateMessageSchema<'r> {
     channel_id: u64,
     #[validate(length(min = 1, max = 2000))]
     content: &'r str,
 }
 
+#[openapi]
 #[post("/", data = "<data>")]
 async fn send(user: User, data: Json<CreateMessageSchema<'_>>) -> Result<Json<Message>> {
     let data = data.into_inner();
@@ -39,12 +40,13 @@ async fn send(user: User, data: Json<CreateMessageSchema<'_>>) -> Result<Json<Me
     Ok(Json(msg))
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, JsonSchema)]
 struct EditMessageSchema<'r> {
     #[validate(length(min = 1, max = 2000))]
     content: &'r str,
 }
 
+#[openapi]
 #[patch("/<message_id>", data = "<data>")]
 async fn edit(
     user: User,
@@ -74,6 +76,7 @@ async fn edit(
     Ok(Json(msg))
 }
 
+#[openapi]
 #[delete("/<message_id>")]
 async fn delete(user: User, message_id: Ref) -> Result<()> {
     let msg = message_id.message().await?;
@@ -92,6 +95,7 @@ async fn delete(user: User, message_id: Ref) -> Result<()> {
     Ok(())
 }
 
+#[openapi]
 #[get("/<message_id>")]
 async fn fetch_one(user: User, message_id: Ref) -> Result<Json<Message>> {
     let msg = message_id.message().await?;
@@ -104,6 +108,6 @@ async fn fetch_one(user: User, message_id: Ref) -> Result<Json<Message>> {
     Ok(Json(msg))
 }
 
-pub fn routes() -> Vec<rocket::Route> {
-    routes![send, edit, delete, fetch_one]
+pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
+    openapi_get_routes_spec![send, edit, delete, fetch_one]
 }

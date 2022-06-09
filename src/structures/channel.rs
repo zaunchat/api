@@ -3,14 +3,14 @@ use crate::utils::permissions::*;
 use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, JsonSchema)]
 pub enum ChannelTypes {
     Direct,
     Group,
     Text,
     Voice,
     Category,
-    Unknown
+    Unknown,
 }
 
 impl Default for ChannelTypes {
@@ -19,13 +19,13 @@ impl Default for ChannelTypes {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, JsonSchema)]
 pub enum OverwriteTypes {
     Role,
     Member,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, JsonSchema)]
 pub struct Overwrite {
     pub id: u64,
     pub r#type: OverwriteTypes,
@@ -34,7 +34,7 @@ pub struct Overwrite {
 }
 
 #[crud_table(table_name:channels)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, JsonSchema)]
 pub struct Channel {
     pub id: u64,
     pub r#type: ChannelTypes,
@@ -75,7 +75,6 @@ impl Base for Channel {
         self.id
     }
 }
-
 
 impl Channel {
     pub fn new_dm(user: u64, target: u64) -> Self {

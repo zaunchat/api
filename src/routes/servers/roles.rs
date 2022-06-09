@@ -5,7 +5,7 @@ use crate::utils::permissions::Permissions;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, JsonSchema)]
 struct CreateRoleSchema<'a> {
     #[validate(length(min = 1, max = 32))]
     name: &'a str,
@@ -14,7 +14,7 @@ struct CreateRoleSchema<'a> {
     hoist: bool,
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, JsonSchema)]
 struct UpdateRoleSchema<'a> {
     #[validate(length(min = 1, max = 32))]
     name: Option<&'a str>,
@@ -23,6 +23,7 @@ struct UpdateRoleSchema<'a> {
     hoist: Option<bool>,
 }
 
+#[openapi]
 #[get("/<server_id>/<role_id>")]
 async fn fetch_one(user: User, server_id: u64, role_id: Ref) -> Result<Json<Role>> {
     if !user.is_in_server(server_id).await {
@@ -32,6 +33,7 @@ async fn fetch_one(user: User, server_id: u64, role_id: Ref) -> Result<Json<Role
     Ok(Json(role_id.role(server_id).await?))
 }
 
+#[openapi]
 #[get("/<server_id>")]
 async fn fetch_many(user: User, server_id: u64) -> Result<Json<Vec<Role>>> {
     if !user.is_in_server(server_id).await {
@@ -43,6 +45,7 @@ async fn fetch_many(user: User, server_id: u64) -> Result<Json<Vec<Role>>> {
     Ok(Json(roles))
 }
 
+#[openapi]
 #[post("/<server_id>", data = "<data>")]
 async fn create(
     user: User,
@@ -73,6 +76,7 @@ async fn create(
     Ok(Json(role))
 }
 
+#[openapi]
 #[patch("/<server_id>/<role_id>", data = "<data>")]
 async fn update(
     user: User,
@@ -118,6 +122,7 @@ async fn update(
     Ok(Json(role))
 }
 
+#[openapi]
 #[delete("/<server_id>/<role_id>")]
 async fn delete(user: User, server_id: u64, role_id: Ref) -> Result<()> {
     if !user.is_in_server(server_id).await {
@@ -135,6 +140,6 @@ async fn delete(user: User, server_id: u64, role_id: Ref) -> Result<()> {
     Ok(())
 }
 
-pub fn routes() -> Vec<rocket::Route> {
-    routes![fetch_one, fetch_many, create, update, delete]
+pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
+    openapi_get_routes_spec![fetch_one, fetch_many, create, update, delete]
 }

@@ -6,22 +6,25 @@ use rbatis::crud::CRUDMut;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
+#[openapi]
 #[get("/")]
 async fn fetch_many(user: User) -> Json<Vec<Server>> {
     Json(user.fetch_servers().await)
 }
 
+#[openapi]
 #[get("/<server_id>")]
 async fn fetch_one(server_id: Ref) -> Result<Json<Server>> {
     Ok(Json(server_id.server().await?))
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, JsonSchema)]
 struct CreateServerSchema<'a> {
     #[validate(length(min = 1, max = 50))]
     name: &'a str,
 }
 
+#[openapi]
 #[post("/", data = "<data>")]
 async fn create(user: User, data: Json<CreateServerSchema<'_>>) -> Result<Json<Server>> {
     let data = data.into_inner();
@@ -48,6 +51,7 @@ async fn create(user: User, data: Json<CreateServerSchema<'_>>) -> Result<Json<S
     Ok(Json(server))
 }
 
+#[openapi]
 #[delete("/<server_id>")]
 async fn delete(user: User, server_id: Ref) -> Result<()> {
     let server = server_id.server().await?;
@@ -65,6 +69,6 @@ async fn delete(user: User, server_id: Ref) -> Result<()> {
     Ok(())
 }
 
-pub fn routes() -> Vec<rocket::Route> {
-    routes![fetch_many, fetch_one, create, delete]
+pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
+    openapi_get_routes_spec![fetch_many, fetch_one, create, delete]
 }

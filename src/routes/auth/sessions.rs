@@ -5,7 +5,7 @@ use crate::utils::error::*;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
-#[derive(Debug, Deserialize, Validate, Clone, Copy)]
+#[derive(Debug, Deserialize, Validate, Clone, Copy, JsonSchema)]
 pub struct LoginSchema<'r> {
     #[validate(length(min = 8, max = 32))]
     pub password: &'r str,
@@ -13,6 +13,7 @@ pub struct LoginSchema<'r> {
     pub email: &'r str,
 }
 
+#[openapi]
 #[post("/login", data = "<data>")]
 async fn create(_captcha: Captcha, data: Json<LoginSchema<'_>>) -> Result<Json<Session>> {
     let data = data.into_inner();
@@ -44,17 +45,20 @@ async fn create(_captcha: Captcha, data: Json<LoginSchema<'_>>) -> Result<Json<S
     }
 }
 
+#[openapi]
 #[get("/<target>")]
 async fn fetch_one(user: User, target: Ref) -> Result<Json<Session>> {
     let session = target.session(user.id).await?;
     Ok(Json(session))
 }
 
+#[openapi]
 #[get("/")]
 pub async fn fetch_many(user: User) -> Json<Vec<Session>> {
     Json(Session::find(|q| q.eq("user_id", &user.id)).await)
 }
 
+#[openapi]
 #[delete("/<target>/<token>")]
 pub async fn delete(user: User, target: Ref, token: &str) -> Result<()> {
     let session = target.session(user.id).await?;
@@ -68,7 +72,7 @@ pub async fn delete(user: User, target: Ref, token: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn routes() -> Vec<rocket::Route> {
+pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
     // TODO: Add route to edit sessions
-    routes![create, delete, fetch_one, fetch_many]
+    openapi_get_routes_spec![create, delete, fetch_one, fetch_many]
 }

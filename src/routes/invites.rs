@@ -2,6 +2,7 @@ use crate::structures::{Base, Channel, Invite, Member, User};
 use crate::utils::error::*;
 use rocket::serde::json::Json;
 
+#[openapi]
 #[get("/<code>")]
 async fn fetch_one(code: &str) -> Result<Json<Invite>> {
     let invite = Invite::find_one(|q| q.eq("code", &code)).await;
@@ -13,6 +14,7 @@ async fn fetch_one(code: &str) -> Result<Json<Invite>> {
     Err(Error::UnknownInvite)
 }
 
+#[openapi]
 #[post("/<code>")]
 async fn join(user: User, code: &str) -> Result<()> {
     let invite = Invite::find_one(|q| q.eq("code", &code)).await;
@@ -54,6 +56,6 @@ async fn join(user: User, code: &str) -> Result<()> {
     }
 }
 
-pub fn routes() -> Vec<rocket::Route> {
-    routes![fetch_one, join]
+pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
+    openapi_get_routes_spec![fetch_one, join]
 }
