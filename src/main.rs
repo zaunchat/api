@@ -15,8 +15,8 @@ pub mod utils;
 
 use fairings::*;
 
-#[async_std::main]
-async fn main() {
+#[launch]
+async fn rocket() -> _ {
     dotenv::dotenv().ok();
     env_logger::init();
 
@@ -28,21 +28,19 @@ async fn main() {
 
     let auth = fairings::auth::Auth {
         ignore: vec![
-            "/".into(),
-            "/auth/accounts/register".into(),
-            "/auth/accounts/verify".into(),
-            "/auth/sessions/login".into(),
+            "/",
+            "/auth/accounts/register",
+            "/auth/accounts/verify",
+            "/auth/sessions/login",
             "/ratelimit",
         ],
     };
 
     let rocket = rocket::build();
 
-    let _ = routes::mount(rocket)
+    routes::mount(rocket)
         .attach(ratelimit::RateLimiter)
         .attach(auth)
         .mount("/", ratelimit::routes())
         .mount("/", auth::routes())
-        .launch()
-        .await;
 }
