@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/itchatapp/api/compare/v1.0.1...v1.1.0) (2022-06-09)
+
+
+### Features
+
+* **fairings:** Add cors ([eca952b](https://github.com/itchatapp/api/commit/eca952b3edd1150ba5ebc05aed1c11afd0c9d37d))
+
 ## [1.0.1](https://github.com/itchatapp/api/compare/v1.0.0...v1.0.1) (2022-06-09)
 
 
