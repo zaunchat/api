@@ -105,3 +105,19 @@ impl<'r> FromParam<'r> for Ref {
         Ok(Ref::from_unchecked(param.into()))
     }
 }
+
+use schemars::schema::{InstanceType, Schema, SchemaObject, SingleOrVec};
+use schemars::JsonSchema;
+
+impl JsonSchema for Ref {
+    fn schema_name() -> String {
+        "Id".to_string()
+    }
+
+    fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> Schema {
+        Schema::Object(SchemaObject {
+            instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::Integer))),
+            ..Default::default()
+        })
+    }
+}

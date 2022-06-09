@@ -3,7 +3,7 @@ use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:bots)]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 pub struct Bot {
     pub id: u64,
     pub username: String,

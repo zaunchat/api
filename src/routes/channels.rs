@@ -6,23 +6,26 @@ use rocket::form::validate::Contains;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
+#[openapi]
 #[get("/")]
 async fn fetch_many(user: User) -> Json<Vec<Channel>> {
     Json(user.fetch_channels().await)
 }
 
+#[openapi]
 #[get("/<channel_id>")]
 async fn fetch_one(user: User, channel_id: Ref) -> Result<Json<Channel>> {
     let channel = channel_id.channel(user.id.into()).await?;
     Ok(Json(channel))
 }
 
-#[derive(Debug, Deserialize, Validate, Clone, Copy)]
+#[derive(Debug, Deserialize, Validate, Clone, Copy, JsonSchema)]
 struct CreateGroupSchema<'a> {
     #[validate(length(min = 3, max = 32))]
     name: &'a str,
 }
 
+#[openapi]
 #[post("/", data = "<data>")]
 async fn create_group(user: User, data: Json<CreateGroupSchema<'_>>) -> Result<Json<Channel>> {
     let data = data.into_inner();
@@ -37,6 +40,7 @@ async fn create_group(user: User, data: Json<CreateGroupSchema<'_>>) -> Result<J
     Ok(Json(group))
 }
 
+#[openapi]
 #[post("/<group_id>/<target>")]
 async fn add_user_to_group(user: User, group_id: Ref, target: Ref) -> Result<()> {
     let target = target.user().await?;
@@ -54,6 +58,7 @@ async fn add_user_to_group(user: User, group_id: Ref, target: Ref) -> Result<()>
     Ok(())
 }
 
+#[openapi]
 #[delete("/<group_id>/<target>")]
 async fn remove_user_from_group(user: User, group_id: Ref, target: Ref) -> Result<()> {
     let target = target.user().await?;
@@ -89,6 +94,7 @@ async fn remove_user_from_group(user: User, group_id: Ref, target: Ref) -> Resul
     Ok(())
 }
 
+#[openapi]
 #[delete("/<group_id>")]
 async fn delete_group(user: User, group_id: Ref) -> Result<()> {
     let group = group_id.channel(user.id.into()).await?;
@@ -102,6 +108,7 @@ async fn delete_group(user: User, group_id: Ref) -> Result<()> {
     Ok(())
 }
 
+#[openapi]
 #[post("/<group_id>/invite")]
 async fn create_invite(user: User, group_id: Ref) -> Result<Json<Invite>> {
     let group = group_id.channel(user.id.into()).await?;
@@ -118,8 +125,8 @@ async fn create_invite(user: User, group_id: Ref) -> Result<Json<Invite>> {
     Ok(Json(invite))
 }
 
-pub fn routes() -> Vec<rocket::Route> {
-    routes![
+pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
+    openapi_get_routes_spec![
         fetch_one,
         fetch_many,
         create_group,

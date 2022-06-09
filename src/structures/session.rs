@@ -5,7 +5,7 @@ use super::Base;
 use nanoid::nanoid;
 
 #[crud_table(table_name:sessions)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, JsonSchema)]
 pub struct Session {
     pub id: u64,
     pub token: String,

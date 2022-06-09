@@ -4,6 +4,8 @@ extern crate rocket;
 extern crate rbatis;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate rocket_okapi;
 
 pub mod config;
 pub mod database;
@@ -27,6 +29,7 @@ async fn rocket() -> _ {
     let rocket = rocket::build();
 
     use fairings::*;
+    use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 
     routes::mount(rocket)
         .attach(cors::new())
@@ -35,4 +38,11 @@ async fn rocket() -> _ {
         .mount("/", rocket_cors::catch_all_options_routes())
         .mount("/", ratelimit::routes())
         .mount("/", auth::routes())
+        .mount(
+            "/swagger",
+            make_swagger_ui(&SwaggerUIConfig {
+                url: "/openapi.json".to_string(),
+                ..Default::default()
+            }),
+        )
 }

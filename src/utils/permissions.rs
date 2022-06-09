@@ -5,6 +5,7 @@ use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
 bitflags! {
+    #[derive(JsonSchema)]
     pub struct Permissions: u64 {
           const ADMINISTRATOR = 1 << 0;
           const VIEW_CHANNEL = 1 << 1;

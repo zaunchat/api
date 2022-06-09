@@ -5,13 +5,14 @@ use crate::utils::permissions::Permissions;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, JsonSchema)]
 struct CreateChannelSchema<'a> {
     r#type: ChannelTypes,
     #[validate(length(min = 1, max = 32))]
     name: &'a str,
 }
 
+#[openapi]
 #[get("/<server_id>/<channel_id>")]
 async fn fetch_one(user: User, server_id: u64, channel_id: u64) -> Result<Json<Channel>> {
     if !user.is_in_server(server_id).await {
@@ -26,6 +27,7 @@ async fn fetch_one(user: User, server_id: u64, channel_id: u64) -> Result<Json<C
     }
 }
 
+#[openapi]
 #[get("/<server_id>")]
 async fn fetch_many(user: User, server_id: u64) -> Result<Json<Vec<Channel>>> {
     if !user.is_in_server(server_id).await {
@@ -37,6 +39,7 @@ async fn fetch_many(user: User, server_id: u64) -> Result<Json<Vec<Channel>>> {
     Ok(Json(channels))
 }
 
+#[openapi]
 #[post("/<server_id>", data = "<data>")]
 async fn create(
     user: User,
@@ -61,6 +64,7 @@ async fn create(
     }
 }
 
+#[openapi]
 #[delete("/<server_id>/<channel_id>")]
 async fn delete(user: User, server_id: u64, channel_id: Ref) -> Result<()> {
     if !user.is_in_server(server_id).await {
@@ -78,6 +82,7 @@ async fn delete(user: User, server_id: u64, channel_id: Ref) -> Result<()> {
     Ok(())
 }
 
+#[openapi]
 #[patch("/<server_id>/<channel_id>")]
 async fn update(user: User, server_id: u64, channel_id: Ref) -> Result<Json<Channel>> {
     if !user.is_in_server(server_id).await {
@@ -93,6 +98,7 @@ async fn update(user: User, server_id: u64, channel_id: Ref) -> Result<Json<Chan
     todo!("Update channels route")
 }
 
+#[openapi]
 #[post("/<server_id>/<channel_id>/invite")]
 async fn create_invite(user: User, server_id: u64, channel_id: Ref) -> Result<Json<Invite>> {
     if !user.is_in_server(server_id).await {
@@ -114,6 +120,6 @@ async fn create_invite(user: User, server_id: u64, channel_id: Ref) -> Result<Js
     Ok(Json(invite))
 }
 
-pub fn routes() -> Vec<rocket::Route> {
-    routes![fetch_one, fetch_many, create, update, delete, create_invite]
+pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
+    openapi_get_routes_spec![fetch_one, fetch_many, create, update, delete, create_invite]
 }

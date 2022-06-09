@@ -20,8 +20,8 @@ lazy_static! {
 
 fn is_ignored(path: &String) -> bool {
     for &x in &*IGNORED {
-        if path == "/" || path.starts_with(x)  {
-            return true
+        if path == "/" || path.starts_with(x) {
+            return true;
         }
     }
     false

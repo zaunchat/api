@@ -3,6 +3,7 @@ use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
 bitflags! {
+    #[derive(JsonSchema)]
     pub struct Badges: u64 {
        const STAFF = 1 << 1;
        const DEVELOPER = 1 << 2;
