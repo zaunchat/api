@@ -66,13 +66,13 @@ impl<'r> OpenApiFromRequest<'r> for Captcha {
         requirements.insert("captcha".to_owned(), vec![]);
 
         Ok(RequestHeaderInput::Security(
-            "Captcha key".to_owned(),
+            "captcha".to_owned(),
             SecurityScheme {
                 data: SecuritySchemeData::ApiKey {
-                    name: "X-Captcha-Key".to_owned(),
+                    name: "x-captcha-key".to_owned(),
                     location: "header".to_owned(),
                 },
-                description: Some("Captcha key".to_owned()),
+                description: Some("Recaptcha key to verify your request".to_owned()),
                 extensions: schemars::Map::new(),
             },
             requirements,
