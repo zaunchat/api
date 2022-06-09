@@ -37,7 +37,7 @@ async fn create_group(user: User, data: Json<CreateGroupSchema<'_>>) -> Result<J
     Ok(Json(group))
 }
 
-#[put("/<group_id>/<target>")]
+#[post("/<group_id>/<target>")]
 async fn add_user_to_group(user: User, group_id: Ref, target: Ref) -> Result<()> {
     let target = target.user().await?;
     let mut group = group_id.channel(user.id.into()).await?;

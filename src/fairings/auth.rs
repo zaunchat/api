@@ -7,9 +7,18 @@ use rocket::{
     Data, Request, Route,
 };
 
-pub struct Auth<'a> {
-    pub ignore: Vec<&'a str>,
+fn is_ignored(path: &str) -> bool {
+    match path {
+        "/" => true,
+        "/auth/accounts/register" => true,
+        "/auth/accounts/verify" => true,
+        "/auth/sessions/login" => true,
+        "/ratelimit" => true,
+        _ => false
+    }
 }
+
+pub struct Auth;
 
 #[rocket::async_trait]
 impl Fairing for Auth<'static> {
@@ -23,10 +32,8 @@ impl Fairing for Auth<'static> {
     async fn on_request(&self, req: &mut Request<'_>, _: &mut Data<'_>) {
         let path = req.uri().path().as_str();
 
-        for &url in &self.ignore {
-            if url == path {
-                return;
-            }
+        if is_ignored(&path) {
+            return
         }
 
         if let Outcome::Failure(_) = req.guard::<User>().await {
@@ -34,6 +41,10 @@ impl Fairing for Auth<'static> {
             req.set_uri(Origin::parse("/unauthorized").unwrap())
         }
     }
+}
+
+pub fn new(ignore: Vec<&'a str>) -> Auth {
+    Auth {}
 }
 
 #[get("/unauthorized")]

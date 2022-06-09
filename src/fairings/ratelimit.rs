@@ -28,8 +28,6 @@ lazy_static! {
     static ref MAP: DashMap<String, SharedRateLimiter> = DashMap::new();
 }
 
-pub struct RateLimiter;
-
 fn limit_of(key: &String) -> (u32, u64) {
     match key.as_str() {
         "/auth" => (10, 1000 * 60 * 60 * 3),
@@ -39,6 +37,12 @@ fn limit_of(key: &String) -> (u32, u64) {
         _ => (50, 1000 * 60 * 1),
     }
 }
+
+fn now() -> Duration {
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap()
+}
+
+pub struct RateLimiter;
 
 impl RateLimiter {
     fn limiter_of(&self, req: &Request<'_>) -> Ref<String, SharedRateLimiter> {
@@ -59,21 +63,7 @@ impl RateLimiter {
 
         MAP.get(&key).unwrap()
     }
-}
 
-fn now() -> Duration {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap()
-}
-
-#[derive(Clone, Copy)]
-struct RateLimitInfo {
-    pub limit: u32,
-    pub remaining: u32,
-    pub retry_after: u64,
-    pub reset: u64,
-}
-
-impl RateLimiter {
     async fn check(&self, req: &Request<'_>) -> RateLimitInfo {
         *req.local_cache_async(async {
             let key = if let Outcome::Success(user) = req.guard::<User>().await {
@@ -102,6 +92,16 @@ impl RateLimiter {
         .await
     }
 }
+
+
+#[derive(Clone, Copy)]
+struct RateLimitInfo {
+    pub limit: u32,
+    pub remaining: u32,
+    pub retry_after: u64,
+    pub reset: u64,
+}
+
 
 #[rocket::async_trait]
 impl Fairing for RateLimiter {
@@ -147,6 +147,10 @@ impl Fairing for RateLimiter {
             res.set_status(Status::TooManyRequests);
         }
     }
+}
+
+pub fn new() -> RateLimiter {
+    RateLimiter {}
 }
 
 #[get("/ratelimit")]
