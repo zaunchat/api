@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/itchatapp/api/compare/v1.3.0...v1.3.1) (2022-06-09)
+
+
+### Bug Fixes
+
+* **docker:** Set default port to 8080 ([18b3d5d](https://github.com/itchatapp/api/commit/18b3d5d057d491d2f226792985531da6ac338afe))
+
 # [1.3.0](https://github.com/itchatapp/api/compare/v1.2.1...v1.3.0) (2022-06-09)
 
 
