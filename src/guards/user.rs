@@ -8,7 +8,7 @@ impl<'r> FromRequest<'r> for User {
     type Error = Error;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let token = req.headers().get_one("x-session-token");
+        let token = req.headers().get_one("Authorization");
 
         if token.is_none() {
             return Outcome::Failure((Status::BadRequest, Error::InvalidToken));

@@ -13,8 +13,6 @@ pub mod routes;
 pub mod structures;
 pub mod utils;
 
-use fairings::*;
-
 #[launch]
 async fn rocket() -> _ {
     dotenv::dotenv().ok();
@@ -26,21 +24,15 @@ async fn rocket() -> _ {
     log::info!("Run migration...");
     utils::migration::migrate().await;
 
-    let auth = fairings::auth::Auth {
-        ignore: vec![
-            "/",
-            "/auth/accounts/register",
-            "/auth/accounts/verify",
-            "/auth/sessions/login",
-            "/ratelimit",
-        ],
-    };
-
     let rocket = rocket::build();
 
+    use fairings::*;
+
     routes::mount(rocket)
-        .attach(ratelimit::RateLimiter)
-        .attach(auth)
+        .attach(cors::new())
+        .attach(ratelimit::new())
+        .attach(auth::new())
+        .mount("/", rocket_cors::catch_all_options_routes())
         .mount("/", ratelimit::routes())
         .mount("/", auth::routes())
 }
