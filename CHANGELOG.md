@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/itchatapp/api/compare/v1.1.0...v1.1.1) (2022-06-09)
+
+
+### Bug Fixes
+
+* Remove un-needed lifetimes ([39a27e5](https://github.com/itchatapp/api/commit/39a27e5d70b6a04397e572b14a82295bd77755ef))
+
 # [1.1.0](https://github.com/itchatapp/api/compare/v1.0.1...v1.1.0) (2022-06-09)
 
 
