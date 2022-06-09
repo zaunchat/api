@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/itchatapp/api/compare/v1.2.0...v1.2.1) (2022-06-09)
+
+
+### Bug Fixes
+
+* Permissions & Badges as integer ([917f327](https://github.com/itchatapp/api/commit/917f327e37c62156eaccdffb505a2d7dec072d04))
+
 # [1.2.0](https://github.com/itchatapp/api/compare/v1.1.3...v1.2.0) (2022-06-09)
 
 
