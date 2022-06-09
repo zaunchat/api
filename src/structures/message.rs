@@ -6,10 +6,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Message {
     pub id: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
     pub channel_id: u64,
     pub author_id: u64,
-    // pub created_at: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub edited_at: Option<u64>, /*
                                 TODO:
                                 pub embeds: Vec<Embed>

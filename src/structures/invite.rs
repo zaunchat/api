@@ -12,6 +12,7 @@ pub struct Invite {
     pub uses: u64,
     pub inviter_id: u64,
     pub channel_id: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub server_id: Option<u64>,
 }
 

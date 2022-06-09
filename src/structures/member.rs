@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Member {
     pub id: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub nickname: Option<String>,
     pub joined_at: u64,
     pub server_id: u64,

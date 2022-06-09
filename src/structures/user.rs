@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct User {
     pub id: u64,
     pub username: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub avatar: Option<String>,
     pub password: String,
     pub email: String,
