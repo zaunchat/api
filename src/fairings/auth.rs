@@ -7,15 +7,24 @@ use rocket::{
     Data, Request, Route,
 };
 
-fn is_ignored(path: &str) -> bool {
-    match path {
-        "/" => true,
-        "/auth/accounts/register" => true,
-        "/auth/accounts/verify" => true,
-        "/auth/sessions/login" => true,
-        "/ratelimit" => true,
-        _ => false
+lazy_static! {
+    static ref IGNORED: Vec<&'static str> = vec![
+        "/",
+        "/auth/accounts/register",
+        "/auth/accounts/verify",
+        "/auth/sessions/login",
+        "/ratelimit",
+        "/swagger"
+    ];
+}
+
+fn is_ignored(path: &String) -> bool {
+    for &x in &*IGNORED {
+        if path == "/" || path.starts_with(x)  {
+            return true
+        }
     }
+    false
 }
 
 pub struct Auth;
@@ -30,10 +39,10 @@ impl Fairing for Auth {
     }
 
     async fn on_request(&self, req: &mut Request<'_>, _: &mut Data<'_>) {
-        let path = req.uri().path().as_str();
+        let path = req.uri().path().to_string();
 
         if is_ignored(&path) {
-            return
+            return;
         }
 
         if let Outcome::Failure(_) = req.guard::<User>().await {
