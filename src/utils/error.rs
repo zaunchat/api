@@ -25,6 +25,8 @@ pub enum Error {
     MissingPermissions,
     MissingAccess,
     EmptyMessage,
+    RequireInviteCode,
+    InviteAlreadyTaken,
 
     // Unknown
     UnknownAccount,

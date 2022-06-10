@@ -1,14 +1,49 @@
 use crate::config::*;
 use crate::database::DB as db;
-use crate::structures::User;
+use crate::structures::{Base, User};
 use nanoid::nanoid;
 use rbatis::crud::CRUD;
+use regex::Regex;
 use serde_json::json;
+
+lazy_static! {
+    static ref SPLIT_REGEX: Regex = Regex::new("([^@]+)(@.+)").unwrap();
+    static ref SYMBOL_REEGEX: Regex = Regex::new("\\+.+|\\.").unwrap();
+}
 
 #[crud_table(table_name:pending_accounts)]
 struct PendingVerification {
     user_id: u64,
     code: String,
+}
+
+#[crud_table(table_name:account_invites)]
+pub struct Invite {
+    pub code: String,
+    pub used: bool,
+    pub taken_by: Option<u64>,
+}
+
+#[async_trait]
+impl Base for Invite {
+    fn id(&self) -> u64 {
+        unreachable!()
+    }
+
+    async fn update(&self) {
+        db.update_by_column("code", &self)
+            .await
+            .expect("Couldn't update account invite");
+    }
+}
+
+pub fn normalise(email: String) -> String {
+    let split = SPLIT_REGEX.captures(&email).unwrap();
+    let mut clean = SYMBOL_REEGEX
+        .replace_all(split.get(1).unwrap().as_str(), "")
+        .to_string();
+    clean.push_str(split.get(2).unwrap().as_str());
+    clean.to_lowercase()
 }
 
 pub async fn send(user: &User) -> bool {

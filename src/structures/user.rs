@@ -40,6 +40,10 @@ impl User {
             .is_some()
     }
 
+    pub async fn email_taken(email: &String) -> bool {
+        User::find_one(|q| q.eq("email", &email)).await.is_some()
+    }
+
     pub async fn fetch_sessions(&self) -> Vec<Session> {
         Session::find(|q| q.eq("user_id", &self.id)).await
     }
