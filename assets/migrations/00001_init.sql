@@ -100,8 +100,8 @@ CREATE TABLE IF NOT EXISTS bots (
     FOREIGN KEY (owner_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS pending_accounts {
+CREATE TABLE IF NOT EXISTS pending_accounts (
     user_id BIGINT PRIMARY KEY,
     code TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-};
+);
