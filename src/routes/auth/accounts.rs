@@ -1,4 +1,4 @@
-use crate::config::EMAIL_VERIFICATION;
+use crate::config::*;
 use crate::guards::captcha::Captcha;
 use crate::guards::r#ref::Ref;
 use crate::structures::*;
@@ -8,51 +8,70 @@ use argon2::Config;
 use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
-#[derive(Debug, Deserialize, Validate, Clone, Copy, JsonSchema)]
-pub struct RegisterSchema<'r> {
+#[derive(Deserialize, Validate, JsonSchema)]
+pub struct RegisterSchema {
     #[validate(length(min = 3, max = 32))]
-    pub username: &'r str,
+    pub username: String,
     #[validate(length(min = 8, max = 32))]
-    pub password: &'r str,
+    pub password: String,
     #[validate(email)]
-    pub email: &'r str,
+    pub email: String,
+    pub invite_code: Option<String>,
+}
+
+#[derive(Deserialize, Validate, JsonSchema)]
+pub struct RequestInvite {
+    pub email: String,
 }
 
 #[openapi]
 #[post("/register", data = "<data>")]
-async fn register(_captcha: Captcha, data: Json<RegisterSchema<'_>>) -> Result<Json<User>> {
-    let data = data.into_inner();
+async fn register(_captcha: Captcha, data: Json<RegisterSchema>) -> Result<Json<User>> {
+    let mut data = data.into_inner();
 
     data.validate()
         .map_err(|error| Error::InvalidBody { error })?;
 
-    let email_in_use = User::find_one(|q| q.eq("email", &data.email))
-        .await
-        .is_some();
+    data.email = email::normalise(data.email);
 
-    if email_in_use {
+    let invite = if *REQUIRE_INVITE_TO_REGISTER && data.invite_code.is_some() {
+        email::Invite::find_one(|q| q.eq("code", data.invite_code.as_ref().unwrap())).await
+    } else {
+        None
+    };
+
+    if *REQUIRE_INVITE_TO_REGISTER {
+        if let Some(invite) = &invite {
+            if invite.used {
+                return Err(Error::InviteAlreadyTaken);
+            }
+        } else {
+            return Err(Error::RequireInviteCode);
+        }
+    }
+
+    if User::email_taken(&data.email).await {
         return Err(Error::EmailAlreadyInUse);
     }
 
     let config = Config::default();
     let salt = nanoid::nanoid!(24);
-    let hashed_password = argon2::hash_encoded(
-        data.password.to_string().as_bytes(),
-        salt.as_bytes(),
-        &config,
-    )
-    .unwrap();
+    let hashed_password =
+        argon2::hash_encoded(data.password.as_bytes(), salt.as_bytes(), &config).unwrap();
 
-    let mut user = User::new(data.username.into(), data.email.into(), hashed_password);
+    let mut user = User::new(data.username, data.email, hashed_password);
 
-    match *EMAIL_VERIFICATION {
-        true if email::send(&user).await => {
-            log::debug!("Email have been sent to: {}", user.email);
-        } // If email sending failed for any reason just verify the account.
-        _ => {
-            user.verified = true;
-        }
-    };
+    if *EMAIL_VERIFICATION && email::send(&user).await {
+        log::debug!("Email have been sent to: {}", user.email);
+    } else {
+        user.verified = true;
+    }
+
+    if let Some(mut invite) = invite {
+        invite.taken_by = user.id.into();
+        invite.used = true;
+        invite.update().await;
+    }
 
     user.save().await;
 
@@ -62,9 +81,7 @@ async fn register(_captcha: Captcha, data: Json<RegisterSchema<'_>>) -> Result<J
 #[openapi]
 #[get("/verify/<user_id>/<code>")]
 async fn verify(user_id: Ref, code: &str) -> Result<()> {
-    let verified = email::verify(user_id.0, code).await;
-
-    if verified {
+    if email::verify(user_id.0, code).await {
         let mut user = user_id.user().await?;
         user.verified = true;
         user.update().await;

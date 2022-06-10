@@ -84,6 +84,7 @@ dependencies = [
  "once_cell",
  "rbatis",
  "rbson",
+ "regex",
  "reqwest",
  "rocket",
  "rocket_cors",
