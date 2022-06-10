@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly-slim AS builder
+FROM rust:1.61-slim AS builder
 USER 0:0
 WORKDIR /home/rust/src
 
@@ -11,10 +11,13 @@ COPY assets ./assets
 COPY src ./src
 RUN cargo install --locked --path .
 
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 RUN apt-get update && apt-get install -y ca-certificates
+
 COPY --from=builder /usr/local/cargo/bin/api ./
+
 EXPOSE 8080
 ENV ROCKET_ADDRESS 0.0.0.0
 ENV ROCKET_PORT 8080
+
 CMD ["./api"]
