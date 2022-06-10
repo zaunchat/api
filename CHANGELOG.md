@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/itchatapp/api/compare/v1.4.0...v1.5.0) (2022-06-10)
+
+
+### Features
+
+* **migrations:** Add account invites table ([c49f33f](https://github.com/itchatapp/api/commit/c49f33f4ad21d600b11aeafa52a5a9633e900b1c))
+
 # [1.4.0](https://github.com/itchatapp/api/compare/v1.3.3...v1.4.0) (2022-06-10)
 
 
