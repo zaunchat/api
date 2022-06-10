@@ -19,21 +19,21 @@ async fn fetch_one(user: User, channel_id: Ref) -> Result<Json<Channel>> {
     Ok(Json(channel))
 }
 
-#[derive(Debug, Deserialize, Validate, Clone, Copy, JsonSchema)]
-struct CreateGroupSchema<'a> {
+#[derive(Deserialize, Validate, JsonSchema)]
+struct CreateGroupSchema {
     #[validate(length(min = 3, max = 32))]
-    name: &'a str,
+    name: String,
 }
 
 #[openapi]
 #[post("/", data = "<data>")]
-async fn create_group(user: User, data: Json<CreateGroupSchema<'_>>) -> Result<Json<Channel>> {
+async fn create_group(user: User, data: Json<CreateGroupSchema>) -> Result<Json<Channel>> {
     let data = data.into_inner();
 
     data.validate()
         .map_err(|error| Error::InvalidBody { error })?;
 
-    let group = Channel::new_group(user.id, data.name.into());
+    let group = Channel::new_group(user.id, data.name);
 
     group.save().await;
 

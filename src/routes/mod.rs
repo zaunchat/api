@@ -24,15 +24,17 @@ pub fn mount(mut rocket: Rocket<Build>) -> Rocket<Build> {
         "/auth/accounts" => auth::accounts::routes(),
         "/auth/sessions" => auth::sessions::routes(),
         "/users" => users::routes(),
-        "/channels" => channels::routes(),
+        "/@me/channels" => channels::routes(),
         "/messages" => messages::routes(),
         "/bots" => bots::routes(),
         "/invites" => invites::routes(),
+
+        // Servers
         "/servers" => servers::servers::routes(),
-        "/servers/channels" => servers::channels::routes(),
-        "/servers/members" => servers::members::routes(),
-        "/servers/invites" => servers::invites::routes(),
-        "/servers/roles" => servers::roles::routes()
+        "/channels" => servers::channels::routes(),
+        "/members" => servers::members::routes(),
+        "/invites" => servers::invites::routes(),
+        "/roles" => servers::roles::routes()
     };
 
     rocket
