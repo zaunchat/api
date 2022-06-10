@@ -1,4 +1,4 @@
-use crate::structures::{Base, Channel, Invite, Member, User};
+use crate::structures::*;
 use crate::utils::error::*;
 use rocket::serde::json::Json;
 
@@ -21,10 +21,7 @@ async fn join(user: User, code: &str) -> Result<()> {
 
     match invite {
         Some(mut invite) if invite.server_id.is_some() => {
-            let already_joined =
-                Member::find_one(|q| q.eq("id", &user.id).eq("server_id", &invite.server_id)).await;
-
-            if already_joined.is_some() {
+            if user.is_in_server(invite.server_id.unwrap()).await {
                 return Err(Error::MissingAccess);
             }
 

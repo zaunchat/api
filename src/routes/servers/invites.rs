@@ -15,7 +15,7 @@ async fn fetch_one(user: User, server_id: u64, invite_id: Ref) -> Result<Json<In
 }
 
 #[openapi]
-#[get("/<server_id>")]
+#[get("/<server_id>/all")]
 async fn fetch_many(user: User, server_id: u64) -> Result<Json<Vec<Invite>>> {
     if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
