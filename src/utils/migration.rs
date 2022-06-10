@@ -1,26 +1,25 @@
 use crate::database::DB as db;
+use include_dir::{include_dir, Dir};
 use rbatis::crud::CRUD;
-use std::fs;
+
+static MIGRATION_DIR: Dir = include_dir!("assets/migrations");
 
 #[crud_table(table_name:migrations)]
-#[derive(Debug)]
 struct Migration {
     id: u32,
     name: String,
-    path: String,
+    content: String,
 }
 
 pub async fn migrate() {
     let mut migrations: Vec<Migration> = vec![];
 
-    for path in fs::read_dir("assets/migrations").unwrap() {
-        let path = path.unwrap().path().to_str().unwrap().to_string();
-        let id = &path[18..18 + 5];
-        let name = &path[18 + 6..];
+    for asset in MIGRATION_DIR.files() {
+        let filename = asset.path().file_name().unwrap().to_str().unwrap();
         migrations.push(Migration {
-            id: id.parse().unwrap(),
-            name: name.into(),
-            path,
+            id: filename[0..5].parse().unwrap(),
+            name: filename[6..].into(),
+            content: asset.contents_utf8().unwrap().into(),
         });
     }
 
@@ -48,9 +47,7 @@ pub async fn migrate() {
     let needed = &migrations[index..];
 
     for migration in needed {
-        let content = fs::read_to_string(migration.path.as_str()).unwrap();
-
-        db.exec(content.as_str(), vec![])
+        db.exec(migration.content.as_str(), vec![])
             .await
             .expect("Couldn't execute a migration");
 
@@ -61,7 +58,7 @@ pub async fn migrate() {
 }
 
 async fn ensure_table() {
-    db.exec("CREATE TABLE IF NOT EXISTS migrations ( id SERIAL PRIMARY KEY, created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), name TEXT, path TEXT )", vec![])
+    db.exec("CREATE TABLE IF NOT EXISTS migrations ( id SERIAL PRIMARY KEY, created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), name TEXT, content TEXT )", vec![])
     .await
     .unwrap();
 }

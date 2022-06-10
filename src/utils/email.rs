@@ -1,7 +1,6 @@
 use crate::config::*;
 use crate::database::DB as db;
 use crate::structures::User;
-use async_std::fs;
 use nanoid::nanoid;
 use rbatis::crud::CRUD;
 use serde_json::json;
@@ -13,10 +12,8 @@ struct PendingVerification {
 }
 
 pub async fn send(user: &User) -> bool {
-    let mut content = fs::read_to_string("assets/templates/verify.html")
-        .await
-        .unwrap();
-    let code = nanoid!();
+    let mut content = include_str!("../../assets/templates/verify.html").to_string();
+    let code = nanoid!(10);
 
     content = content
         .replace("%%EMAIL%%", user.email.as_str())
