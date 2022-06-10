@@ -6,10 +6,10 @@ use rocket::serde::{json::Json, Deserialize};
 use validator::Validate;
 
 #[derive(Deserialize, Validate, JsonSchema)]
-struct CreateChannelSchema<'a> {
+struct CreateChannelSchema {
     r#type: ChannelTypes,
     #[validate(length(min = 1, max = 32))]
-    name: &'a str,
+    name: String
 }
 
 #[openapi]
@@ -44,7 +44,7 @@ async fn fetch_many(user: User, server_id: u64) -> Result<Json<Vec<Channel>>> {
 async fn create(
     user: User,
     server_id: u64,
-    data: Json<CreateChannelSchema<'_>>,
+    data: Json<CreateChannelSchema>,
 ) -> Result<Json<Channel>> {
     if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
@@ -56,12 +56,18 @@ async fn create(
         return Err(Error::MissingPermissions);
     }
 
-    match data.r#type {
-        ChannelTypes::Text => Ok(Json(Channel::new_text(data.name.into(), server_id))),
-        ChannelTypes::Category => Ok(Json(Channel::new_category(data.name.into(), server_id))),
-        ChannelTypes::Voice => Ok(Json(Channel::new_voice(data.name.into(), server_id))),
+    let channel = match data.r#type {
+        ChannelTypes::Text => Ok(Json(Channel::new_text(data.name.clone(), server_id))),
+        ChannelTypes::Category => Ok(Json(Channel::new_category(data.name.clone(), server_id))),
+        ChannelTypes::Voice => Ok(Json(Channel::new_voice(data.name.clone(), server_id))),
         _ => Err(Error::MissingAccess),
+    };
+
+    if let Ok(channel) = &channel {
+        channel.save().await;
     }
+
+    channel
 }
 
 #[openapi]
