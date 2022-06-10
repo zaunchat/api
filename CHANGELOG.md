@@ -1,3 +1,13 @@
+## [1.5.1](https://github.com/itchatapp/api/compare/v1.5.0...v1.5.1) (2022-06-10)
+
+
+### Bug Fixes
+
+* Remove bloated code ([e3ae67a](https://github.com/itchatapp/api/commit/e3ae67ac1a7433179cdad88a0965d5b18455ffc9))
+* Remove unneeded header ([b6045c3](https://github.com/itchatapp/api/commit/b6045c30962f6073909d61c193ddde9c625b1c4e))
+* **route:** mount routes the right way ([15df39e](https://github.com/itchatapp/api/commit/15df39e930c1bd9180b6a78a399edcb02dca5fa4))
+* Save the channel ([c2d4732](https://github.com/itchatapp/api/commit/c2d4732e2886163e2e422814b53f4663a2e9488e))
+
 # [1.5.0](https://github.com/itchatapp/api/compare/v1.4.0...v1.5.0) (2022-06-10)
 
 
