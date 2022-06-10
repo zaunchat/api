@@ -1,3 +1,12 @@
+## [1.3.3](https://github.com/itchatapp/api/compare/v1.3.2...v1.3.3) (2022-06-10)
+
+
+### Bug Fixes
+
+* **docker:** Use stable version of rust ([929caae](https://github.com/itchatapp/api/commit/929caae73cfd49ee3a2844ece283c644716ea8ed))
+* **migration:** syntax error ([5d67550](https://github.com/itchatapp/api/commit/5d6755008d8f6e28faf489ac9752c16d3974f204))
+* use include_str instead of std::fs ([fe1d2ad](https://github.com/itchatapp/api/commit/fe1d2adb5a818b9ffc142ac19fedd249a2e63836))
+
 ## [1.3.2](https://github.com/itchatapp/api/compare/v1.3.1...v1.3.2) (2022-06-09)
 
 
