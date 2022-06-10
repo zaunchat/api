@@ -65,25 +65,18 @@ async fn remove_user_from_group(user: User, group_id: Ref, target: Ref) -> Resul
     let mut group = group_id.channel(user.id.into()).await?;
 
     if let Some(recipients) = group.recipients.as_mut() {
-        if !recipients.contains(&target.id) {
+        let exists = recipients
+            .iter()
+            .position(|&id| id == target.id)
+            .map(|i| recipients.remove(i))
+            .is_some();
+
+        if !exists {
             return Err(Error::UnknownMember);
         }
-
-        // FIXME: Do the same thing in more efficient way
-
-        let mut index: Option<usize> = None;
-
-        for (i, id) in recipients.iter_mut().enumerate() {
-            if *id == target.id {
-                index = Some(i);
-                break;
-            }
-        }
-
-        recipients.remove(index.unwrap());
     }
 
-    let permissions = Permissions::fetch(&user, None, Some(group.id)).await?;
+    let permissions = Permissions::fetch(&user, None, group.id.into()).await?;
 
     if !permissions.contains(Permissions::KICK_MEMBERS) {
         return Err(Error::MissingPermissions);
