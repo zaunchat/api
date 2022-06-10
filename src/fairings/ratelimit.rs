@@ -1,4 +1,5 @@
 use crate::structures::User;
+use dashmap::{mapref::one::Ref, DashMap};
 use governor::{
     clock::{Clock, DefaultClock},
     middleware::StateInformationMiddleware,
@@ -12,13 +13,7 @@ use rocket::{
     Data, Request, Response, Route,
 };
 use serde_json::json;
-use std::{
-    io::Cursor,
-    ops::Add,
-    time::{Duration, SystemTime, UNIX_EPOCH},
-};
-
-use dashmap::{mapref::one::Ref, DashMap};
+use std::{io::Cursor, time::Duration};
 
 type SharedRateLimiter =
     Limiter<String, DefaultKeyedStateStore<String>, DefaultClock, StateInformationMiddleware>;
@@ -38,8 +33,11 @@ fn limit_of(path: &str) -> (u32, u64) {
     }
 }
 
-fn now() -> Duration {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap()
+#[derive(Copy, Clone)]
+struct RateLimitInfo {
+    pub limit: u32,
+    pub remaining: u32,
+    pub retry_after: u64,
 }
 
 pub struct RateLimiter;
@@ -72,6 +70,8 @@ impl RateLimiter {
                 req.remote().map(|x| x.ip().to_string()).unwrap_or_default()
             };
 
+            log::debug!("IP: {}", key);
+
             let limiter = self.limiter_of(req);
 
             match limiter.check_key(&key) {
@@ -79,26 +79,16 @@ impl RateLimiter {
                     limit: snapshot.quota().burst_size().get(),
                     remaining: snapshot.remaining_burst_capacity(),
                     retry_after: 0,
-                    reset: 0,
                 },
                 Err(negative) => RateLimitInfo {
                     limit: negative.quota().burst_size().get(),
                     retry_after: negative.wait_time_from(CLOCK.now()).as_secs(),
-                    reset: now().add(negative.wait_time_from(CLOCK.now())).as_millis() as u64,
                     remaining: 0,
                 },
             }
         })
         .await
     }
-}
-
-#[derive(Clone, Copy)]
-struct RateLimitInfo {
-    pub limit: u32,
-    pub remaining: u32,
-    pub retry_after: u64,
-    pub reset: u64,
 }
 
 #[rocket::async_trait]
@@ -113,7 +103,7 @@ impl Fairing for RateLimiter {
     async fn on_request(&self, req: &mut Request<'_>, _: &mut Data<'_>) {
         let info = self.check(req).await;
 
-        if info.remaining == 0 {
+        if info.retry_after > 0 {
             req.set_method(Method::Get);
             req.set_uri(Origin::parse("/ratelimit").unwrap())
         }
@@ -124,19 +114,16 @@ impl Fairing for RateLimiter {
             remaining,
             retry_after,
             limit,
-            reset,
         } = self.check(req).await;
 
         res.set_raw_header("X-RateLimit-Limit", limit.to_string());
         res.set_raw_header("X-RateLimit-Remaining", remaining.to_string());
         res.set_raw_header("X-RateLimit-After", retry_after.to_string());
-        res.set_raw_header("X-RateLimit-Reset", reset.to_string());
 
-        if remaining == 0 {
+        if retry_after > 0 {
             let body = json!({
                 "limit": limit,
                 "remaining": remaining,
-                "reset": reset,
                 "retry_after": retry_after,
             })
             .to_string();
@@ -148,13 +135,11 @@ impl Fairing for RateLimiter {
 }
 
 pub fn new() -> RateLimiter {
-    RateLimiter {}
+    RateLimiter
 }
 
 #[get("/ratelimit")]
-fn rate_limit() -> Status {
-    Status::TooManyRequests
-}
+fn rate_limit() {}
 
 pub fn routes() -> Vec<Route> {
     routes![rate_limit]
