@@ -89,7 +89,7 @@ impl Channel {
     pub fn new_group(user: u64, name: String) -> Self {
         Self {
             id: snowflake::generate(),
-            name: Some(name),
+            name: name.into(),
             r#type: ChannelTypes::Group,
             recipients: vec![user].into(),
             permissions: Some(*DEFAULT_PERMISSION_DM),
