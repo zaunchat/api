@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/itchatapp/api/compare/v1.3.3...v1.4.0) (2022-06-10)
+
+
+### Features
+
+* **routes:** Implement inviteation requirement ([fc94366](https://github.com/itchatapp/api/commit/fc94366ca555c98c5005f84df6c64060533e2bce))
+
 ## [1.3.3](https://github.com/itchatapp/api/compare/v1.3.2...v1.3.3) (2022-06-10)
 
 
