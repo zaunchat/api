@@ -33,17 +33,15 @@ pub async fn ratelimit<B>(
 ) -> Result<Response, Error> {
     let key = if let Some(user) = req.extensions().get::<User>() {
         user.id.to_string()
+    } else if *TRUST_CLOUDFLARE {
+        req.headers()
+            .get("CF-Connecting-IP")
+            .and_then(|header| header.to_str().ok())
+            .unwrap()
+            .to_string()
     } else {
-        if *TRUST_CLOUDFLARE {
-            req.headers()
-                .get("CF-Connecting-IP")
-                .and_then(|header| header.to_str().ok())
-                .unwrap()
-                .to_string()
-        } else {
-            let addr = req.extensions().get::<ConnectInfo<SocketAddr>>();
-            addr.map_or("No IP".to_string(), |i| i.0.ip().to_string())
-        }
+        let addr = req.extensions().get::<ConnectInfo<SocketAddr>>();
+        addr.map_or("No IP".to_string(), |i| i.0.ip().to_string())
     };
 
     let info = match limiter.check_key(&key) {

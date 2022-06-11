@@ -8,8 +8,8 @@ use argon2::Config;
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
-pub struct RegisterSchema {
+#[derive(Deserialize, Validate, utoipa::Component)]
+pub struct RegisterAccountOptions {
     #[validate(length(min = 3, max = 32))]
     pub username: String,
     #[validate(length(min = 8, max = 32))]
@@ -19,12 +19,15 @@ pub struct RegisterSchema {
     pub invite_code: Option<String>,
 }
 
-#[derive(Deserialize, Validate)]
-pub struct RequestInvite {
-    pub email: String,
-}
-
-async fn register(ValidatedJson(mut data): ValidatedJson<RegisterSchema>) -> Result<Json<User>> {
+#[utoipa::path(
+    post,
+    path = "/auth/accounts/register",
+    request_body = CreateSessionOptions,
+    responses((status = 200, body = User), (status = 400, body = Error))
+)]
+async fn register_account(
+    ValidatedJson(mut data): ValidatedJson<RegisterAccountOptions>,
+) -> Result<Json<User>> {
     data.email = email::normalise(data.email);
 
     let invite = if *REQUIRE_INVITE_TO_REGISTER && data.invite_code.is_some() {
@@ -71,7 +74,14 @@ async fn register(ValidatedJson(mut data): ValidatedJson<RegisterSchema>) -> Res
     Ok(Json(user))
 }
 
-async fn verify(Path((user_id, code)): Path<(u64, String)>) -> Result<()> {
+#[utoipa::path(
+    get,
+    path = "/auth/accounts/verify/{id}/{code}",
+    request_body = CreateSessionOptions,
+    responses((status = 400, body = Error)),
+    params(("id" = u64, path), ("code" = String, path))    
+)]
+pub async fn verify_account(Path((user_id, code)): Path<(u64, String)>) -> Result<()> {
     if email::verify(user_id, &code).await {
         let mut user = user_id.user().await?;
         user.verified = true;
@@ -89,7 +99,7 @@ pub fn routes() -> axum::Router {
     Router::new()
         .route(
             "/register",
-            post(register).route_layer(middleware::from_fn(captcha::handle)),
+            post(register_account).route_layer(middleware::from_fn(captcha::handle)),
         )
-        .route("/verify/:user_id/:code", get(verify))
+        .route("/verify/:user_id/:code", get(verify_account))
 }

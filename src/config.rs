@@ -2,7 +2,7 @@ use std::env;
 
 fn is_true(mut v: String) -> bool {
     v = v.to_lowercase();
-    return v == "true" || v == "yes";
+    v == "true" || v == "yes"
 }
 
 macro_rules! get {
@@ -21,7 +21,8 @@ lazy_static! {
     pub static ref CAPTCHA_KEY: String = get!("CAPTCHA_KEY");
     pub static ref PORT: String = get!("PORT", "8080");
     pub static ref EMAIL_VERIFICATION: bool = is_true(get!("EMAIL_VERIFICATION", "false"));
-    pub static ref REQUIRE_INVITE_TO_REGISTER: bool = is_true(get!("REQUIRE_INVITE_TO_REGISTER", "false"));
+    pub static ref REQUIRE_INVITE_TO_REGISTER: bool =
+        is_true(get!("REQUIRE_INVITE_TO_REGISTER", "false"));
     pub static ref SENDINBLUE_API_KEY: String = get!("SENDINBLUE_API_KEY");
     pub static ref TRUST_CLOUDFLARE: bool = is_true(get!("TRUST_CLOUDFLARE", "false"));
 }
