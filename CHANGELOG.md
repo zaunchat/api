@@ -1,3 +1,11 @@
+# [1.7.0](https://github.com/itchatapp/api/compare/v1.6.0...v1.7.0) (2022-06-11)
+
+
+### Features
+
+* Add trust cloudflare option ([51f4205](https://github.com/itchatapp/api/commit/51f4205cd1963dcc7f4e7190b48430dd0e9d8ddc))
+* **docs:** readd openapi & swagger ui ([f098ccd](https://github.com/itchatapp/api/commit/f098ccde44123c42af3602490b02d94849b1f74c))
+
 # [1.6.0](https://github.com/itchatapp/api/compare/v1.5.1...v1.6.0) (2022-06-11)
 
 
