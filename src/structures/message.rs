@@ -3,7 +3,7 @@ use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:messages)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, utoipa::Component)]
 pub struct Message {
     pub id: u64,
     #[serde(skip_serializing_if = "Option::is_none")]

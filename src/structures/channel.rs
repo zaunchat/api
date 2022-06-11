@@ -3,7 +3,7 @@ use crate::utils::permissions::*;
 use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, utoipa::Component)]
 pub enum ChannelTypes {
     Direct,
     Group,
@@ -19,13 +19,13 @@ impl Default for ChannelTypes {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, utoipa::Component)]
 pub enum OverwriteTypes {
     Role,
     Member,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, utoipa::Component)]
 pub struct Overwrite {
     pub id: u64,
     pub r#type: OverwriteTypes,
@@ -34,7 +34,7 @@ pub struct Overwrite {
 }
 
 #[crud_table(table_name:channels)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, utoipa::Component)]
 pub struct Channel {
     pub id: u64,
     pub r#type: ChannelTypes,

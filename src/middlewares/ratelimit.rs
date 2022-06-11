@@ -15,7 +15,7 @@ lazy_static! {
     static ref CLOCK: DefaultClock = DefaultClock::default();
 }
 
-#[derive(Serialize, Clone, Copy, Debug)]
+#[derive(Serialize, Clone, Copy, Debug, utoipa::Component)]
 pub struct RateLimitInfo {
     pub limit: u32,
     pub remaining: u32,

@@ -1,12 +1,13 @@
 use crate::middlewares::ratelimit::RateLimitInfo;
-use serde::Serialize;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
+use serde::Serialize;
+use utoipa::Component;
 use validator::ValidationErrors;
 
-#[derive(thiserror::Error, Debug, Serialize)]
+#[derive(thiserror::Error, Debug, Serialize, Component)]
 #[serde(tag = "type")]
 pub enum Error {
     #[error("Invalid body")]
@@ -64,7 +65,6 @@ pub enum Error {
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
-
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {

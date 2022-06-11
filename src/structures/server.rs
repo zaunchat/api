@@ -4,7 +4,7 @@ use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:servers)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, utoipa::Component)]
 pub struct Server {
     pub id: u64,
     pub name: String,
