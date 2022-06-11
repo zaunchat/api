@@ -1,10 +1,16 @@
-use crate::structures::*;
+use crate::extractors::*;
 use crate::utils::error::*;
-use rocket::serde::json::Json;
+use crate::utils::r#ref::Ref;
+use crate::{structures::*, utils::permissions::Permissions};
+use serde::Deserialize;
+use validator::Validate;
 
-#[openapi]
-#[get("/<code>")]
-async fn fetch_one(code: &str) -> Result<Json<Invite>> {
+#[derive(Deserialize, Validate)]
+struct CreateInviteOptions {
+    channel_id: u64,
+}
+
+async fn fetch_one(Path(code): Path<String>) -> Result<Json<Invite>> {
     let invite = Invite::find_one(|q| q.eq("code", &code)).await;
 
     if let Some(invite) = invite {
@@ -14,9 +20,7 @@ async fn fetch_one(code: &str) -> Result<Json<Invite>> {
     Err(Error::UnknownInvite)
 }
 
-#[openapi]
-#[post("/<code>")]
-async fn join(user: User, code: &str) -> Result<()> {
+async fn join(Extension(user): Extension<User>, Path(code): Path<String>) -> Result<()> {
     let invite = Invite::find_one(|q| q.eq("code", &code)).await;
 
     match invite {
@@ -53,6 +57,29 @@ async fn join(user: User, code: &str) -> Result<()> {
     }
 }
 
-pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
-    openapi_get_routes_spec![fetch_one, join]
+async fn create(
+    Extension(user): Extension<User>,
+    ValidatedJson(data): ValidatedJson<CreateInviteOptions>,
+) -> Result<Json<Invite>> {
+    let channel = data.channel_id.channel(user.id.into()).await?;
+
+    let p = Permissions::fetch(&user, channel.server_id, channel.id.into()).await?;
+
+    if !p.contains(Permissions::INVITE_OTHERS) {
+        return Err(Error::MissingPermissions);
+    }
+
+    let invite = Invite::new(user.id, channel.id, channel.server_id);
+    invite.save().await;
+
+    Ok(Json(invite))
+}
+
+pub fn routes() -> axum::Router {
+    use crate::middlewares::*;
+    use axum::{middleware, routing::*, Router};
+    Router::new()
+        .route("/", post(create))
+        .route("/:code", get(fetch_one).post(join))
+        .layer(middleware::from_fn(ratelimit::handle!(30, 1000 * 60 * 60)))
 }

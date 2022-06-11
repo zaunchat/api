@@ -4,7 +4,7 @@ use crate::utils::{badges::Badges, snowflake};
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:users)]
-#[derive(Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct User {
     pub id: u64,
     pub username: String,

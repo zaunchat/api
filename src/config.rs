@@ -8,6 +8,14 @@ fn is_true(v: Result<String, env::VarError>) -> bool {
     false
 }
 
+fn default(v: Result<String, env::VarError>, default_value: &str) -> String {
+    if let Ok(v) = v {
+        v
+    } else {
+        default_value.to_string()
+    }
+}
+
 lazy_static! {
     pub static ref DATABASE_URI: String =
         env::var("DATABASE_URI").expect("DATABASE_URI is required");
@@ -15,6 +23,7 @@ lazy_static! {
     pub static ref CAPTCHA_TOKEN: String =
         env::var("CAPTCHA_TOKEN").expect("CAPTCHA_TOKEN is required");
     pub static ref CAPTCHA_KEY: String = env::var("CAPTCHA_KEY").expect("CAPTCHA_KEY is required");
+    pub static ref PORT: String = default(env::var("PORT"), "8080");
     pub static ref EMAIL_VERIFICATION: bool = is_true(env::var("EMAIL_VERIFICATION"));
     pub static ref REQUIRE_INVITE_TO_REGISTER: bool =
         is_true(env::var("REQUIRE_INVITE_TO_REGISTER"));

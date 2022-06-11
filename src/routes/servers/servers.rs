@@ -1,38 +1,30 @@
 use crate::database::DB as db;
-use crate::guards::r#ref::Ref;
-use crate::structures::*;
+use crate::extractors::*;
 use crate::utils::error::*;
+use crate::{structures::*, utils::r#ref::Ref};
 use rbatis::crud::CRUDMut;
-use rocket::serde::{json::Json, Deserialize};
+use serde::Deserialize;
 use validator::Validate;
 
-#[openapi]
-#[get("/")]
-async fn fetch_many(user: User) -> Json<Vec<Server>> {
+async fn fetch_many(Extension(user): Extension<User>) -> Json<Vec<Server>> {
     Json(user.fetch_servers().await)
 }
 
-#[openapi]
-#[get("/<server_id>")]
-async fn fetch_one(server_id: Ref) -> Result<Json<Server>> {
+async fn fetch_one(Path(server_id): Path<u64>) -> Result<Json<Server>> {
     Ok(Json(server_id.server().await?))
 }
 
-#[derive(Deserialize, Validate, JsonSchema)]
-struct CreateServerSchema<'a> {
+#[derive(Deserialize, Validate)]
+struct CreateServerOptions {
     #[validate(length(min = 1, max = 50))]
-    name: &'a str,
+    name: String,
 }
 
-#[openapi]
-#[post("/", data = "<data>")]
-async fn create(user: User, data: Json<CreateServerSchema<'_>>) -> Result<Json<Server>> {
-    let data = data.into_inner();
-
-    data.validate()
-        .map_err(|error| Error::InvalidBody { error })?;
-
-    let server = Server::new(data.name.into(), user.id);
+async fn create(
+    Extension(user): Extension<User>,
+    ValidatedJson(data): ValidatedJson<CreateServerOptions>,
+) -> Result<Json<Server>> {
+    let server = Server::new(data.name, user.id);
     let member = Member::new(user.id, server.id);
     let category = Channel::new_category("General".into(), server.id);
     let mut chat = Channel::new_text("general".into(), server.id);
@@ -51,9 +43,7 @@ async fn create(user: User, data: Json<CreateServerSchema<'_>>) -> Result<Json<S
     Ok(Json(server))
 }
 
-#[openapi]
-#[delete("/<server_id>")]
-async fn delete(user: User, server_id: Ref) -> Result<()> {
+async fn delete_server(Extension(user): Extension<User>, Path(server_id): Path<u64>) -> Result<()> {
     let server = server_id.server().await?;
 
     if server.owner_id == user.id {
@@ -67,6 +57,10 @@ async fn delete(user: User, server_id: Ref) -> Result<()> {
     Ok(())
 }
 
-pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
-    openapi_get_routes_spec![fetch_many, fetch_one, create, delete]
+pub fn routes() -> axum::Router {
+    use axum::{routing::*, Router};
+
+    Router::new()
+        .route("/", post(create).get(fetch_many))
+        .route("/:server_id", get(fetch_one).delete(delete_server))
 }

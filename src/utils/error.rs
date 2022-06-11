@@ -1,75 +1,78 @@
-use std::io::Cursor;
-
-use rocket::{
-    http::{ContentType, Status},
-    response::{self, Responder},
-    Request, Response,
+use crate::middlewares::ratelimit::RateLimitInfo;
+use serde::Serialize;
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Json, Response},
 };
-use serde::{Deserialize, Serialize};
-use serde_json::json;
 use validator::ValidationErrors;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(thiserror::Error, Debug, Serialize)]
 #[serde(tag = "type")]
 pub enum Error {
-    InvalidBody {
-        #[serde(skip_serializing, skip_deserializing)]
-        error: ValidationErrors,
-    },
+    #[error("Invalid body")]
+    ValidationFailed { error: ValidationErrors },
+    #[error("You have executed the rate limit")]
+    RateLimited(RateLimitInfo),
+    #[error("Invalid JSON")]
+    ParseFailed,
+    #[error("You need to verify your account in order to perform this action")]
+    AccountVerificationRequired,
+    #[error("Unauthorized. Provide a valid token and try again")]
     InvalidToken,
-    Unauthorized,
+    #[error("Missing header")]
+    MissingHeader,
+    #[error("This email already in use")]
     EmailAlreadyInUse,
-    NotVerified,
+    #[error("This username taken by someone else")]
     UsernameTaken,
+    #[error("Captcha don't love you")]
     FailedCaptcha,
+    #[error("You lack permissions to perform that action")]
     MissingPermissions,
+    #[error("You missing access to do the following action")]
     MissingAccess,
+    #[error("Cannot send an empty message")]
     EmptyMessage,
+    #[error("You must habe an invite to register")]
     RequireInviteCode,
+    #[error("This invite already taken")]
     InviteAlreadyTaken,
 
     // Unknown
+    #[error("Unknwon account")]
     UnknownAccount,
+    #[error("Unknwon session")]
     UnknownSession,
+    #[error("Unknwon user")]
     UnknownUser,
+    #[error("Unknwon message")]
     UnknownMessage,
+    #[error("Unknwon server")]
     UnknownServer,
+    #[error("Unknwon member")]
     UnknownMember,
+    #[error("Unknwon role")]
     UnknownRole,
+    #[error("Unknwon bot")]
     UnknownBot,
+    #[error("Unknwon channel")]
     UnknownChannel,
+    #[error("Unknwon invite")]
     UnknownInvite,
-}
-
-impl<'r> Responder<'r, 'static> for Error {
-    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        let body = json!(self).to_string();
-        // TODO: Get status
-        let status = Status::Forbidden;
-
-        Response::build()
-            .sized_body(body.len(), Cursor::new(body))
-            .header(ContentType::JSON)
-            .status(status)
-            .ok()
-    }
+    #[error("Unknwon error")]
+    Unknown,
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
-pub type Success = Result<()>;
 
-use rocket_okapi::okapi::openapi3::Responses;
-use rocket_okapi::okapi::openapi3::{RefOr, Response as OpenApiReponse};
-use rocket_okapi::{gen::OpenApiGenerator, response::OpenApiResponderInner, OpenApiError};
 
-impl OpenApiResponderInner for Error {
-    fn responses(_gen: &mut OpenApiGenerator) -> std::result::Result<Responses, OpenApiError> {
-        Ok(Responses {
-            default: Some(RefOr::Object(OpenApiReponse {
-                description: "An Error".to_string(),
-                ..Default::default()
-            })),
-            ..Default::default()
-        })
+impl IntoResponse for Error {
+    fn into_response(self) -> Response {
+        let status = match self {
+            Error::RateLimited { .. } => StatusCode::TOO_MANY_REQUESTS,
+            Error::InvalidToken => StatusCode::UNAUTHORIZED,
+            _ => StatusCode::BAD_REQUEST,
+        };
+        (status, Json(serde_json::json!(self))).into_response()
     }
 }

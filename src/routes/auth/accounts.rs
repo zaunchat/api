@@ -1,14 +1,14 @@
 use crate::config::*;
-use crate::guards::captcha::Captcha;
-use crate::guards::r#ref::Ref;
+use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::email;
 use crate::utils::error::*;
+use crate::utils::r#ref::Ref;
 use argon2::Config;
-use rocket::serde::{json::Json, Deserialize};
+use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, JsonSchema)]
+#[derive(Deserialize, Validate)]
 pub struct RegisterSchema {
     #[validate(length(min = 3, max = 32))]
     pub username: String,
@@ -19,19 +19,12 @@ pub struct RegisterSchema {
     pub invite_code: Option<String>,
 }
 
-#[derive(Deserialize, Validate, JsonSchema)]
+#[derive(Deserialize, Validate)]
 pub struct RequestInvite {
     pub email: String,
 }
 
-#[openapi]
-#[post("/register", data = "<data>")]
-async fn register(_captcha: Captcha, data: Json<RegisterSchema>) -> Result<Json<User>> {
-    let mut data = data.into_inner();
-
-    data.validate()
-        .map_err(|error| Error::InvalidBody { error })?;
-
+async fn register(ValidatedJson(mut data): ValidatedJson<RegisterSchema>) -> Result<Json<User>> {
     data.email = email::normalise(data.email);
 
     let invite = if *REQUIRE_INVITE_TO_REGISTER && data.invite_code.is_some() {
@@ -78,10 +71,8 @@ async fn register(_captcha: Captcha, data: Json<RegisterSchema>) -> Result<Json<
     Ok(Json(user))
 }
 
-#[openapi]
-#[get("/verify/<user_id>/<code>")]
-async fn verify(user_id: Ref, code: &str) -> Result<()> {
-    if email::verify(user_id.0, code).await {
+async fn verify(Path((user_id, code)): Path<(u64, String)>) -> Result<()> {
+    if email::verify(user_id, &code).await {
         let mut user = user_id.user().await?;
         user.verified = true;
         user.update().await;
@@ -91,6 +82,14 @@ async fn verify(user_id: Ref, code: &str) -> Result<()> {
     }
 }
 
-pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
-    openapi_get_routes_spec![register, verify]
+pub fn routes() -> axum::Router {
+    use crate::middlewares::*;
+    use axum::{middleware, routing::*, Router};
+
+    Router::new()
+        .route(
+            "/register",
+            post(register).route_layer(middleware::from_fn(captcha::handle)),
+        )
+        .route("/verify/:user_id/:code", get(verify))
 }

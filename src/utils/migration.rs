@@ -27,7 +27,7 @@ pub async fn migrate() {
 
     if let Some(latest) = latest {
         if latest.id != migrations.len() as u32 {
-            panic!("Inconsistency in migration numbering'");
+            panic!("Inconsistency in migration numbering");
         }
     }
 

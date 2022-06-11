@@ -1,31 +1,32 @@
-use crate::guards::r#ref::Ref;
-use crate::structures::*;
+use crate::extractors::*;
 use crate::utils::error::*;
 use crate::utils::permissions::Permissions;
-use rocket::serde::{json::Json, Deserialize};
+use crate::{structures::*, utils::r#ref::Ref};
+use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, JsonSchema)]
-struct CreateRoleSchema<'a> {
+#[derive(Deserialize, Validate)]
+struct CreateRoleOptions {
     #[validate(length(min = 1, max = 32))]
-    name: &'a str,
+    name: String,
     color: u8,
     permissions: Permissions,
     hoist: bool,
 }
 
-#[derive(Deserialize, Validate, JsonSchema)]
-struct UpdateRoleSchema<'a> {
+#[derive(Deserialize, Validate)]
+struct UpdateRoleOptions {
     #[validate(length(min = 1, max = 32))]
-    name: Option<&'a str>,
+    name: Option<String>,
     color: Option<u8>,
     permissions: Option<Permissions>,
     hoist: Option<bool>,
 }
 
-#[openapi]
-#[get("/<server_id>/<role_id>")]
-async fn fetch_one(user: User, server_id: u64, role_id: Ref) -> Result<Json<Role>> {
+async fn fetch_one(
+    Extension(user): Extension<User>,
+    Path((server_id, role_id)): Path<(u64, u64)>,
+) -> Result<Json<Role>> {
     if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
     }
@@ -33,9 +34,10 @@ async fn fetch_one(user: User, server_id: u64, role_id: Ref) -> Result<Json<Role
     Ok(Json(role_id.role(server_id).await?))
 }
 
-#[openapi]
-#[get("/<server_id>")]
-async fn fetch_many(user: User, server_id: u64) -> Result<Json<Vec<Role>>> {
+async fn fetch_many(
+    Extension(user): Extension<User>,
+    Path(server_id): Path<u64>,
+) -> Result<Json<Vec<Role>>> {
     if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
     }
@@ -45,18 +47,11 @@ async fn fetch_many(user: User, server_id: u64) -> Result<Json<Vec<Role>>> {
     Ok(Json(roles))
 }
 
-#[openapi]
-#[post("/<server_id>", data = "<data>")]
 async fn create(
-    user: User,
-    server_id: u64,
-    data: Json<CreateRoleSchema<'_>>,
+    Extension(user): Extension<User>,
+    Path(server_id): Path<u64>,
+    ValidatedJson(data): ValidatedJson<CreateRoleOptions>,
 ) -> Result<Json<Role>> {
-    let data = data.into_inner();
-
-    data.validate()
-        .map_err(|error| Error::InvalidBody { error })?;
-
     if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
     }
@@ -67,7 +62,7 @@ async fn create(
         return Err(Error::MissingPermissions);
     }
 
-    let mut role = Role::new(data.name.into(), server_id);
+    let mut role = Role::new(data.name.clone(), server_id);
 
     role.permissions = data.permissions;
     role.hoist = data.hoist;
@@ -76,19 +71,11 @@ async fn create(
     Ok(Json(role))
 }
 
-#[openapi]
-#[patch("/<server_id>/<role_id>", data = "<data>")]
 async fn update(
-    user: User,
-    server_id: u64,
-    role_id: Ref,
-    data: Json<UpdateRoleSchema<'_>>,
+    Extension(user): Extension<User>,
+    Path((server_id, role_id)): Path<(u64, u64)>,
+    ValidatedJson(data): ValidatedJson<UpdateRoleOptions>,
 ) -> Result<Json<Role>> {
-    let data = data.into_inner();
-
-    data.validate()
-        .map_err(|error| Error::InvalidBody { error })?;
-
     if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
     }
@@ -101,8 +88,8 @@ async fn update(
 
     let mut role = role_id.role(server_id).await?;
 
-    if let Some(name) = data.name {
-        role.name = name.into();
+    if let Some(name) = &data.name {
+        role.name = name.clone();
     }
 
     if let Some(permissions) = data.permissions {
@@ -122,9 +109,10 @@ async fn update(
     Ok(Json(role))
 }
 
-#[openapi]
-#[delete("/<server_id>/<role_id>")]
-async fn delete(user: User, server_id: u64, role_id: Ref) -> Result<()> {
+async fn delete_role(
+    Extension(user): Extension<User>,
+    Path((server_id, role_id)): Path<(u64, u64)>,
+) -> Result<()> {
     if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
     }
@@ -140,6 +128,13 @@ async fn delete(user: User, server_id: u64, role_id: Ref) -> Result<()> {
     Ok(())
 }
 
-pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
-    openapi_get_routes_spec![fetch_one, fetch_many, create, update, delete]
+pub fn routes() -> axum::Router {
+    use axum::{routing::*, Router};
+
+    Router::new()
+        .route("/", get(fetch_many).post(create))
+        .route(
+            "/:role_id",
+            get(fetch_one).patch(update).delete(delete_role),
+        )
 }
