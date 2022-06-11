@@ -1,21 +1,23 @@
-use crate::guards::r#ref::Ref;
+use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::error::*;
-use rocket::serde::json::Json;
+use crate::utils::r#ref::Ref;
+use axum::response::IntoResponse;
 
-#[openapi(tag = "Users")]
-#[get("/@me")]
-fn fetch_me(user: User) -> Result<Json<User>> {
-    Ok(Json(user.to_public()))
+async fn fetch_me(Extension(user): Extension<User>) -> impl IntoResponse {
+    Json(user.to_public())
 }
 
-#[openapi(tag = "Users")]
-#[get("/<user_id>")]
-async fn fetch_one(user_id: Ref) -> Result<Json<User>> {
-    let user = user_id.user().await?;
-    Ok(Json(user.to_public()))
+async fn fetch_one(Path(id): Path<u64>) -> Result<Json<User>> {
+    Ok(Json(id.user().await?.to_public()))
 }
 
-pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
-    openapi_get_routes_spec![fetch_me, fetch_one]
+pub fn routes() -> axum::Router {
+    use crate::middlewares::*;
+    use axum::{middleware, routing::*, Router};
+
+    Router::new()
+        .route("/@me", get(fetch_me))
+        .route("/:user_id", get(fetch_one))
+        .layer(middleware::from_fn(ratelimit::handle!(20, 1000 * 5)))
 }

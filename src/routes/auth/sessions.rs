@@ -1,38 +1,31 @@
-use crate::guards::captcha::Captcha;
-use crate::guards::r#ref::Ref;
-use crate::structures::{Base, Session, User};
+use crate::extractors::*;
+use crate::structures::*;
 use crate::utils::error::*;
-use rocket::serde::{json::Json, Deserialize};
+use crate::utils::r#ref::Ref;
+use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Debug, Deserialize, Validate, Clone, Copy, JsonSchema)]
-pub struct LoginSchema<'r> {
+#[derive(Deserialize, Validate)]
+pub struct CreateSessionOptions {
     #[validate(length(min = 8, max = 32))]
-    pub password: &'r str,
+    pub password: String,
     #[validate(email)]
-    pub email: &'r str,
+    pub email: String,
 }
 
-#[openapi]
-#[post("/login", data = "<data>")]
-async fn create(_captcha: Captcha, data: Json<LoginSchema<'_>>) -> Result<Json<Session>> {
-    let data = data.into_inner();
-
-    data.validate()
-        .map_err(|error| Error::InvalidBody { error })?;
-
+async fn create(ValidatedJson(data): ValidatedJson<CreateSessionOptions>) -> Result<Json<Session>> {
     let user = User::find_one(|q| q.eq("email", &data.email)).await;
 
     match user {
         Some(user) => {
             if !user.verified {
-                return Err(Error::NotVerified);
+                return Err(Error::AccountVerificationRequired);
             }
 
             if argon2::verify_encoded(user.password.as_str(), data.password.to_string().as_bytes())
                 .is_err()
             {
-                return Err(Error::Unauthorized);
+                return Err(Error::MissingAccess);
             }
 
             let session = Session::new(user.id);
@@ -45,23 +38,19 @@ async fn create(_captcha: Captcha, data: Json<LoginSchema<'_>>) -> Result<Json<S
     }
 }
 
-#[openapi]
-#[get("/<target>")]
-async fn fetch_one(user: User, target: Ref) -> Result<Json<Session>> {
-    let session = target.session(user.id).await?;
-    Ok(Json(session))
+async fn fetch_one(Extension(user): Extension<User>, Path(id): Path<u64>) -> Result<Json<Session>> {
+    Ok(Json(id.session(user.id).await?))
 }
 
-#[openapi]
-#[get("/")]
-pub async fn fetch_many(user: User) -> Json<Vec<Session>> {
+pub async fn fetch_many(Extension(user): Extension<User>) -> Json<Vec<Session>> {
     Json(Session::find(|q| q.eq("user_id", &user.id)).await)
 }
 
-#[openapi]
-#[delete("/<target>/<token>")]
-pub async fn delete(user: User, target: Ref, token: &str) -> Result<()> {
-    let session = target.session(user.id).await?;
+pub async fn delete_session(
+    Extension(user): Extension<User>,
+    Path((id, token)): Path<(u64, String)>,
+) -> Result<()> {
+    let session = id.session(user.id).await?;
 
     if session.token != token {
         return Err(Error::InvalidToken);
@@ -72,7 +61,16 @@ pub async fn delete(user: User, target: Ref, token: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
-    // TODO: Add route to edit sessions
-    openapi_get_routes_spec![create, delete, fetch_one, fetch_many]
+pub fn routes() -> axum::Router {
+    use crate::middlewares::*;
+    use axum::{middleware, routing::*, Router};
+
+    Router::new()
+        .route("/", get(fetch_many))
+        .route(
+            "/login",
+            post(create).route_layer(middleware::from_fn(captcha::handle)),
+        )
+        .route("/:session_id", get(fetch_one))
+        .route("/:session_id/:token", delete(delete_session))
 }

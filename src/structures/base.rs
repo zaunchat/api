@@ -2,7 +2,7 @@ use crate::database::DB as db;
 use async_trait::async_trait;
 use rbatis::crud::{CRUDTable, CRUD};
 use rbatis::wrapper::Wrapper;
-use rocket::serde::DeserializeOwned;
+use serde::de::DeserializeOwned;
 
 #[async_trait]
 pub trait Base: CRUDTable + DeserializeOwned {

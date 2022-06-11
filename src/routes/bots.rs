@@ -1,31 +1,22 @@
-use crate::guards::r#ref::Ref;
-use crate::structures::*;
+use crate::extractors::*;
 use crate::utils::error::*;
-use rocket::serde::json::Json;
+use crate::{structures::*, utils::r#ref::Ref};
 
-#[openapi]
-#[get("/<bot_id>")]
-async fn fetch_one(bot_id: Ref) -> Result<Json<Bot>> {
+async fn fetch_one(Path(bot_id): Path<u64>) -> Result<Json<Bot>> {
     let bot = bot_id.bot().await?;
     Ok(Json(bot))
 }
 
-#[openapi]
-#[get("/")]
-async fn fetch_many(user: User) -> Json<Vec<Bot>> {
+async fn fetch_many(Extension(user): Extension<User>) -> Json<Vec<Bot>> {
     let bots = user.fetch_bots().await;
     Json(bots)
 }
 
-#[openapi]
-#[post("/")]
 async fn create() -> Result<Json<Bot>> {
     todo!()
 }
 
-#[openapi]
-#[delete("/<bot_id>")]
-async fn delete(user: User, bot_id: Ref) -> Result<()> {
+async fn delete_bot(Extension(user): Extension<User>, Path(bot_id): Path<u64>) -> Result<()> {
     let bot = bot_id.bot().await?;
 
     if bot.owner_id != user.id {
@@ -37,6 +28,10 @@ async fn delete(user: User, bot_id: Ref) -> Result<()> {
     Ok(())
 }
 
-pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
-    openapi_get_routes_spec![fetch_one, fetch_many, create, delete]
+pub fn routes() -> axum::Router {
+    use axum::{routing::*, Router};
+
+    Router::new()
+        .route("/", get(fetch_many).post(create))
+        .route("/:bot_id", get(fetch_one).delete(delete_bot))
 }

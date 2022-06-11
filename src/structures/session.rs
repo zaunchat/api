@@ -1,11 +1,10 @@
+use super::Base;
 use crate::utils::snowflake;
+use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 
-use super::Base;
-use nanoid::nanoid;
-
 #[crud_table(table_name:sessions)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Session {
     pub id: u64,
     pub token: String,

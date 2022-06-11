@@ -1,11 +1,10 @@
-use crate::utils::snowflake;
-
 use super::Base;
+use crate::utils::snowflake;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:invites)]
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Invite {
     pub id: u64,
     pub code: String,

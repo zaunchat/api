@@ -1,38 +1,32 @@
-use crate::guards::r#ref::Ref;
-use crate::structures::*;
+use crate::extractors::*;
 use crate::utils::error::*;
 use crate::utils::permissions::Permissions;
-use rocket::form::validate::Contains;
-use rocket::serde::{json::Json, Deserialize};
+use crate::{structures::*, utils::r#ref::Ref};
+use serde::Deserialize;
 use validator::Validate;
 
-#[openapi]
-#[get("/")]
-async fn fetch_many(user: User) -> Json<Vec<Channel>> {
-    Json(user.fetch_channels().await)
-}
-
-#[openapi]
-#[get("/<channel_id>")]
-async fn fetch_one(user: User, channel_id: Ref) -> Result<Json<Channel>> {
-    let channel = channel_id.channel(user.id.into()).await?;
-    Ok(Json(channel))
-}
-
-#[derive(Deserialize, Validate, JsonSchema)]
+#[derive(Deserialize, Validate)]
 struct CreateGroupSchema {
     #[validate(length(min = 3, max = 32))]
     name: String,
 }
 
-#[openapi]
-#[post("/", data = "<data>")]
-async fn create_group(user: User, data: Json<CreateGroupSchema>) -> Result<Json<Channel>> {
-    let data = data.into_inner();
+async fn fetch_many(Extension(user): Extension<User>) -> Json<Vec<Channel>> {
+    Json(user.fetch_channels().await)
+}
 
-    data.validate()
-        .map_err(|error| Error::InvalidBody { error })?;
+async fn fetch_one(
+    Extension(user): Extension<User>,
+    Path(channel_id): Path<u64>,
+) -> Result<Json<Channel>> {
+    let channel = channel_id.channel(user.id.into()).await?;
+    Ok(Json(channel))
+}
 
+async fn create_group(
+    Extension(user): Extension<User>,
+    ValidatedJson(data): ValidatedJson<CreateGroupSchema>,
+) -> Result<Json<Channel>> {
     let group = Channel::new_group(user.id, data.name);
 
     group.save().await;
@@ -40,10 +34,11 @@ async fn create_group(user: User, data: Json<CreateGroupSchema>) -> Result<Json<
     Ok(Json(group))
 }
 
-#[openapi]
-#[post("/<group_id>/<target>")]
-async fn add_user_to_group(user: User, group_id: Ref, target: Ref) -> Result<()> {
-    let target = target.user().await?;
+async fn add_user_to_group(
+    Extension(user): Extension<User>,
+    Path((group_id, target_id)): Path<(u64, u64)>,
+) -> Result<()> {
+    let target = target_id.user().await?;
     let mut group = group_id.channel(user.id.into()).await?;
 
     if let Some(recipients) = group.recipients.as_mut() {
@@ -58,10 +53,11 @@ async fn add_user_to_group(user: User, group_id: Ref, target: Ref) -> Result<()>
     Ok(())
 }
 
-#[openapi]
-#[delete("/<group_id>/<target>")]
-async fn remove_user_from_group(user: User, group_id: Ref, target: Ref) -> Result<()> {
-    let target = target.user().await?;
+async fn remove_user_from_group(
+    Extension(user): Extension<User>,
+    Path((group_id, target_id)): Path<(u64, u64)>,
+) -> Result<()> {
+    let target = target_id.user().await?;
     let mut group = group_id.channel(user.id.into()).await?;
 
     if let Some(recipients) = group.recipients.as_mut() {
@@ -87,10 +83,8 @@ async fn remove_user_from_group(user: User, group_id: Ref, target: Ref) -> Resul
     Ok(())
 }
 
-#[openapi]
-#[delete("/<group_id>")]
-async fn delete_group(user: User, group_id: Ref) -> Result<()> {
-    let group = group_id.channel(user.id.into()).await?;
+async fn delete_group(Extension(user): Extension<User>, Path(channel_id): Path<u64>) -> Result<()> {
+    let group = channel_id.channel(user.id.into()).await?;
 
     if group.owner_id != Some(user.id) {
         return Err(Error::MissingPermissions);
@@ -101,31 +95,18 @@ async fn delete_group(user: User, group_id: Ref) -> Result<()> {
     Ok(())
 }
 
-#[openapi]
-#[post("/<group_id>/invite")]
-async fn create_invite(user: User, group_id: Ref) -> Result<Json<Invite>> {
-    let group = group_id.channel(user.id.into()).await?;
+pub fn routes() -> axum::Router {
+    use crate::middlewares::*;
+    use axum::{middleware, routing::*, Router};
 
-    let p = Permissions::fetch(&user, None, Some(group.id)).await?;
+    Router::new()
+        .route("/", get(fetch_many).post(create_group))
+        .route("/:channel_id", get(fetch_one).delete(delete_group))
+        .route(
+            "/join/:group_id/:target",
+            post(add_user_to_group).delete(remove_user_from_group),
+        )
+        .route("/leave/:group_id/:target", delete(remove_user_from_group))
+        .layer(middleware::from_fn(ratelimit::handle!(15, 1000 * 5)))
 
-    if !p.contains(Permissions::INVITE_OTHERS) {
-        return Err(Error::MissingPermissions);
-    }
-
-    let invite = Invite::new(user.id, group.id, None);
-    invite.save().await;
-
-    Ok(Json(invite))
-}
-
-pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
-    openapi_get_routes_spec![
-        fetch_one,
-        fetch_many,
-        create_group,
-        delete_group,
-        add_user_to_group,
-        remove_user_from_group,
-        create_invite
-    ]
 }

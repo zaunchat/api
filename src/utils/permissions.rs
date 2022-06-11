@@ -192,19 +192,3 @@ impl<'de> Deserialize<'de> for Permissions {
         deserializer.deserialize_identifier(PermissionsVisitor)
     }
 }
-
-use schemars::schema::{InstanceType, Schema, SchemaObject, SingleOrVec};
-use schemars::JsonSchema;
-
-impl JsonSchema for Permissions {
-    fn schema_name() -> String {
-        "Permissions".to_string()
-    }
-
-    fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> Schema {
-        Schema::Object(SchemaObject {
-            instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::Integer))),
-            ..Default::default()
-        })
-    }
-}

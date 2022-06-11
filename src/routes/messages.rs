@@ -1,25 +1,27 @@
-use crate::guards::r#ref::Ref;
-use crate::structures::*;
+use crate::extractors::*;
 use crate::utils::error::*;
 use crate::utils::permissions::*;
-use rocket::serde::{json::Json, Deserialize};
+use crate::{structures::*, utils::r#ref::Ref};
+use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, JsonSchema)]
-struct CreateMessageSchema<'r> {
+#[derive(Deserialize, Validate)]
+struct CreateMessageOptions {
     channel_id: u64,
     #[validate(length(min = 1, max = 2000))]
-    content: &'r str,
+    content: String,
 }
 
-#[openapi]
-#[post("/", data = "<data>")]
-async fn send(user: User, data: Json<CreateMessageSchema<'_>>) -> Result<Json<Message>> {
-    let data = data.into_inner();
+#[derive(Deserialize, Validate)]
+struct EditMessageOptions {
+    #[validate(length(min = 1, max = 2000))]
+    content: String,
+}
 
-    data.validate()
-        .map_err(|error| Error::InvalidBody { error })?;
-
+async fn send(
+    Extension(user): Extension<User>,
+    ValidatedJson(data): ValidatedJson<CreateMessageOptions>,
+) -> Result<Json<Message>> {
     let p = Permissions::fetch(&user, None, data.channel_id.into()).await?;
 
     if !p.contains(Permissions::VIEW_CHANNEL) || !p.contains(Permissions::SEND_MESSAGES) {
@@ -29,7 +31,7 @@ async fn send(user: User, data: Json<CreateMessageSchema<'_>>) -> Result<Json<Me
     let mut msg = Message::new(data.channel_id, user.id);
 
     // TODO: Add more fields
-    msg.content = Some(data.content.into());
+    msg.content = data.content.into();
 
     if msg.is_empty() {
         return Err(Error::EmptyMessage);
@@ -40,24 +42,11 @@ async fn send(user: User, data: Json<CreateMessageSchema<'_>>) -> Result<Json<Me
     Ok(Json(msg))
 }
 
-#[derive(Deserialize, Validate, JsonSchema)]
-struct EditMessageSchema<'r> {
-    #[validate(length(min = 1, max = 2000))]
-    content: &'r str,
-}
-
-#[openapi]
-#[patch("/<message_id>", data = "<data>")]
 async fn edit(
-    user: User,
-    message_id: Ref,
-    data: Json<EditMessageSchema<'_>>,
+    Extension(user): Extension<User>,
+    Path(message_id): Path<u64>,
+    ValidatedJson(data): ValidatedJson<EditMessageOptions>,
 ) -> Result<Json<Message>> {
-    let data = data.into_inner();
-
-    data.validate()
-        .map_err(|error| Error::InvalidBody { error })?;
-
     let mut msg = message_id.message().await?;
 
     if msg.author_id != user.id {
@@ -70,15 +59,16 @@ async fn edit(
         return Err(Error::MissingPermissions);
     }
 
-    msg.content = Some(data.content.into());
+    msg.content = data.content.into();
     msg.update().await;
 
     Ok(Json(msg))
 }
 
-#[openapi]
-#[delete("/<message_id>")]
-async fn delete(user: User, message_id: Ref) -> Result<()> {
+async fn delete_message(
+    Extension(user): Extension<User>,
+    Path(message_id): Path<u64>,
+) -> Result<()> {
     let msg = message_id.message().await?;
     let p = Permissions::fetch(&user, None, Some(msg.channel_id)).await?;
 
@@ -95,9 +85,10 @@ async fn delete(user: User, message_id: Ref) -> Result<()> {
     Ok(())
 }
 
-#[openapi]
-#[get("/<message_id>")]
-async fn fetch_one(user: User, message_id: Ref) -> Result<Json<Message>> {
+async fn fetch_one(
+    Extension(user): Extension<User>,
+    Path(message_id): Path<u64>,
+) -> Result<Json<Message>> {
     let msg = message_id.message().await?;
     let p = Permissions::fetch(&user, None, msg.channel_id.into()).await?;
 
@@ -108,6 +99,15 @@ async fn fetch_one(user: User, message_id: Ref) -> Result<Json<Message>> {
     Ok(Json(msg))
 }
 
-pub fn routes() -> (Vec<rocket::Route>, rocket_okapi::okapi::openapi3::OpenApi) {
-    openapi_get_routes_spec![send, edit, delete, fetch_one]
+pub fn routes() -> axum::Router {
+    use axum::{middleware, routing::*, Router};
+    use crate::middlewares::*;
+
+    Router::new()
+        .route("/", post(send))
+        .route(
+            "/:message_id",
+            get(fetch_one).patch(edit).delete(delete_message),
+        )
+        .layer(middleware::from_fn(ratelimit::handle!(10, 1000 * 10)))
 }

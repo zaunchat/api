@@ -1,22 +1,23 @@
 #[macro_use]
-extern crate rocket;
-#[macro_use]
 extern crate rbatis;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
-extern crate rocket_okapi;
+extern crate async_trait;
 
 pub mod config;
 pub mod database;
-pub mod fairings;
-pub mod guards;
+pub mod extractors;
+pub mod middlewares;
 pub mod routes;
 pub mod structures;
 pub mod utils;
 
-#[launch]
-async fn rocket() -> _ {
+use axum::{handler::Handler, http::StatusCode, middleware, Router, Server};
+use std::net::SocketAddr;
+
+#[async_std::main]
+async fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 
@@ -26,23 +27,20 @@ async fn rocket() -> _ {
     log::info!("Run migration...");
     utils::migration::migrate().await;
 
-    let rocket = rocket::build();
+    use middlewares::*;
 
-    use fairings::*;
-    use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
+    let app = routes::mount(Router::new())
+        .layer(cors::handle())
+        .layer(middleware::from_fn(auth::handle))
+        .layer(middleware::from_fn(ratelimit::handle!(50, 1000 * 60)))
+        .fallback((|| async { StatusCode::NOT_FOUND }).into_service());
 
-    routes::mount(rocket)
-        .attach(cors::new())
-        .attach(ratelimit::new())
-        .attach(auth::new())
-        .mount("/", rocket_cors::catch_all_options_routes())
-        .mount("/", ratelimit::routes())
-        .mount("/", auth::routes())
-        .mount(
-            "/swagger",
-            make_swagger_ui(&SwaggerUIConfig {
-                url: "/openapi.json".to_string(),
-                ..Default::default()
-            }),
-        )
+    let address: SocketAddr = format!("0.0.0.0:{}", *config::PORT).parse().unwrap();
+
+    log::info!("Listening on: {}", address.port());
+
+    Server::bind(&address)
+        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+        .await
+        .unwrap();
 }
