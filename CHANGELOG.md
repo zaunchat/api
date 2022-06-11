@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/itchatapp/api/compare/v1.5.1...v1.6.0) (2022-06-11)
+
+
+### Features
+
+* Move on to axum instead of rocket ([9d66431](https://github.com/itchatapp/api/commit/9d664316c54e6a0cebab0d3b58d50d6f210133de))
+
 ## [1.5.1](https://github.com/itchatapp/api/compare/v1.5.0...v1.5.1) (2022-06-10)
 
 
