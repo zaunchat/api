@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/itchatapp/api/compare/v1.7.0...v1.8.0) (2022-06-11)
+
+
+### Features
+
+* **docs:** document session/account routes ([83170a0](https://github.com/itchatapp/api/commit/83170a08adc8281873c31522a8e2527a54ab0e60))
+
 # [1.7.0](https://github.com/itchatapp/api/compare/v1.6.0...v1.7.0) (2022-06-11)
 
 
