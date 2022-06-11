@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/itchatapp/api/compare/v1.8.0...v1.8.1) (2022-06-11)
+
+
+### Bug Fixes
+
+* **docker:** Remove old rocket options ([42ba75b](https://github.com/itchatapp/api/commit/42ba75be54ec78f5490e4f419a88b0dd3915442a))
+
 # [1.8.0](https://github.com/itchatapp/api/compare/v1.7.0...v1.8.0) (2022-06-11)
 
 
