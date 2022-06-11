@@ -192,3 +192,13 @@ impl<'de> Deserialize<'de> for Permissions {
         deserializer.deserialize_identifier(PermissionsVisitor)
     }
 }
+
+use utoipa::openapi::{schema::Component, ComponentType, PropertyBuilder};
+
+impl utoipa::Component for Permissions {
+    fn component() -> Component {
+        PropertyBuilder::new()
+            .component_type(ComponentType::Integer)
+            .into()
+    }
+}

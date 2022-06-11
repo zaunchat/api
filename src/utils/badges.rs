@@ -55,3 +55,13 @@ impl<'de> Deserialize<'de> for Badges {
         deserializer.deserialize_identifier(BadgesVisitor)
     }
 }
+
+use utoipa::openapi::{schema::Component, ComponentType, PropertyBuilder};
+
+impl utoipa::Component for Badges {
+    fn component() -> Component {
+        PropertyBuilder::new()
+            .component_type(ComponentType::Integer)
+            .into()
+    }
+}

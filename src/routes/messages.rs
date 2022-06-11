@@ -5,20 +5,26 @@ use crate::{structures::*, utils::r#ref::Ref};
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
-struct CreateMessageOptions {
+#[derive(Deserialize, Validate, utoipa::Component)]
+pub struct CreateMessageOptions {
     channel_id: u64,
     #[validate(length(min = 1, max = 2000))]
     content: String,
 }
 
-#[derive(Deserialize, Validate)]
-struct EditMessageOptions {
+#[derive(Deserialize, Validate, utoipa::Component)]
+pub struct EditMessageOptions {
     #[validate(length(min = 1, max = 2000))]
     content: String,
 }
 
-async fn send(
+#[utoipa::path(
+    post,
+    request_body = CreateMessageOptions,
+    path = "/messages",
+    responses((status = 200, body = Message), (status = 400, body = Error))
+)]
+pub async fn send_message(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateMessageOptions>,
 ) -> Result<Json<Message>> {
@@ -42,7 +48,14 @@ async fn send(
     Ok(Json(msg))
 }
 
-async fn edit(
+#[utoipa::path(
+    patch,
+    request_body = EditMessageOptions,
+    path = "/messages/{id}",
+    responses((status = 200, body = Message), (status = 400, body = Error)),
+    params(("id" = u64, path))
+)]
+pub async fn edit_message(
     Extension(user): Extension<User>,
     Path(message_id): Path<u64>,
     ValidatedJson(data): ValidatedJson<EditMessageOptions>,
@@ -65,7 +78,13 @@ async fn edit(
     Ok(Json(msg))
 }
 
-async fn delete_message(
+#[utoipa::path(
+    delete,
+    path = "/messages/{id}",
+    responses((status = 400, body = Error)),
+    params(("id" = u64, path))
+)]
+pub async fn delete_message(
     Extension(user): Extension<User>,
     Path(message_id): Path<u64>,
 ) -> Result<()> {
@@ -85,7 +104,13 @@ async fn delete_message(
     Ok(())
 }
 
-async fn fetch_one(
+#[utoipa::path(
+    get,
+    path = "/messages/{id}",
+    responses((status = 200, body = Message), (status = 400, body = Error)),
+    params(("id" = u64, path))
+)]
+pub async fn fetch_message(
     Extension(user): Extension<User>,
     Path(message_id): Path<u64>,
 ) -> Result<Json<Message>> {
@@ -100,14 +125,16 @@ async fn fetch_one(
 }
 
 pub fn routes() -> axum::Router {
-    use axum::{middleware, routing::*, Router};
     use crate::middlewares::*;
+    use axum::{middleware, routing::*, Router};
 
     Router::new()
-        .route("/", post(send))
+        .route("/", post(send_message))
         .route(
             "/:message_id",
-            get(fetch_one).patch(edit).delete(delete_message),
+            get(fetch_message)
+                .patch(edit_message)
+                .delete(delete_message),
         )
         .layer(middleware::from_fn(ratelimit::handle!(10, 1000 * 10)))
 }

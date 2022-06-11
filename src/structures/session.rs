@@ -4,7 +4,7 @@ use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:sessions)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, utoipa::Component)]
 pub struct Session {
     pub id: u64,
     pub token: String,
