@@ -1,3 +1,4 @@
+use crate::config::TRUST_CLOUDFLARE;
 use crate::structures::User;
 use crate::utils::error::Error;
 use axum::{extract::ConnectInfo, http::Request, middleware::Next, response::Response};
@@ -33,8 +34,16 @@ pub async fn ratelimit<B>(
     let key = if let Some(user) = req.extensions().get::<User>() {
         user.id.to_string()
     } else {
-        let addr = req.extensions().get::<ConnectInfo<SocketAddr>>();
-        addr.map_or("No IP".to_string(), |i| i.0.ip().to_string())
+        if *TRUST_CLOUDFLARE {
+            req.headers()
+                .get("CF-Connecting-IP")
+                .and_then(|header| header.to_str().ok())
+                .unwrap()
+                .to_string()
+        } else {
+            let addr = req.extensions().get::<ConnectInfo<SocketAddr>>();
+            addr.map_or("No IP".to_string(), |i| i.0.ip().to_string())
+        }
     };
 
     let info = match limiter.check_key(&key) {
