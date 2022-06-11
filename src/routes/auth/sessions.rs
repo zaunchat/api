@@ -5,7 +5,7 @@ use crate::utils::r#ref::Ref;
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, utoipa::Component)]
 pub struct CreateSessionOptions {
     #[validate(length(min = 8, max = 32))]
     pub password: String,
@@ -13,7 +13,15 @@ pub struct CreateSessionOptions {
     pub email: String,
 }
 
-async fn create(ValidatedJson(data): ValidatedJson<CreateSessionOptions>) -> Result<Json<Session>> {
+#[utoipa::path(
+    post,
+    path = "/auth/sessions",
+    request_body = CreateSessionOptions,
+    responses((status = 200, body = Session), (status = 400, body = Error))
+)]
+async fn create_session(
+    ValidatedJson(data): ValidatedJson<CreateSessionOptions>,
+) -> Result<Json<Session>> {
     let user = User::find_one(|q| q.eq("email", &data.email)).await;
 
     match user {
@@ -38,14 +46,35 @@ async fn create(ValidatedJson(data): ValidatedJson<CreateSessionOptions>) -> Res
     }
 }
 
-async fn fetch_one(Extension(user): Extension<User>, Path(id): Path<u64>) -> Result<Json<Session>> {
+#[utoipa::path(
+    get,
+    path = "/auth/sessions/{id}",
+    responses((status = 200, body = Session), (status = 400, body = Error)),
+    params(("id" = u64, path))
+)]
+async fn fetch_session(
+    Extension(user): Extension<User>,
+    Path(id): Path<u64>,
+) -> Result<Json<Session>> {
     Ok(Json(id.session(user.id).await?))
 }
 
-pub async fn fetch_many(Extension(user): Extension<User>) -> Json<Vec<Session>> {
+#[utoipa::path(
+    get,
+    path = "/auth/sessions",
+    responses((status = 200, body = [Session]), (status = 400, body = Error)),
+    params(("id" = u64, path))
+)]
+pub async fn fetch_sessions(Extension(user): Extension<User>) -> Json<Vec<Session>> {
     Json(Session::find(|q| q.eq("user_id", &user.id)).await)
 }
 
+#[utoipa::path(
+    delete,
+    path = "/auth/sessions/{id}",
+    responses((status = 400, body = Error)),
+    params(("id" = u64, path))
+)]
 pub async fn delete_session(
     Extension(user): Extension<User>,
     Path((id, token)): Path<(u64, String)>,
@@ -66,11 +95,11 @@ pub fn routes() -> axum::Router {
     use axum::{middleware, routing::*, Router};
 
     Router::new()
-        .route("/", get(fetch_many))
+        .route("/", get(fetch_sessions))
         .route(
             "/login",
-            post(create).route_layer(middleware::from_fn(captcha::handle)),
+            post(create_session).route_layer(middleware::from_fn(captcha::handle)),
         )
-        .route("/:session_id", get(fetch_one))
+        .route("/:session_id", get(fetch_session))
         .route("/:session_id/:token", delete(delete_session))
 }

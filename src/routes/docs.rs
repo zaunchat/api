@@ -1,4 +1,6 @@
-use super::{bots::*, channels::*, invites::*, messages::*, users::*};
+use super::{
+    auth::accounts::*, auth::sessions::*, bots::*, channels::*, invites::*, messages::*, users::*,
+};
 use crate::middlewares::ratelimit::RateLimitInfo;
 use crate::structures::*;
 use crate::utils::{badges::Badges, error::Error, permissions::Permissions};
@@ -34,7 +36,16 @@ use utoipa_swagger_ui::Config;
         fetch_bots,
         fetch_bot,
         delete_bot,
-        create_bot
+        create_bot,
+
+
+        create_session,
+        delete_session,
+        fetch_session,
+        fetch_sessions,
+
+        register_account,
+        verify_account
     ),
     components(
         Badges,
@@ -56,7 +67,9 @@ use utoipa_swagger_ui::Config;
         CreateMessageOptions,
         EditMessageOptions,
         CreateGroupOptions,
-        CreateInviteOptions
+        CreateInviteOptions,
+        CreateSessionOptions,
+        RegisterAccountOptions
     ),
     modifiers(&SecurityAddon),
     tags(
@@ -91,13 +104,7 @@ pub fn docs(router: Router) -> Router {
     let config = Arc::new(Config::from("/openapi.json"));
     let docs = Docs::openapi();
     router
-        .route(
-            "/openapi.json",
-            get({
-                let doc = docs.clone();
-                move || async { Json(doc) }
-            }),
-        )
+        .route("/openapi.json", get({ move || async { Json(docs) } }))
         .route(
             "/swagger/*tail",
             get(serve_swagger_ui).layer(Extension(config)),
