@@ -104,7 +104,7 @@ pub fn docs(router: Router) -> Router {
     let config = Arc::new(Config::from("/openapi.json"));
     let docs = Docs::openapi();
     router
-        .route("/openapi.json", get({ move || async { Json(docs) } }))
+        .route("/openapi.json", get(move || async { Json(docs) }))
         .route(
             "/swagger/*tail",
             get(serve_swagger_ui).layer(Extension(config)),

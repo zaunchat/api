@@ -9,7 +9,7 @@ pub fn routes() -> axum::Router {
         .nest("/accounts", accounts::routes())
         .nest("/sessions", sessions::routes())
         .layer(middleware::from_fn(ratelimit::handle!(
-            2,
+            10,
             1000 * 60 * 60 * 3
         )))
 }
