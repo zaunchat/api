@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/itchatapp/api/compare/v1.8.1...v1.8.2) (2022-06-11)
+
+
+### Bug Fixes
+
+* **routes:** Increase maiumum requests for auth routes ([92e16f9](https://github.com/itchatapp/api/commit/92e16f9fc2277accd6eb4ce8dcceff8ad43ab3c8))
+
 ## [1.8.1](https://github.com/itchatapp/api/compare/v1.8.0...v1.8.1) (2022-06-11)
 
 
