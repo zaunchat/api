@@ -16,7 +16,7 @@ use super::{
 
 use crate::middlewares::ratelimit::RateLimitInfo;
 use crate::structures::*;
-use crate::utils::{badges::Badges, error::Error, permissions::Permissions};
+use crate::utils::{badges::Badges, error::*, permissions::Permissions};
 use std::sync::Arc;
 use utoipa::{
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
@@ -101,7 +101,8 @@ use utoipa_swagger_ui::Config;
         CreateServerOptions,
         CreateRoleOptions,
         UpdateRoleOptions,
-        UpdateMemberOptions
+        UpdateMemberOptions,
+        ValidationError
     ),
     modifiers(&SecurityAddon),
     tags(

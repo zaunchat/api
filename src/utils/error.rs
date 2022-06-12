@@ -4,14 +4,16 @@ use axum::{
     response::{IntoResponse, Json, Response},
 };
 use serde::Serialize;
-use utoipa::Component;
 use validator::ValidationErrors;
 
-#[derive(thiserror::Error, Debug, Serialize, Component)]
+#[derive(Debug, Serialize)]
+pub struct ValidationError(pub ValidationErrors);
+
+#[derive(thiserror::Error, Debug, Serialize, utoipa::Component)]
 #[serde(tag = "type")]
 pub enum Error {
     #[error("Invalid body")]
-    ValidationFailed { error: ValidationErrors },
+    ValidationFailed { error: ValidationError },
     #[error("You have executed the rate limit")]
     RateLimited(RateLimitInfo),
     #[error("Invalid JSON")]
@@ -74,5 +76,15 @@ impl IntoResponse for Error {
             _ => StatusCode::BAD_REQUEST,
         };
         (status, Json(serde_json::json!(self))).into_response()
+    }
+}
+
+use utoipa::openapi::{schema::Component, ComponentType, PropertyBuilder};
+
+impl utoipa::Component for ValidationError {
+    fn component() -> Component {
+        PropertyBuilder::new()
+            .component_type(ComponentType::Object)
+            .into()
     }
 }
