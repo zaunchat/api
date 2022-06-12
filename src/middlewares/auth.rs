@@ -1,7 +1,7 @@
 use crate::structures::*;
 use crate::utils::error::Error;
 use axum::{
-    http::{self, Request},
+    http::{Request, header},
     middleware::Next,
     response::Response,
 };
@@ -15,7 +15,6 @@ pub async fn handle<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, E
         "/auth/sessions/login" => true,
         "/openapi.json" => true,
         _ if path.starts_with("/auth/accounts/verify") => true,
-        _ if path.starts_with("/swagger") => true,
         _ => false,
     };
 
@@ -25,7 +24,7 @@ pub async fn handle<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, E
 
     let token = req
         .headers()
-        .get(http::header::AUTHORIZATION)
+        .get(header::AUTHORIZATION)
         .and_then(|header| header.to_str().ok());
 
     if token.is_none() {
