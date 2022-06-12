@@ -1,3 +1,10 @@
+## [1.8.4](https://github.com/itchatapp/api/compare/v1.8.3...v1.8.4) (2022-06-12)
+
+
+### Bug Fixes
+
+*  bug fixes ([b4246b3](https://github.com/itchatapp/api/commit/b4246b3bff7b1d3d72f3a4ab4983b5a01d7766f6))
+
 ## [1.8.3](https://github.com/itchatapp/api/compare/v1.8.2...v1.8.3) (2022-06-12)
 
 
