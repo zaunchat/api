@@ -17,7 +17,7 @@ use super::{
     users,
 };
 use crate::middlewares::ratelimit::RateLimitInfo;
-use crate::utils::{Error, Badges, Permissions};
+use crate::utils::{Error, ValidationError, Badges, Permissions};
 
 #[derive(OpenApi)]
 #[openapi(
