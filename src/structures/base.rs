@@ -1,7 +1,6 @@
 use crate::database::DB as db;
 use rbatis::{crud::{CRUDTable, CRUD}, wrapper::Wrapper};
 use serde::de::DeserializeOwned;
-use crate::utils::error::*;
 
 #[async_trait]
 pub trait Base: CRUDTable + DeserializeOwned {
