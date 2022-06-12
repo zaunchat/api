@@ -1,3 +1,11 @@
+## [1.8.3](https://github.com/itchatapp/api/compare/v1.8.2...v1.8.3) (2022-06-12)
+
+
+### Bug Fixes
+
+* **auth:** Remove swagger endpoint ([57babd5](https://github.com/itchatapp/api/commit/57babd5b008703802682fc4cc4d60a9b8b11d35d))
+* **captcha:** Should return error instead of status code ([6b42a3b](https://github.com/itchatapp/api/commit/6b42a3b44587ec875eaf48a684e573884cef5dd7))
+
 ## [1.8.2](https://github.com/itchatapp/api/compare/v1.8.1...v1.8.2) (2022-06-11)
 
 
