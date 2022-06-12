@@ -1,3 +1,6 @@
+use axum::{extract::Json, routing::get, Router};
+use utoipa::{Modify, OpenApi, openapi::security::{ApiKey, ApiKeyValue, SecurityScheme}};
+use crate::structures::*;
 use super::{
     auth::accounts::{self, *},
     auth::sessions::{self, *},
@@ -13,16 +16,8 @@ use super::{
     servers::servers::{self, *},
     users,
 };
-
 use crate::middlewares::ratelimit::RateLimitInfo;
-use crate::structures::*;
-use crate::utils::{badges::Badges, error::*, permissions::Permissions};
-use std::sync::Arc;
-use utoipa::{
-    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
-    Modify, OpenApi,
-};
-use utoipa_swagger_ui::Config;
+use crate::utils::{Error, Badges, Permissions};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -140,36 +135,8 @@ impl Modify for SecurityAddon {
     }
 }
 
-use axum::{
-    extract::Json, extract::*, http::StatusCode, response::IntoResponse, routing::get, Router,
-};
 
 pub fn docs(router: Router) -> Router {
-    let config = Arc::new(Config::from("/openapi.json"));
     let docs = Docs::openapi();
-    router
-        .route("/openapi.json", get(move || async { Json(docs) }))
-        .route(
-            "/swagger/*tail",
-            get(serve_swagger_ui).layer(Extension(config)),
-        )
-}
-
-async fn serve_swagger_ui(
-    Path(tail): Path<String>,
-    Extension(state): Extension<Arc<Config<'static>>>,
-) -> impl IntoResponse {
-    match utoipa_swagger_ui::serve(&tail[1..], state) {
-        Ok(file) => file
-            .map(|file| {
-                (
-                    StatusCode::OK,
-                    [("Content-Type", file.content_type)],
-                    file.bytes,
-                )
-                    .into_response()
-            })
-            .unwrap_or_else(|| StatusCode::NOT_FOUND.into_response()),
-        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response(),
-    }
+    router.route("/openapi.json", get(move || async { Json(docs) }))
 }
