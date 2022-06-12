@@ -1,9 +1,10 @@
-use crate::config::*;
 use axum::{
     http::{Request, StatusCode},
     middleware::Next,
     response::Response,
 };
+use crate::config::*;
+use crate::utils::error::*;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -11,11 +12,11 @@ struct CaptchaResponse {
     success: bool,
 }
 
-pub async fn handle<B>(req: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {
+pub async fn handle<B>(req: Request<B>, next: Next<B>) -> Result<Response, Error> {
     let key = req.headers().get("X-Captcha-Key");
 
     if key.is_none() {
-        return Err(StatusCode::BAD_REQUEST);
+        return Err(Error::MissingHeader);
     }
 
     let client = reqwest::Client::new();
@@ -39,5 +40,5 @@ pub async fn handle<B>(req: Request<B>, next: Next<B>) -> Result<Response, Statu
         }
     }
 
-    Err(StatusCode::BAD_REQUEST)
+    Err(Error::FailedCaptcha)
 }
