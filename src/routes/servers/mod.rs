@@ -1,8 +1,8 @@
-mod channels;
-mod invites;
-mod members;
-mod roles;
-mod servers;
+pub mod channels;
+pub mod invites;
+pub mod members;
+pub mod roles;
+pub mod servers;
 
 pub fn routes() -> axum::Router {
     use crate::middlewares::*;

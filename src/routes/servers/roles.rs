@@ -5,8 +5,8 @@ use crate::{structures::*, utils::r#ref::Ref};
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
-struct CreateRoleOptions {
+#[derive(Deserialize, Validate, utoipa::Component)]
+pub struct CreateRoleOptions {
     #[validate(length(min = 1, max = 32))]
     name: String,
     color: u8,
@@ -14,8 +14,8 @@ struct CreateRoleOptions {
     hoist: bool,
 }
 
-#[derive(Deserialize, Validate)]
-struct UpdateRoleOptions {
+#[derive(Deserialize, Validate, utoipa::Component)]
+pub struct UpdateRoleOptions {
     #[validate(length(min = 1, max = 32))]
     name: Option<String>,
     color: Option<u8>,
@@ -23,7 +23,13 @@ struct UpdateRoleOptions {
     hoist: Option<bool>,
 }
 
-async fn fetch_one(
+#[utoipa::path(
+    get,
+    path = "/servers/{server_id}/roles/{id}",
+    responses((status = 200, body = Role), (status = 400, body = Error)),
+    params(("server_id" = u64, path), ("id" = u64, path))
+)]
+pub async fn fetch_role(
     Extension(user): Extension<User>,
     Path((server_id, role_id)): Path<(u64, u64)>,
 ) -> Result<Json<Role>> {
@@ -34,7 +40,13 @@ async fn fetch_one(
     Ok(Json(role_id.role(server_id).await?))
 }
 
-async fn fetch_many(
+#[utoipa::path(
+    get,
+    path = "/servers/{server_id}/roles",
+    responses((status = 200, body = [Role]), (status = 400, body = Error)),
+    params(("server_id" = u64, path))
+)]
+pub async fn fetch_roles(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
 ) -> Result<Json<Vec<Role>>> {
@@ -47,7 +59,14 @@ async fn fetch_many(
     Ok(Json(roles))
 }
 
-async fn create(
+#[utoipa::path(
+    post,
+    path = "/servers/{server_id}/roles",
+    request_body = CreateRoleOptions,
+    responses((status = 200, body = [Role]), (status = 400, body = Error)),
+    params(("server_id" = u64, path))
+)]
+pub async fn create_role(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
     ValidatedJson(data): ValidatedJson<CreateRoleOptions>,
@@ -71,7 +90,14 @@ async fn create(
     Ok(Json(role))
 }
 
-async fn update(
+#[utoipa::path(
+    patch,
+    path = "/servers/{server_id}/roles/{id}",
+    request_body = UpdateRoleOptions,
+    responses((status = 200, body = [Role]), (status = 400, body = Error)),
+    params(("server_id" = u64, path), ("id" = u64, path))
+)]
+pub async fn edit_role(
     Extension(user): Extension<User>,
     Path((server_id, role_id)): Path<(u64, u64)>,
     ValidatedJson(data): ValidatedJson<UpdateRoleOptions>,
@@ -109,7 +135,13 @@ async fn update(
     Ok(Json(role))
 }
 
-async fn delete_role(
+#[utoipa::path(
+    delete,
+    path = "/servers/{server_id}/roles/{id}",
+    responses((status = 400, body = Error)),
+    params(("server_id" = u64, path), ("id" = u64, path))
+)]
+pub async fn delete_role(
     Extension(user): Extension<User>,
     Path((server_id, role_id)): Path<(u64, u64)>,
 ) -> Result<()> {
@@ -132,9 +164,9 @@ pub fn routes() -> axum::Router {
     use axum::{routing::*, Router};
 
     Router::new()
-        .route("/", get(fetch_many).post(create))
+        .route("/", get(fetch_roles).post(create_role))
         .route(
             "/:role_id",
-            get(fetch_one).patch(update).delete(delete_role),
+            get(fetch_role).patch(edit_role).delete(delete_role),
         )
 }

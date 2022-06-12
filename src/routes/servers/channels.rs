@@ -5,14 +5,20 @@ use crate::{structures::*, utils::r#ref::Ref};
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
-struct CreateChannelOptions {
+#[derive(Deserialize, Validate, utoipa::Component)]
+pub struct CreateServerChannelOptions {
     r#type: ChannelTypes,
     #[validate(length(min = 1, max = 32))]
     name: String,
 }
 
-async fn fetch_one(
+#[utoipa::path(
+    get,
+    path = "/servers/{server_id}/channels/{id}",
+    responses((status = 200, body = Channel), (status = 400, body = Error)),
+    params(("server_id" = u64, path), ("id" = u64, path))
+)]
+pub async fn fetch_server_channel(
     Extension(user): Extension<User>,
     Path((server_id, channel_id)): Path<(u64, u64)>,
 ) -> Result<Json<Channel>> {
@@ -28,7 +34,13 @@ async fn fetch_one(
     }
 }
 
-async fn fetch_many(
+#[utoipa::path(
+    get,
+    path = "/servers/{server_id}/channels",
+    responses((status = 200, body = [Channel]), (status = 400, body = Error)),
+    params(("server_id" = u64, path))
+)]
+pub async fn fetch_server_channels(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
 ) -> Result<Json<Vec<Channel>>> {
@@ -41,10 +53,17 @@ async fn fetch_many(
     Ok(Json(channels))
 }
 
-async fn create(
+#[utoipa::path(
+    post,
+    request_body = CreateServerChannelOptions,
+    path = "/servers/{server_id}/channels",
+    responses((status = 200, body = Channel), (status = 400, body = Error)),
+    params(("server_id" = u64, path))
+)]
+pub async fn create_server_channel(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
-    ValidatedJson(data): ValidatedJson<CreateChannelOptions>,
+    ValidatedJson(data): ValidatedJson<CreateServerChannelOptions>,
 ) -> Result<Json<Channel>> {
     if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
@@ -70,7 +89,13 @@ async fn create(
     channel
 }
 
-async fn delete_channel(
+#[utoipa::path(
+    delete,
+    path = "/servers/{server_id}/channels/{id}",
+    responses((status = 400, body = Error)),
+    params(("server_id" = u64, path), ("id" = u64, path))
+)]
+pub async fn delete_server_channel(
     Extension(user): Extension<User>,
     Path((server_id, channel_id)): Path<(u64, u64)>,
 ) -> Result<()> {
@@ -89,7 +114,13 @@ async fn delete_channel(
     Ok(())
 }
 
-async fn update(
+#[utoipa::path(
+    patch,
+    path = "/servers/{server_id}/channels/{id}",
+    responses((status = 200, body = Channel), (status = 400, body = Error)),
+    params(("server_id" = u64, path), ("id" = u64, path))
+)]
+pub async fn edit_server_channel(
     Extension(user): Extension<User>,
     Path((server_id, channel_id)): Path<(u64, u64)>,
 ) -> Result<Json<Channel>> {
@@ -110,9 +141,11 @@ pub fn routes() -> axum::Router {
     use axum::{routing::*, Router};
 
     Router::new()
-        .route("/", get(fetch_many).post(create))
+        .route("/", get(fetch_server_channels).post(create_server_channel))
         .route(
             "/:channel_id",
-            get(fetch_one).patch(update).delete(delete_channel),
+            get(fetch_server_channel)
+                .patch(edit_server_channel)
+                .delete(delete_server_channel),
         )
 }

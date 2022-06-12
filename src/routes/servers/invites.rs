@@ -5,12 +5,18 @@ use crate::{structures::*, utils::r#ref::Ref};
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
-struct CreateInviteOptions {
+#[derive(Deserialize, Validate, utoipa::Component)]
+pub struct CreateServerInviteOptions {
     channel_id: u64,
 }
 
-async fn fetch_one(
+#[utoipa::path(
+    get,
+    path = "/servers/{server_id}/invites/{id}",
+    responses((status = 200, body = Invite), (status = 400, body = Error)),
+    params(("server_id" = u64, path), ("id" = u64, path))
+)]
+pub async fn fetch_server_invite(
     Extension(user): Extension<User>,
     Path((server_id, invite_id)): Path<(u64, u64)>,
 ) -> Result<Json<Invite>> {
@@ -21,7 +27,13 @@ async fn fetch_one(
     Ok(Json(invite_id.invite(server_id.into()).await?))
 }
 
-async fn fetch_many(
+#[utoipa::path(
+    get,
+    path = "/servers/{server_id}/invites",
+    responses((status = 200, body = [Invite]), (status = 400, body = Error)),
+    params(("server_id" = u64, path))
+)]
+pub async fn fetch_server_invites(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
 ) -> Result<Json<Vec<Invite>>> {
@@ -34,7 +46,13 @@ async fn fetch_many(
     Ok(Json(invites))
 }
 
-async fn delete_invite(
+#[utoipa::path(
+    delete,
+    path = "/servers/{server_id}/invites/{id}",
+    responses((status = 400, body = Error)),
+    params(("server_id" = u64, path), ("id" = u64, path))
+)]
+pub async fn delete_server_invite(
     Extension(user): Extension<User>,
     Path((server_id, invite_id)): Path<(u64, u64)>,
 ) -> Result<()> {
@@ -53,10 +71,16 @@ async fn delete_invite(
     Ok(())
 }
 
-async fn create(
+#[utoipa::path(
+    post,
+    path = "/servers/{server_id}/invites",
+    responses((status = 200, body = Invite), (status = 400, body = Error)),
+    params(("server_id" = u64, path))
+)]
+pub async fn create_server_invite(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
-    ValidatedJson(data): ValidatedJson<CreateInviteOptions>,
+    ValidatedJson(data): ValidatedJson<CreateServerInviteOptions>,
 ) -> Result<Json<Invite>> {
     if !user.is_in_server(server_id).await {
         return Err(Error::UnknownServer);
@@ -79,6 +103,9 @@ pub fn routes() -> axum::Router {
     use axum::{routing::*, Router};
 
     Router::new()
-        .route("/", get(fetch_many).post(create))
-        .route("/:invite_id", get(fetch_one).delete(delete_invite))
+        .route("/", get(fetch_server_invites).post(create_server_invite))
+        .route(
+            "/:invite_id",
+            get(fetch_server_invite).delete(delete_server_invite),
+        )
 }

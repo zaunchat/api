@@ -17,7 +17,8 @@ pub struct CreateSessionOptions {
     post,
     path = "/auth/sessions",
     request_body = CreateSessionOptions,
-    responses((status = 200, body = Session), (status = 400, body = Error))
+    responses((status = 200, body = Session), (status = 400, body = Error)),
+    security(("captcha" = []))
 )]
 async fn create_session(
     ValidatedJson(data): ValidatedJson<CreateSessionOptions>,
@@ -62,8 +63,7 @@ async fn fetch_session(
 #[utoipa::path(
     get,
     path = "/auth/sessions",
-    responses((status = 200, body = [Session]), (status = 400, body = Error)),
-    params(("id" = u64, path))
+    responses((status = 200, body = [Session]), (status = 400, body = Error))
 )]
 pub async fn fetch_sessions(Extension(user): Extension<User>) -> Json<Vec<Session>> {
     Json(Session::find(|q| q.eq("user_id", &user.id)).await)

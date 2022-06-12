@@ -1,6 +1,19 @@
 use super::{
-    auth::accounts::*, auth::sessions::*, bots::*, channels::*, invites::*, messages::*, users::*,
+    auth::accounts::{self, *},
+    auth::sessions::{self, *},
+    bots,
+    channels::{self, *},
+    invites::{self, *},
+    messages::{self, *},
+    servers as server,
+    servers::channels::*,
+    servers::invites::*,
+    servers::members::*,
+    servers::roles::*,
+    servers::servers::{self, *},
+    users,
 };
+
 use crate::middlewares::ratelimit::RateLimitInfo;
 use crate::structures::*;
 use crate::utils::{badges::Badges, error::Error, permissions::Permissions};
@@ -14,38 +27,51 @@ use utoipa_swagger_ui::Config;
 #[derive(OpenApi)]
 #[openapi(
     handlers(
-        fetch_me,
-        fetch_user,
-
-        join_invite,
-        create_invite,
-        fetch_invite,
-
-        fetch_channel,
-        fetch_channels,
-        delete_group,
-        create_group,
-        add_user_to_group,
-        remove_user_from_group,
-
-        fetch_message,
-        send_message,
-        edit_message,
-        delete_message,
-
-        fetch_bots,
-        fetch_bot,
-        delete_bot,
-        create_bot,
-
-
-        create_session,
-        delete_session,
-        fetch_session,
-        fetch_sessions,
-
-        register_account,
-        verify_account
+        accounts::register_account,
+        accounts::verify_account,
+        bots::create_bot,
+        bots::delete_bot,
+        bots::fetch_bot,
+        bots::fetch_bots,
+        channels::add_user_to_group,
+        channels::create_group,
+        channels::delete_group,
+        channels::fetch_channel,
+        channels::fetch_channels,
+        channels::remove_user_from_group,
+        invites::create_invite,
+        invites::fetch_invite,
+        invites::join_invite,
+        messages::delete_message,
+        messages::edit_message,
+        messages::fetch_message,
+        messages::send_message,
+        server::channels::create_server_channel,
+        server::channels::delete_server_channel,
+        server::channels::edit_server_channel,
+        server::invites::create_server_invite,
+        server::invites::delete_server_invite,
+        server::invites::fetch_server_invite,
+        server::invites::fetch_server_invites,
+        server::members::edit_member,
+        server::members::fetch_member,
+        server::members::fetch_members,
+        server::members::kick_member,
+        server::roles::create_role,
+        server::roles::delete_role,
+        server::roles::edit_role,
+        server::roles::fetch_role,
+        server::roles::fetch_roles,
+        servers::create_server,
+        servers::delete_server,
+        servers::fetch_server,
+        servers::fetch_servers,
+        sessions::create_session,
+        sessions::delete_session,
+        sessions::fetch_session,
+        sessions::fetch_sessions,
+        users::fetch_me,
+        users::fetch_user,
     ),
     components(
         Badges,
@@ -69,11 +95,28 @@ use utoipa_swagger_ui::Config;
         CreateGroupOptions,
         CreateInviteOptions,
         CreateSessionOptions,
-        RegisterAccountOptions
+        RegisterAccountOptions,
+        CreateServerChannelOptions,
+        CreateServerInviteOptions,
+        CreateServerOptions,
+        CreateRoleOptions,
+        UpdateRoleOptions,
+        UpdateMemberOptions
     ),
     modifiers(&SecurityAddon),
     tags(
-        (name = "users", description = "Users")
+        (name = "users", description = "User Information"),
+        (name = "messages", description = "Messaging"),
+        (name = "accounts", description = "Accounts"),
+        (name = "sessions", description = "Sessions"),
+        (name = "channels", description = "Group/DM Channels"),
+        (name = "servers", description = "Servers"),
+        (name = "server::roles", description = "Server Roles"),
+        (name = "server::members", description = "Server Members"),
+        (name = "server::channels", description = "Server Channels"),
+        (name = "server::invites", description = "Server Invites"),
+        (name = "bots", description = "Bots"),
+        (name = "invites", description = "Invites")
     )
 )]
 struct Docs;
