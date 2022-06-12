@@ -47,4 +47,3 @@ thiserror = "1.0.31"
 
 # Docs
 utoipa = "1"
-utoipa-swagger-ui = "1"
