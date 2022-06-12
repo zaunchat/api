@@ -1,6 +1,6 @@
 use crate::extractors::*;
-use crate::utils::error::*;
-use crate::{structures::*, utils::r#ref::Ref};
+use crate::utils::*;
+use crate::structures::*;
 
 #[utoipa::path(
     get,

@@ -1,9 +1,7 @@
 use crate::config::*;
 use crate::extractors::*;
+use crate::utils::*;
 use crate::structures::*;
-use crate::utils::email;
-use crate::utils::error::*;
-use crate::utils::r#ref::Ref;
 use argon2::Config;
 use serde::Deserialize;
 use validator::Validate;

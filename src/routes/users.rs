@@ -1,15 +1,14 @@
 use crate::extractors::*;
 use crate::structures::*;
-use crate::utils::error::*;
-use crate::utils::r#ref::Ref;
-use axum::response::IntoResponse;
+use crate::utils::*;
+
 
 #[utoipa::path(
     get,
     path = "/users/@me",
     responses((status = 200, body = User), (status = 400, body = Error))
 )]
-pub async fn fetch_me(Extension(user): Extension<User>) -> impl IntoResponse {
+pub async fn fetch_me(Extension(user): Extension<User>) -> Json<User> {
     Json(user.to_public())
 }
 

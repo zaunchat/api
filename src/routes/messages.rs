@@ -1,7 +1,6 @@
 use crate::extractors::*;
-use crate::utils::error::*;
-use crate::utils::permissions::*;
-use crate::{structures::*, utils::r#ref::Ref};
+use crate::utils::*;
+use crate::structures::*;
 use serde::Deserialize;
 use validator::Validate;
 
@@ -81,7 +80,7 @@ pub async fn edit_message(
 #[utoipa::path(
     delete,
     path = "/messages/{id}",
-    responses((status = 400, body = Error)),
+    responses((status = 200), (status = 400, body = Error)),
     params(("id" = u64, path))
 )]
 pub async fn delete_message(

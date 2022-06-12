@@ -1,7 +1,7 @@
 use crate::database::DB as db;
 use crate::extractors::*;
-use crate::utils::error::*;
-use crate::{structures::*, utils::r#ref::Ref};
+use crate::utils::*;
+use crate::structures::*;
 use rbatis::crud::CRUDMut;
 use serde::Deserialize;
 use validator::Validate;
@@ -14,7 +14,7 @@ pub struct CreateServerOptions {
 
 #[utoipa::path(
     get,
-    path = "/servers/",
+    path = "/servers",
     responses((status = 200, body = [Server]), (status = 400, body = Error))
 )]
 pub async fn fetch_servers(Extension(user): Extension<User>) -> Json<Vec<Server>> {
