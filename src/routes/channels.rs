@@ -77,7 +77,7 @@ async fn add_user_to_group(
 
 #[utoipa::path(
     post,
-    path = "/channels/join/{group_id}/{target_id}",
+    path = "/channels/leave/{group_id}/{target_id}",
     responses((status = 400, body = Error)),
     params(("group_id" = u64, path), ("target_id" = u64, path))    
 )]
