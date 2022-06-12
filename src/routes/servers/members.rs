@@ -5,20 +5,26 @@ use crate::{structures::*, utils::r#ref::Ref};
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
-struct UpdateMemberOptions {
+#[derive(Deserialize, Validate, utoipa::Component)]
+pub struct UpdateMemberOptions {
     #[validate(length(min = 1, max = 32))]
     nickname: Option<String>,
     roles: Option<Vec<u64>>,
 }
 
-#[derive(Deserialize, Validate)]
-struct FetchMembersOptions {
+#[derive(Deserialize, Validate, utoipa::Component)]
+pub struct FetchMembersOptions {
     #[validate(range(min = 2, max = 1000))]
     limit: Option<u64>,
 }
 
-async fn fetch_one(
+#[utoipa::path(
+    get,
+    path = "/servers/{server_id}/members/{user_id}",
+    responses((status = 200, body = Member), (status = 400, body = Error)),
+    params(("server_id" = u64, path), ("user_id" = u64, path))
+)]
+pub async fn fetch_member(
     Extension(user): Extension<User>,
     Path((server_id, member_id)): Path<(u64, u64)>,
 ) -> Result<Json<Member>> {
@@ -31,7 +37,13 @@ async fn fetch_one(
     Ok(Json(member))
 }
 
-async fn fetch_many(
+#[utoipa::path(
+    get,
+    path = "/servers/{server_id}/members",
+    responses((status = 200, body = [Member]), (status = 400, body = Error)),
+    params(("server_id" = u64, path))
+)]
+pub async fn fetch_members(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
     Query(query): Query<FetchMembersOptions>,
@@ -46,7 +58,13 @@ async fn fetch_many(
     Ok(Json(members))
 }
 
-async fn kick(
+#[utoipa::path(
+    delete,
+    path = "/servers/{server_id}/members/{user_id}",
+    responses((status = 400, body = Error)),
+    params(("server_id" = u64, path), ("user_id" = u64, path))
+)]
+pub async fn kick_member(
     Extension(user): Extension<User>,
     Path((server_id, member_id)): Path<(u64, u64)>,
 ) -> Result<()> {
@@ -66,7 +84,14 @@ async fn kick(
     Ok(())
 }
 
-async fn update(
+#[utoipa::path(
+    patch,
+    request_body = UpdateMemberOptions,
+    path = "/servers/{server_id}/members/{user_id}",
+    responses((status = 200, body = Member), (status = 400, body = Error)),
+    params(("server_id" = u64, path), ("user_id" = u64, path))
+)]
+pub async fn edit_member(
     Extension(user): Extension<User>,
     Path((server_id, member_id)): Path<(u64, u64)>,
     ValidatedJson(data): ValidatedJson<UpdateMemberOptions>,
@@ -117,7 +142,8 @@ async fn update(
 pub fn routes() -> axum::Router {
     use axum::{routing::*, Router};
 
-    Router::new()
-        .route("/", get(fetch_many))
-        .route("/:member_id", get(fetch_one).patch(update).delete(kick))
+    Router::new().route("/", get(fetch_members)).route(
+        "/:member_id",
+        get(fetch_member).patch(edit_member).delete(kick_member),
+    )
 }

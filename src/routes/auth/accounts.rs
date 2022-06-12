@@ -23,7 +23,8 @@ pub struct RegisterAccountOptions {
     post,
     path = "/auth/accounts/register",
     request_body = CreateSessionOptions,
-    responses((status = 200, body = User), (status = 400, body = Error))
+    responses((status = 200, body = User), (status = 400, body = Error)),
+    security(("captcha" = []))
 )]
 async fn register_account(
     ValidatedJson(mut data): ValidatedJson<RegisterAccountOptions>,
@@ -77,7 +78,6 @@ async fn register_account(
 #[utoipa::path(
     get,
     path = "/auth/accounts/verify/{id}/{code}",
-    request_body = CreateSessionOptions,
     responses((status = 400, body = Error)),
     params(("id" = u64, path), ("code" = String, path))    
 )]
