@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/itchatapp/api/compare/v1.9.0...v1.9.1) (2022-06-13)
+
+
+### Bug Fixes
+
+* **ssl:** deal with http-1 challenge ([580efd0](https://github.com/itchatapp/api/commit/580efd0459537b220835a80959bdf8fd1b6dda93))
+
 # [1.9.0](https://github.com/itchatapp/api/compare/v1.8.4...v1.9.0) (2022-06-13)
 
 
