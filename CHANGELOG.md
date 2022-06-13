@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/itchatapp/api/compare/v1.8.4...v1.9.0) (2022-06-13)
+
+
+### Features
+
+* HTTPs Support ([e8c25b2](https://github.com/itchatapp/api/commit/e8c25b2d650a73dff4163442b64a44c14c7014db))
+
 ## [1.8.4](https://github.com/itchatapp/api/compare/v1.8.3...v1.8.4) (2022-06-12)
 
 
