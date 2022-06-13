@@ -1,7 +1,7 @@
 use crate::database::DB as db;
 use crate::extractors::*;
-use crate::utils::*;
 use crate::structures::*;
+use crate::utils::*;
 use rbatis::crud::CRUDMut;
 use serde::Deserialize;
 use validator::Validate;

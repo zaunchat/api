@@ -1,7 +1,7 @@
 use crate::structures::*;
 use crate::utils::error::Error;
 use axum::{
-    http::{Request, header},
+    http::{header, Request},
     middleware::Next,
     response::Response,
 };

@@ -1,10 +1,6 @@
-use axum::{
-    http::Request,
-    middleware::Next,
-    response::Response,
-};
 use crate::config::*;
 use crate::utils::error::*;
+use axum::{http::Request, middleware::Next, response::Response};
 use serde::Deserialize;
 
 #[derive(Deserialize)]

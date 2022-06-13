@@ -1,5 +1,8 @@
 use crate::database::DB as db;
-use rbatis::{crud::{CRUDTable, CRUD}, wrapper::Wrapper};
+use rbatis::{
+    crud::{CRUDTable, CRUD},
+    wrapper::Wrapper,
+};
 use serde::de::DeserializeOwned;
 
 #[async_trait]
