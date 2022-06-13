@@ -27,6 +27,20 @@ pub async fn request() -> Result<(), Error> {
 
     for auth in order.authorizations().await? {
         let challenge = auth.get_challenge("http-01").unwrap();
+        let token = challenge.token.as_ref().unwrap();
+        let contents = challenge.key_authorization()?.unwrap();
+
+        fs::create_dir_all("/var/www/.well-known/acme-challenge")
+            .await
+            .unwrap();
+
+        fs::write(
+            format!("/var/www/.well-known/acme-challenge/{}", token),
+            contents,
+        )
+        .await
+        .unwrap();
+
         let challenge = challenge.validate().await?;
         assert_eq!(
             challenge.wait_done(Duration::from_secs(5), 3).await?.status,
