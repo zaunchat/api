@@ -1,6 +1,6 @@
 use crate::extractors::*;
-use crate::utils::*;
 use crate::structures::*;
+use crate::utils::*;
 
 #[utoipa::path(
     get,

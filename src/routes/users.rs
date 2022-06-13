@@ -2,7 +2,6 @@ use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
 
-
 #[utoipa::path(
     get,
     path = "/users/@me",

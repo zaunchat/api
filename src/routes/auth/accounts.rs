@@ -1,7 +1,7 @@
 use crate::config::*;
 use crate::extractors::*;
-use crate::utils::*;
 use crate::structures::*;
+use crate::utils::*;
 use argon2::Config;
 use serde::Deserialize;
 use validator::Validate;

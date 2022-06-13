@@ -25,4 +25,6 @@ lazy_static! {
         is_true(get!("REQUIRE_INVITE_TO_REGISTER", "false"));
     pub static ref SENDINBLUE_API_KEY: String = get!("SENDINBLUE_API_KEY");
     pub static ref TRUST_CLOUDFLARE: bool = is_true(get!("TRUST_CLOUDFLARE", "false"));
+    pub static ref HTTPS_ENABLED: bool = is_true(get!("HTTPS_ENABLED", "false"));
+    pub static ref DOMAIN_NAME: String = get!("DOMAIN_NAME");
 }

@@ -1,6 +1,6 @@
 use crate::extractors::*;
-use crate::utils::*;
 use crate::structures::*;
+use crate::utils::*;
 use serde::Deserialize;
 use validator::Validate;
 

@@ -1,6 +1,3 @@
-use axum::{extract::Json, routing::get, Router};
-use utoipa::{Modify, OpenApi, openapi::security::{ApiKey, ApiKeyValue, SecurityScheme}};
-use crate::structures::*;
 use super::{
     auth::accounts::{self, *},
     auth::sessions::{self, *},
@@ -17,7 +14,13 @@ use super::{
     users,
 };
 use crate::middlewares::ratelimit::RateLimitInfo;
-use crate::utils::{Error, ValidationError, Badges, Permissions};
+use crate::structures::*;
+use crate::utils::{Badges, Error, Permissions, ValidationError};
+use axum::{extract::Json, routing::get, Router};
+use utoipa::{
+    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
+    Modify, OpenApi,
+};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -134,7 +137,6 @@ impl Modify for SecurityAddon {
         }
     }
 }
-
 
 pub fn docs(router: Router) -> Router {
     let docs = Docs::openapi();
