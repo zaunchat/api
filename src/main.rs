@@ -16,7 +16,7 @@ pub mod utils;
 use axum::{handler::Handler, http::StatusCode, middleware, Router, Server};
 use std::net::SocketAddr;
 
-#[async_std::main]
+#[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
