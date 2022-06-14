@@ -1,3 +1,4 @@
+use crate::config::*;
 use crate::database::DB as db;
 use crate::extractors::*;
 use crate::structures::*;
@@ -41,9 +42,9 @@ pub async fn create_server(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateServerOptions>,
 ) -> Result<Json<Server>> {
-    let joined_server_count = Member::count(|q| q.eq("id", user.id)).await;
+    let count = Member::count(|q| q.eq("id", user.id)).await;
 
-    if joined_server_count > 100 {
+    if count > *MAX_SERVERS {
         return Err(Error::MaximumServers);
     }
 

@@ -1,3 +1,4 @@
+use crate::config::*;
 use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
@@ -72,6 +73,12 @@ pub async fn create_server_channel(
 
     if !p.contains(Permissions::MANAGE_CHANNELS) {
         return Err(Error::MissingPermissions);
+    }
+
+    let count = Channel::count(|q| q.eq("server_id", server_id)).await;
+
+    if count > *MAX_SERVER_CHANNELS {
+        return Err(Error::MaximumChannels);
     }
 
     let channel = match data.r#type {

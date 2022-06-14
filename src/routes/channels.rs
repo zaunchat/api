@@ -1,3 +1,4 @@
+use crate::config::*;
 use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
@@ -64,6 +65,10 @@ async fn add_user_to_group(
     let mut group = group_id.channel(user.id.into()).await?;
 
     if let Some(recipients) = group.recipients.as_mut() {
+        if recipients.len() as u64 > *MAX_GROUP_MEMBERS {
+            return Err(Error::MaximumGroupMembers);
+        }
+
         if recipients.contains(&target.id) {
             return Err(Error::MissingAccess);
         }

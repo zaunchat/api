@@ -1,3 +1,4 @@
+use crate::config::*;
 use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
@@ -40,6 +41,12 @@ pub async fn join_invite(Extension(user): Extension<User>, Path(code): Path<Stri
                 return Err(Error::MissingAccess);
             }
 
+            let count = Member::count(|q| q.eq("server_id", invite.server_id.unwrap())).await;
+
+            if count > *MAX_SERVER_MEMBERS {
+                return Err(Error::MaximumChannels);
+            }
+
             let member = Member::new(user.id, invite.server_id.unwrap());
 
             invite.uses += 1;
@@ -52,6 +59,10 @@ pub async fn join_invite(Extension(user): Extension<User>, Path(code): Path<Stri
             let mut group = Channel::find_one_by_id(invite.channel_id).await.unwrap();
 
             if let Some(recipients) = group.recipients.as_mut() {
+                if recipients.len() as u64 > *MAX_GROUP_MEMBERS {
+                    return Err(Error::MaximumGroupMembers);
+                }
+
                 if recipients.contains(&user.id) {
                     return Err(Error::MissingAccess);
                 }
