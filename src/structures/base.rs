@@ -21,6 +21,16 @@ pub trait Base: CRUDTable + DeserializeOwned {
         db.fetch_list_by_wrapper(query).await.unwrap()
     }
 
+    async fn count<F>(query: F) -> u64
+    where
+        F: Send + Fn(Wrapper) -> Wrapper,
+    {
+        let query = query(db.new_wrapper());
+        db.fetch_count_by_wrapper::<Self>(query)
+            .await
+            .unwrap_or_default()
+    }
+
     async fn find_one<F>(query: F) -> Option<Self>
     where
         F: Send + Fn(Wrapper) -> Wrapper,
