@@ -1,4 +1,4 @@
-use crate::utils::error::{Error, ValidationError};
+use crate::utils::error::Error;
 use axum::{
     body::HttpBody,
     extract::{FromRequest, Json, RequestParts},
@@ -26,13 +26,11 @@ where
         if let Ok(data) = data {
             let data: Json<T> = data;
 
-            data.validate().map_err(|error| Error::ValidationFailed {
-                error: ValidationError(error),
-            })?;
+            data.validate().map_err(|_| Error::InvalidBody)?;
 
             Ok(Self(data.0))
         } else {
-            Err(Error::ParseFailed)
+            Err(Error::InvalidBody)
         }
     }
 }
