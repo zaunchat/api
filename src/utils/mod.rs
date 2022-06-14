@@ -5,7 +5,6 @@ pub mod migration;
 pub mod permissions;
 pub mod r#ref;
 pub mod snowflake;
-pub mod ssl;
 
 pub use badges::*;
 pub use error::*;
