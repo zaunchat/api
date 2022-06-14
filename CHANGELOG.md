@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/itchatapp/api/compare/v1.10.0...v1.11.0) (2022-06-14)
+
+
+### Features
+
+* Apply limitation of creation of x ([01d6ab0](https://github.com/itchatapp/api/commit/01d6ab04886d73f483bbce93c8c33ff39c433ddd))
+
 # [1.10.0](https://github.com/itchatapp/api/compare/v1.9.1...v1.10.0) (2022-06-14)
 
 
