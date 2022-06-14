@@ -47,6 +47,8 @@ use utoipa::{
         server::channels::create_server_channel,
         server::channels::delete_server_channel,
         server::channels::edit_server_channel,
+        server::channels::fetch_server_channel,
+        server::channels::fetch_server_channels,
         server::invites::create_server_invite,
         server::invites::delete_server_invite,
         server::invites::fetch_server_invite,
