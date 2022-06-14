@@ -25,7 +25,7 @@ pub async fn fetch_servers(Extension(user): Extension<User>) -> Json<Vec<Server>
 #[utoipa::path(
     get,
     path = "/servers/{id}",
-    responses((status = 200, body = [Server]), (status = 400, body = Error)),
+    responses((status = 200, body = Server), (status = 400, body = Error)),
     params(("id" = u64, path))
 )]
 pub async fn fetch_server(Path(server_id): Path<u64>) -> Result<Json<Server>> {
