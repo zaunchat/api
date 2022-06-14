@@ -14,7 +14,6 @@ pub mod structures;
 pub mod utils;
 
 use axum::{handler::Handler, http::StatusCode, middleware, Router, Server};
-use axum_server::tls_rustls::RustlsConfig;
 use std::net::SocketAddr;
 
 #[tokio::main]
@@ -40,23 +39,8 @@ async fn main() {
 
     log::info!("Listening on: {}", address.port());
 
-    if *config::HTTPS_ENABLED {
-        utils::ssl::request()
-            .await
-            .expect("Couldn't get the certificate for https");
-
-        let config = RustlsConfig::from_pem_file("public.pem", "private.pem")
-            .await
-            .unwrap();
-
-        axum_server::bind_rustls(address, config)
-            .serve(app.into_make_service_with_connect_info::<SocketAddr>())
-            .await
-            .unwrap();
-    } else {
-        Server::bind(&address)
-            .serve(app.into_make_service_with_connect_info::<SocketAddr>())
-            .await
-            .unwrap();
-    }
+    Server::bind(&address)
+        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+        .await
+        .unwrap();
 }
