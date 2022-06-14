@@ -25,4 +25,19 @@ lazy_static! {
         is_true(get!("REQUIRE_INVITE_TO_REGISTER", "false"));
     pub static ref SENDINBLUE_API_KEY: String = get!("SENDINBLUE_API_KEY");
     pub static ref TRUST_CLOUDFLARE: bool = is_true(get!("TRUST_CLOUDFLARE", "false"));
+
+    // User related
+    pub static ref MAX_FRIENDS: u64 = get!("MAX_FRIENDS", "1000").parse().unwrap();
+    pub static ref MAX_BLOCKED: u64 = get!("MAX_BLOCKED", "1000").parse().unwrap();
+
+    // Group related
+    pub static ref MAX_GROUPS: u64 = get!("MAX_GROUPS", "100").parse().unwrap();
+    pub static ref MAX_GROUP_MEMBERS: u64 = get!("MAX_GROUP_MEMBERS", "50").parse().unwrap();
+
+    // Server related
+    pub static ref MAX_SERVERS: u64 = get!("MAX_SERVERS", "100").parse().unwrap();
+    pub static ref MAX_SERVER_MEMBERS: u64 = get!("MAX_SERVER_MEMBERS", "10000").parse().unwrap();
+    pub static ref MAX_SERVER_CHANNELS: u64 = get!("MAX_SERVER_CHANNELS", "200").parse().unwrap();
+    pub static ref MAX_SERVER_ROLES: u64 = get!("MAX_SERVER_ROLES", "200").parse().unwrap();
+    pub static ref MAX_SERVER_EMOJIS: u64 = get!("MAX_SERVER_EMOJIS", "150").parse().unwrap();
 }

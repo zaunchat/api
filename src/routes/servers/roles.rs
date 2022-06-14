@@ -1,3 +1,4 @@
+use crate::config::*;
 use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
@@ -78,6 +79,12 @@ pub async fn create_role(
 
     if !p.contains(Permissions::MANAGE_ROLES) {
         return Err(Error::MissingPermissions);
+    }
+
+    let count = Role::count(|q| q.eq("server_id", server_id)).await;
+
+    if count > *MAX_SERVER_ROLES {
+        return Err(Error::MaximumRoles);
     }
 
     let mut role = Role::new(data.name.clone(), server_id);
