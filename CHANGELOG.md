@@ -1,3 +1,19 @@
+# [1.10.0](https://github.com/itchatapp/api/compare/v1.9.1...v1.10.0) (2022-06-14)
+
+
+### Bug Fixes
+
+* **cors:** explicitly allowed headers ([778b195](https://github.com/itchatapp/api/commit/778b19541c4a6619f2faea510aab4e59291f69b6))
+* **cors:** use from_str instead of from_static ([1c1ba35](https://github.com/itchatapp/api/commit/1c1ba35156e398507b9220de22b9db5e1b1c92cd))
+* Remove support of HTTPs ([26fba0a](https://github.com/itchatapp/api/commit/26fba0a093d7656c245670f9e347327d1bfdba92))
+
+
+### Features
+
+* **base:** Add #count method ([d0fd90a](https://github.com/itchatapp/api/commit/d0fd90a66874ffd96391b61e139804784115b404))
+* **error:** Provide more information about the occuret error ([a9f9a6b](https://github.com/itchatapp/api/commit/a9f9a6bcdba97011403cfecb8e7cc3389023ceaf))
+* **routes:** limit creation of servers ([349b87d](https://github.com/itchatapp/api/commit/349b87de11d9dc04ea68b3010e5178ff33711fe2))
+
 ## [1.9.1](https://github.com/itchatapp/api/compare/v1.9.0...v1.9.1) (2022-06-13)
 
 
