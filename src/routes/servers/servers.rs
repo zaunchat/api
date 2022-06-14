@@ -41,6 +41,12 @@ pub async fn create_server(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateServerOptions>,
 ) -> Result<Json<Server>> {
+    let joined_server_count = Member::count(|q| q.eq("id", user.id)).await;
+
+    if joined_server_count > 100 {
+        return Err(Error::MaximumServers);
+    }
+
     let server = Server::new(data.name, user.id);
     let member = Member::new(user.id, server.id);
     let category = Channel::new_category("General".into(), server.id);
