@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use axum::http::header::*;
 use axum::http::Method;
 use tower_http::cors::CorsLayer;
@@ -17,6 +19,6 @@ pub fn handle() -> CorsLayer {
             AUTHORIZATION,
             CONTENT_TYPE,
             CONTENT_LENGTH,
-            HeaderName::from_static("X-Captcha-Key"),
+            HeaderName::from_str("X-Captcha-Key").unwrap(),
         ])
 }
