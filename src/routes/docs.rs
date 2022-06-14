@@ -15,7 +15,7 @@ use super::{
 };
 use crate::middlewares::ratelimit::RateLimitInfo;
 use crate::structures::*;
-use crate::utils::{Badges, Error, Permissions, ValidationError};
+use crate::utils::{Badges, Error, Permissions};
 use axum::{extract::Json, routing::get, Router};
 use utoipa::{
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
@@ -100,7 +100,6 @@ use utoipa::{
         CreateRoleOptions,
         UpdateRoleOptions,
         UpdateMemberOptions,
-        ValidationError
     ),
     modifiers(&SecurityAddon),
     tags(

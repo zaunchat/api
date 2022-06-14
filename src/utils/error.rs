@@ -3,67 +3,49 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
+use quick_error::quick_error;
 use serde::Serialize;
-use validator::ValidationErrors;
+use std::fmt::Debug;
 
-#[derive(Debug, Serialize)]
-pub struct ValidationError(pub ValidationErrors);
+quick_error! {
+    #[derive(Debug, Serialize, utoipa::Component)]
+    pub enum Error {
+        RateLimited(info: RateLimitInfo) {
+            from(RateLimitInfo)
+            display("Executed the rate limit. Please retry after {}s", info.retry_after)
+        }
+        InvalidBody { display("You have provided a bad json schema") }
+        MissingHeader { display("Missing header") }
+        AccountVerificationRequired { display("You need to verify your account in order to perform this action") }
+        InvalidToken { display("Unauthorized. Provide a valid token and try again") }
+        EmailAlreadyInUse { display("This email already in use") }
+        MissingPermissions { display("You lack permissions to perform that action") }
+        EmptyMessage { display("Cannot send an empty message") }
+        RequireInviteCode { display("You must have an invite code to perform this action") }
+        InviteAlreadyTaken { display("This invite already used") }
+        FailedCaptcha { display("Respect the captcha, Respect you") }
+        MissingAccess { display("You missing access to perform this action ") }
 
-#[derive(thiserror::Error, Debug, Serialize, utoipa::Component)]
-#[serde(tag = "type")]
-pub enum Error {
-    #[error("Invalid body")]
-    ValidationFailed { error: ValidationError },
-    #[error("You have executed the rate limit")]
-    RateLimited(RateLimitInfo),
-    #[error("Invalid JSON")]
-    ParseFailed,
-    #[error("You need to verify your account in order to perform this action")]
-    AccountVerificationRequired,
-    #[error("Unauthorized. Provide a valid token and try again")]
-    InvalidToken,
-    #[error("Missing header")]
-    MissingHeader,
-    #[error("This email already in use")]
-    EmailAlreadyInUse,
-    #[error("This username taken by someone else")]
-    UsernameTaken,
-    #[error("Captcha don't love you")]
-    FailedCaptcha,
-    #[error("You lack permissions to perform that action")]
-    MissingPermissions,
-    #[error("You missing access to do the following action")]
-    MissingAccess,
-    #[error("Cannot send an empty message")]
-    EmptyMessage,
-    #[error("You must habe an invite to register")]
-    RequireInviteCode,
-    #[error("This invite already taken")]
-    InviteAlreadyTaken,
+        UnknownAccount
+        UnknownBot
+        UnknownChannel
+        UnknownInvite
+        UnknownUser
+        UnknownMessage
+        UnknownServer
+        UnknownSession
+        UnknownRole
+        UnknownMember
+        Unknown { display("Unknown error has occurred") }
 
-    // Unknown
-    #[error("Unknwon account")]
-    UnknownAccount,
-    #[error("Unknwon session")]
-    UnknownSession,
-    #[error("Unknwon user")]
-    UnknownUser,
-    #[error("Unknwon message")]
-    UnknownMessage,
-    #[error("Unknwon server")]
-    UnknownServer,
-    #[error("Unknwon member")]
-    UnknownMember,
-    #[error("Unknwon role")]
-    UnknownRole,
-    #[error("Unknwon bot")]
-    UnknownBot,
-    #[error("Unknwon channel")]
-    UnknownChannel,
-    #[error("Unknwon invite")]
-    UnknownInvite,
-    #[error("Unknwon error")]
-    Unknown,
+        MaximumFriends { display("Maximum number of friends reached") }
+        MaximumServers { display("Maximum number of servers reached")  }
+        MaximumGroups { display("Maximum number of groups reached")  }
+        MaximumRoles { display("Maximum number of server roles reached")  }
+        MaximumChannels { display("Maximum number of channels reached") }
+        MaximumGroupMembers { display("Maximum number of group members reached") }
+        MaximumBots { display("Maximum number of bots reached") }
+    }
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -75,16 +57,14 @@ impl IntoResponse for Error {
             Error::InvalidToken => StatusCode::UNAUTHORIZED,
             _ => StatusCode::BAD_REQUEST,
         };
-        (status, Json(serde_json::json!(self))).into_response()
-    }
-}
 
-use utoipa::openapi::{schema::Component, ComponentType, PropertyBuilder};
+        let mut body = serde_json::json!({ "type": self });
+        let msg = self.to_string();
 
-impl utoipa::Component for ValidationError {
-    fn component() -> Component {
-        PropertyBuilder::new()
-            .component_type(ComponentType::Object)
-            .into()
+        if msg.contains(' ') {
+            body["message"] = serde_json::json!(msg);
+        }
+
+        (status, Json(body)).into_response()
     }
 }
