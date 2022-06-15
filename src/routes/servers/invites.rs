@@ -19,9 +19,7 @@ pub async fn fetch_server_invite(
     Extension(user): Extension<User>,
     Path((server_id, invite_id)): Path<(u64, u64)>,
 ) -> Result<Json<Invite>> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     Ok(Json(invite_id.invite(server_id.into()).await?))
 }
@@ -36,9 +34,7 @@ pub async fn fetch_server_invites(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
 ) -> Result<Json<Vec<Invite>>> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     let invites = Invite::find(|q| q.eq("server_id", server_id)).await;
 
@@ -55,9 +51,7 @@ pub async fn delete_server_invite(
     Extension(user): Extension<User>,
     Path((server_id, invite_id)): Path<(u64, u64)>,
 ) -> Result<()> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     let p = Permissions::fetch(&user, server_id.into(), None).await?;
 
@@ -81,9 +75,7 @@ pub async fn create_server_invite(
     Path(server_id): Path<u64>,
     ValidatedJson(data): ValidatedJson<CreateServerInviteOptions>,
 ) -> Result<Json<Invite>> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     let channel = data.channel_id.channel(None).await?;
     let p = Permissions::fetch(&user, channel.server_id, channel.id.into()).await?;

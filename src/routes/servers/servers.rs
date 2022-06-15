@@ -79,13 +79,11 @@ pub async fn delete_server(
 ) -> Result<()> {
     let server = server_id.server().await?;
 
-    if server.owner_id == user.id {
-        server.delete().await;
-    } else if let Some(member) = server.fetch_member(user.id).await {
-        member.delete().await;
-    } else {
-        return Err(Error::UnknownMember);
+    if server.owner_id != user.id {
+        return Err(Error::MissingAccess);
     }
+
+    server.delete().await;
 
     Ok(())
 }

@@ -37,7 +37,7 @@ pub async fn join_invite(Extension(user): Extension<User>, Path(code): Path<Stri
 
     match invite {
         Some(mut invite) if invite.server_id.is_some() => {
-            if user.is_in_server(invite.server_id.unwrap()).await {
+            if user.member_of(invite.server_id.unwrap()).await.is_ok() {
                 return Err(Error::MissingAccess);
             }
 
