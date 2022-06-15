@@ -63,7 +63,7 @@ pub async fn fetch_roles(
     post,
     path = "/servers/{server_id}/roles",
     request_body = CreateRoleOptions,
-    responses((status = 200, body = [Role]), (status = 400, body = Error)),
+    responses((status = 200, body = Role), (status = 400, body = Error)),
     params(("server_id" = u64, path))
 )]
 pub async fn create_role(
@@ -100,7 +100,7 @@ pub async fn create_role(
     patch,
     path = "/servers/{server_id}/roles/{id}",
     request_body = UpdateRoleOptions,
-    responses((status = 200, body = [Role]), (status = 400, body = Error)),
+    responses((status = 200, body = Role), (status = 400, body = Error)),
     params(("server_id" = u64, path), ("id" = u64, path))
 )]
 pub async fn edit_role(
