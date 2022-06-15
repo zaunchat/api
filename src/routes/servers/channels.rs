@@ -22,9 +22,7 @@ pub async fn fetch_server_channel(
     Extension(user): Extension<User>,
     Path((server_id, channel_id)): Path<(u64, u64)>,
 ) -> Result<Json<Channel>> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     let channel = Channel::find_one(|q| q.eq("id", channel_id).eq("server_id", server_id)).await;
 
@@ -44,9 +42,7 @@ pub async fn fetch_server_channels(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
 ) -> Result<Json<Vec<Channel>>> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     let channels = Channel::find(|q| q.eq("server_id", server_id)).await;
 
@@ -65,9 +61,7 @@ pub async fn create_server_channel(
     Path(server_id): Path<u64>,
     ValidatedJson(data): ValidatedJson<CreateServerChannelOptions>,
 ) -> Result<Json<Channel>> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     let p = Permissions::fetch(&user, server_id.into(), None).await?;
 
@@ -105,9 +99,7 @@ pub async fn delete_server_channel(
     Extension(user): Extension<User>,
     Path((server_id, channel_id)): Path<(u64, u64)>,
 ) -> Result<()> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     let p = Permissions::fetch(&user, server_id.into(), channel_id.into()).await?;
 
@@ -130,9 +122,7 @@ pub async fn edit_server_channel(
     Extension(user): Extension<User>,
     Path((server_id, channel_id)): Path<(u64, u64)>,
 ) -> Result<Json<Channel>> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     let p = Permissions::fetch(&user, server_id.into(), channel_id.into()).await?;
 

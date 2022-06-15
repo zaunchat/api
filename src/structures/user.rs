@@ -1,6 +1,6 @@
 use super::*;
 use crate::database::DB as db;
-use crate::utils::{badges::Badges, snowflake};
+use crate::utils::{Badges, Result, Error, snowflake};
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:users)]
@@ -34,10 +34,14 @@ impl User {
         }
     }
 
-    pub async fn is_in_server(&self, server_id: u64) -> bool {
-        Member::find_one(|q| q.eq("id", self.id).eq("server_id", server_id))
-            .await
-            .is_some()
+    pub async fn member_of(&self, server_id: u64) -> Result<()> {
+        let exists = Member::count(|q| q.eq("id", self.id).eq("server_id", server_id)).await;
+
+        if !exists {
+            return Err(Error::UnknownServer);
+        }
+
+        Ok(())
     }
 
     pub async fn email_taken(email: &String) -> bool {

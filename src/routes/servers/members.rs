@@ -27,13 +27,8 @@ pub async fn fetch_member(
     Extension(user): Extension<User>,
     Path((server_id, member_id)): Path<(u64, u64)>,
 ) -> Result<Json<Member>> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
-
-    let member = member_id.member(server_id).await?;
-
-    Ok(Json(member))
+    user.member_of(server_id).await?;
+    Ok(Json(member_id.member(server_id).await?))
 }
 
 #[utoipa::path(
@@ -47,9 +42,7 @@ pub async fn fetch_members(
     Path(server_id): Path<u64>,
     Query(query): Query<FetchMembersOptions>,
 ) -> Result<Json<Vec<Member>>> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     let limit = query.limit.unwrap_or(100);
     let members = Member::find(|q| q.eq("server_id", server_id).limit(limit)).await;
@@ -67,12 +60,10 @@ pub async fn kick_member(
     Extension(user): Extension<User>,
     Path((server_id, member_id)): Path<(u64, u64)>,
 ) -> Result<()> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     if user.id != member_id {
-        let p = Permissions::fetch(&user, Some(server_id), None).await?;
+        let p = Permissions::fetch(&user, server_id.into(), None).await?;
         if !p.contains(Permissions::KICK_MEMBERS) {
             return Err(Error::MissingPermissions);
         }
@@ -95,12 +86,10 @@ pub async fn edit_member(
     Path((server_id, member_id)): Path<(u64, u64)>,
     ValidatedJson(data): ValidatedJson<UpdateMemberOptions>,
 ) -> Result<Json<Member>> {
-    if !user.is_in_server(server_id).await {
-        return Err(Error::UnknownServer);
-    }
+    user.member_of(server_id).await?;
 
     let mut member = member_id.member(server_id).await?;
-    let p = Permissions::fetch(&user, Some(server_id), None).await?;
+    let p = Permissions::fetch(&user, server_id.into(), None).await?;
 
     if let Some(nickname) = &data.nickname {
         if !p.contains(Permissions::CHANGE_NICKNAME) && !p.contains(Permissions::MANAGE_NICKNAMES) {
