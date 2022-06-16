@@ -8,7 +8,7 @@ use serde_json::json;
 
 lazy_static! {
     static ref SPLIT_REGEX: Regex = Regex::new("([^@]+)(@.+)").unwrap();
-    static ref SYMBOL_REEGEX: Regex = Regex::new("\\+.+|\\.").unwrap();
+    static ref SYMBOL_REGEX: Regex = Regex::new("\\+.+|\\.").unwrap();
 }
 
 #[crud_table(table_name:pending_accounts)]
@@ -37,9 +37,9 @@ impl Base for Invite {
     }
 }
 
-pub fn normalise(email: String) -> String {
+pub fn normalize(email: String) -> String {
     let split = SPLIT_REGEX.captures(&email).unwrap();
-    let mut clean = SYMBOL_REEGEX
+    let mut clean = SYMBOL_REGEX
         .replace_all(split.get(1).unwrap().as_str(), "")
         .to_string();
     clean.push_str(split.get(2).unwrap().as_str());

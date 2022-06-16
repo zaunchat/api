@@ -17,16 +17,6 @@ pub async fn fetch_me(Extension(user): Extension<User>) -> Json<User> {
     responses((status = 200, body = User), (status = 400, body = Error)),
     params(("id" = u64, path))
 )]
-pub async fn fetch_user(Path(id): Path<u64>) -> Result<Json<User>> {
+pub async fn fetch_one(Path(id): Path<u64>) -> Result<Json<User>> {
     Ok(Json(id.user().await?.to_public()))
-}
-
-pub fn routes() -> axum::Router {
-    use crate::middlewares::*;
-    use axum::{middleware, routing::*, Router};
-
-    Router::new()
-        .route("/@me", get(fetch_me))
-        .route("/:user_id", get(fetch_user))
-        .layer(middleware::from_fn(ratelimit::handle!(20, 1000 * 5)))
 }

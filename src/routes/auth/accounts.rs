@@ -27,7 +27,7 @@ pub struct RegisterAccountOptions {
 async fn register_account(
     ValidatedJson(mut data): ValidatedJson<RegisterAccountOptions>,
 ) -> Result<Json<User>> {
-    data.email = email::normalise(data.email);
+    data.email = email::normalize(data.email);
 
     let invite = if *REQUIRE_INVITE_TO_REGISTER && data.invite_code.is_some() {
         email::Invite::find_one(|q| q.eq("code", data.invite_code.as_ref().unwrap())).await
