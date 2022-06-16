@@ -1,145 +1,154 @@
-use super::{
-    auth::accounts::{self, *},
-    auth::sessions::{self, *},
-    bots,
-    channels::{self, *},
-    invites::{self, *},
-    messages::{self, *},
-    servers as server,
-    servers::channels::*,
-    servers::invites::*,
-    servers::members::*,
-    servers::roles::*,
-    servers::servers::{self, *},
-    users,
-};
-use crate::middlewares::ratelimit::RateLimitInfo;
+use super::auth::{accounts, sessions};
+use super::{channels, invites, messages, servers};
 use crate::structures::*;
-use crate::utils::{Badges, Error, Permissions};
 use axum::{extract::Json, routing::get, Router};
-use utoipa::{
-    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
-    Modify, OpenApi,
-};
 
-#[derive(OpenApi)]
-#[openapi(
-    handlers(
-        accounts::register_account,
-        accounts::verify_account,
-        bots::create_bot,
-        bots::delete_bot,
-        bots::fetch_bot,
-        bots::fetch_bots,
-        channels::add_user_to_group,
-        channels::create_group,
-        channels::delete_group,
-        channels::fetch_channel,
-        channels::fetch_channels,
-        channels::remove_user_from_group,
-        invites::create_invite,
-        invites::fetch_invite,
-        invites::join_invite,
-        messages::delete_message,
-        messages::edit_message,
-        messages::fetch_message,
-        messages::send_message,
-        server::channels::create_server_channel,
-        server::channels::delete_server_channel,
-        server::channels::edit_server_channel,
-        server::channels::fetch_server_channel,
-        server::channels::fetch_server_channels,
-        server::invites::create_server_invite,
-        server::invites::delete_server_invite,
-        server::invites::fetch_server_invite,
-        server::invites::fetch_server_invites,
-        server::members::edit_member,
-        server::members::fetch_member,
-        server::members::fetch_members,
-        server::members::kick_member,
-        server::roles::create_role,
-        server::roles::delete_role,
-        server::roles::edit_role,
-        server::roles::fetch_role,
-        server::roles::fetch_roles,
-        servers::create_server,
-        servers::delete_server,
-        servers::fetch_server,
-        servers::fetch_servers,
-        sessions::create_session,
-        sessions::delete_session,
-        sessions::fetch_session,
-        sessions::fetch_sessions,
-        users::fetch_me,
-        users::fetch_user,
-    ),
-    components(
-        Badges,
-        Bot,
-        Channel,
-        ChannelTypes,
-        Error,
-        Invite,
-        Member,
-        Overwrite,
-        OverwriteTypes,
-        Permissions,
-        Role,
-        Server,
-        Session,
-        Message,
-        User,
-        RateLimitInfo,
-        CreateMessageOptions,
-        EditMessageOptions,
-        CreateGroupOptions,
-        CreateInviteOptions,
-        CreateSessionOptions,
-        RegisterAccountOptions,
-        CreateServerChannelOptions,
-        CreateServerInviteOptions,
-        CreateServerOptions,
-        CreateRoleOptions,
-        UpdateRoleOptions,
-        UpdateMemberOptions,
-    ),
-    modifiers(&SecurityAddon),
-    tags(
-        (name = "users", description = "User Information"),
-        (name = "messages", description = "Messaging"),
-        (name = "accounts", description = "Accounts"),
-        (name = "sessions", description = "Sessions"),
-        (name = "channels", description = "Group/DM Channels"),
-        (name = "servers", description = "Servers"),
-        (name = "server::roles", description = "Server Roles"),
-        (name = "server::members", description = "Server Members"),
-        (name = "server::channels", description = "Server Channels"),
-        (name = "server::invites", description = "Server Invites"),
-        (name = "bots", description = "Bots"),
-        (name = "invites", description = "Invites")
-    )
-)]
-struct Docs;
+pub fn document(app: Router) -> Router {
+    let schema = describe_api! {
+        info: {
+            title: "ItChat API",
+            version: "0.0.0",
+        },
+        tags: {
+            users,
+            servers,
+            roles,
+            messages,
+            groups,
+            channels,
+            members,
+            auth,
+            invites,
+            bots
+        },
+        servers: { "https://api.itchat.world" },
+        security_schemes: {},
+        paths: {
+            // Accounts/Sessions
+            ("auth/accounts/login"): {
+                POST: { 200: Session, body: sessions::create::CreateSessionOptions, tags: {auth} } },
+            ("auth/accounts/verify" / { user_id: u64 } / { code: String }): {
+                GET: { 200: None, tags: {auth} }
+            },
+            ("auth/accounts/register"): {
+                POST: { 200: User, body: accounts::register::RegisterAccountOptions, tags: {auth} }
+            },
+            ("auth/sessions"): {
+                POST: { 200: Session, body: sessions::create::CreateSessionOptions, tags: {auth} }
+            },
+            ("auth/sessions" / { session_id: u64 }): {
+                DELETE: { 200: None, tags: {auth} },
+                GET: { 200: Session, body: User, tags: {auth} }
+            },
 
-struct SecurityAddon;
+            // Users
+            ("users/@me"): { GET: { 200: User, tags: {users} } },
+            ("users" / { user_id: u64 }): { GET: { 200: User, tags: {users} } },
 
-impl Modify for SecurityAddon {
-    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
-        if let Some(components) = openapi.components.as_mut() {
-            components.add_security_scheme(
-                "token",
-                SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("authorization"))),
-            );
 
-            components.add_security_scheme(
-                "captcha",
-                SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("x-captcha-key"))),
-            )
+            // Channels
+            ("channels"): {
+                GET: { 200: Vec<Channel>, tags:{channels} },
+                POST: { 200("Create a group channel"): Channel, body: channels::create::CreateGroupOptions, tags:{channels} }
+            },
+            ("channels" / { channel_id: u64 }): {
+                GET: { 200: Channel, tags:{channels} },
+                DELETE: { 200: None, tags:{channels} }
+            },
+            ("channels" / { channel_id: u64 } / { user_id: u64 }): {
+                DELETE: { 200: None, tags:{channels} }
+            },
+
+            // Messages
+            ("channels" / { channel_id: u64 } / "messages"): {
+                POST: { 200: Message, body: messages::create::CreateMessageOptions, tags:{messages} }
+            },
+
+            ("channels" / { channel_id: u64 } / "messages" / { message_id: u64 }): {
+                GET: { 200: Message, tags:{messages} },
+                PATCH: { 200: Message, body: messages::edit::EditMessageOptions, tags:{messages} },
+                DELETE: { 200: None, tags:{messages} }
+            },
+
+
+            // Bots
+            ("bots"): {
+                POST: { 200: Bot, tags:{bots} },
+                GET: { 200: Vec<Bot>, tags:{bots} }
+            },
+            ("bots" / { bot_id: u64 }): {
+                GET: { 200: Bot, tags:{bots} },
+                DELETE: { 200: None, tags:{bots} }
+            },
+
+            // Invites
+            ("invites"): {
+                POST: { 200: Invite, body: invites::create::CreateInviteOptions, tags:{invites} }
+            },
+            ("invites" / { code: String }): {
+                GET: { 200: Invite, tags:{invites} },
+                POST: { 200: Invite, tags:{invites} }
+            },
+
+
+            // Servers
+            ("servers"): {
+                POST: { 200: Server, body: servers::create::CreateServerOptions, tags:{servers} },
+                GET: { 200: Vec<Server>, tags:{servers} }
+            },
+
+            ("servers" / { server_id: u64 }): {
+                GET: { 200: Server, tags:{servers} },
+                DELETE: { 200: None, tags:{servers} },
+                PATCH: { 200: Server, tags:{servers} }
+            },
+
+            // Members
+            ("servers" / { server_id: u64 } / "members"): {
+                GET: { 200: Vec<Member>, tags:{members} },
+                DELETE: { 200: Member, tags:{members} }
+            },
+
+            ("servers" / { server_id: u64 } / "members" / { user_id: u64 }): {
+                GET: { 200: Member, tags:{members} },
+                PATCH: { 200: Member, body: servers::members::edit::EditMemberOptions, tags:{members} }
+            },
+
+            // Roles
+            ("servers" / { server_id: u64 } / "roles"): {
+                POST: { 200: Role, body: servers::roles::create::CreateRoleOptions, tags:{roles} },
+                GET: { 200: Vec<Role>, tags:{roles} }
+            },
+
+            ("servers" / { server_id: u64 } / "roles" / { role_id: u64 }): {
+                GET: { 200: Role, tags:{roles} },
+                DELETE: { 200: None, tags:{roles} },
+                PATCH: { 200: Role, tags:{roles} }
+            },
+
+            // Server Invites
+            ("servers" / { server_id: u64 } / "invites"): {
+                GET: { 200: Vec<Invite>, tags:{invites} }
+            },
+
+            ("servers" / { server_id: u64 } / "invites" / { invite_id: u64 }): {
+                GET: { 200: Invite, tags:{invites} },
+                DELETE: { 200: None, tags:{invites} }
+            },
+
+            // Server Channels
+            ("servers" / { server_id: u64 } / "channels"): {
+                GET: { 200: Vec<Channel>, tags:{channels} },
+                POST: { 200: Channel, body: servers::channels::create::CreateServerChannelOptions, tags:{channels} }
+            },
+
+            ("servers" / { server_id: u64 } / "channels" / { channel_id: u64 }): {
+                GET: { 200: Channel, tags:{channels} },
+                DELETE: { 200: None, tags:{channels} },
+                PATCH: { 200: Channel, tags:{channels} }
+            },
         }
-    }
-}
+    };
 
-pub fn docs(router: Router) -> Router {
-    let docs = Docs::openapi();
-    router.route("/openapi.json", get(move || async { Json(docs) }))
+    app.route("/openapi.json", get(move || async { Json(schema) }))
 }

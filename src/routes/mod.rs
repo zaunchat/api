@@ -1,5 +1,3 @@
-use axum::{routing::*, Router};
-
 mod auth;
 mod bots;
 mod channels;
@@ -13,8 +11,10 @@ async fn root() -> &'static str {
     "Up!"
 }
 
+use axum::{routing::*, Router};
+
 pub fn mount(app: Router) -> Router {
-    docs::docs(app)
+    docs::document(app)
         .route("/", get(root))
         .nest("/auth", auth::routes())
         .nest("/users", users::routes())

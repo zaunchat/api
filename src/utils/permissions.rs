@@ -148,9 +148,9 @@ impl Permissions {
         Ok(p)
     }
 
-    pub fn has(&self, bits: Permissions): Result<()> {
+    pub fn has(&self, bits: Permissions) -> Result<()> {
         if !self.contains(bits) {
-            return Err(Error::MissingPermissions)
+            return Err(Error::MissingPermissions);
         }
         Ok(())
     }
@@ -200,12 +200,20 @@ impl<'de> Deserialize<'de> for Permissions {
     }
 }
 
-use utoipa::openapi::{schema::Component, ComponentType, PropertyBuilder};
+use opg::{Components, Model, ModelData, ModelSimple, ModelType, ModelTypeDescription, OpgModel};
 
-impl utoipa::Component for Permissions {
-    fn component() -> Component {
-        PropertyBuilder::new()
-            .component_type(ComponentType::Integer)
-            .into()
+impl OpgModel for Permissions {
+    fn get_schema(_cx: &mut Components) -> Model {
+        Model {
+            description: "Permissions bits".to_string().into(),
+            data: ModelData::Single(ModelType {
+                nullable: false,
+                type_description: ModelTypeDescription::Number(ModelSimple::default()),
+            }),
+        }
+    }
+
+    fn type_name() -> Option<std::borrow::Cow<'static, str>> {
+        None
     }
 }

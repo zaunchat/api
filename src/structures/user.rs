@@ -1,10 +1,10 @@
 use super::*;
 use crate::database::DB as db;
-use crate::utils::{Badges, Result, Error, snowflake};
+use crate::utils::{snowflake, Badges, Error, Result};
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:users)]
-#[derive(Debug, Serialize, Deserialize, Default, Clone, utoipa::Component)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone, OpgModel)]
 pub struct User {
     pub id: u64,
     pub username: String,
@@ -35,9 +35,9 @@ impl User {
     }
 
     pub async fn member_of(&self, server_id: u64) -> Result<()> {
-        let exists = Member::count(|q| q.eq("id", self.id).eq("server_id", server_id)).await;
+        let count = Member::count(|q| q.eq("id", self.id).eq("server_id", server_id)).await;
 
-        if !exists {
+        if count == 0 {
             return Err(Error::UnknownServer);
         }
 

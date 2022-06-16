@@ -1,10 +1,10 @@
+pub mod delete;
+pub mod fetch;
+
 pub fn routes() -> axum::Router {
     use axum::{routing::*, Router};
 
     Router::new()
-        .route("/", get(fetch_server_invites).post(create_server_invite))
-        .route(
-            "/:invite_id",
-            get(fetch_server_invite).delete(delete_server_invite),
-        )
+        .route("/", get(fetch::fetch_many))
+        .route("/:invite_id", get(fetch::fetch_one).delete(delete::delete))
 }

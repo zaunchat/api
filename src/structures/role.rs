@@ -4,7 +4,7 @@ use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:roles)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, utoipa::Component)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, OpgModel)]
 pub struct Role {
     pub id: u64,
     pub name: String,

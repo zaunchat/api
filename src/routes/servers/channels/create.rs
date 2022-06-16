@@ -5,29 +5,23 @@ use crate::utils::*;
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, utoipa::Component)]
+#[derive(Deserialize, Validate, OpgModel)]
 pub struct CreateServerChannelOptions {
     r#type: ChannelTypes,
     #[validate(length(min = 1, max = 32))]
     name: String,
 }
 
-
-#[utoipa::path(
-    post,
-    request_body = CreateServerChannelOptions,
-    path = "/servers/{server_id}/channels",
-    responses((status = 200, body = Channel), (status = 400, body = Error)),
-    params(("server_id" = u64, path))
-)]
-pub async fn create_server_channel(
+pub async fn create(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
     ValidatedJson(data): ValidatedJson<CreateServerChannelOptions>,
 ) -> Result<Json<Channel>> {
     user.member_of(server_id).await?;
 
-    Permissions::fetch(&user, server_id.into(), None).await?.has(Permissions::MANAGE_CHANNELS)?;
+    Permissions::fetch(&user, server_id.into(), None)
+        .await?
+        .has(Permissions::MANAGE_CHANNELS)?;
 
     let count = Channel::count(|q| q.eq("server_id", server_id)).await;
 

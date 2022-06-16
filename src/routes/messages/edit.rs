@@ -4,20 +4,12 @@ use crate::utils::*;
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, utoipa::Component)]
+#[derive(Deserialize, Validate, OpgModel)]
 pub struct EditMessageOptions {
     #[validate(length(min = 1, max = 2000))]
     content: String,
 }
 
-
-#[utoipa::path(
-    patch,
-    request_body = EditMessageOptions,
-    path = "/messages/{id}",
-    responses((status = 200, body = Message), (status = 400, body = Error)),
-    params(("id" = u64, path))
-)]
 pub async fn edit(
     Extension(user): Extension<User>,
     Path((channel_id, id)): Path<(u64, u64)>,
@@ -29,7 +21,9 @@ pub async fn edit(
         return Err(Error::MissingPermissions);
     }
 
-    Permissions::fetch(&user, None, channel_id.into()).await?.has(Permissions::VIEW_CHANNEL)?;
+    Permissions::fetch(&user, None, channel_id.into())
+        .await?
+        .has(Permissions::VIEW_CHANNEL)?;
 
     msg.content = data.content.into();
     msg.update().await;

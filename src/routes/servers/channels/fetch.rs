@@ -1,10 +1,8 @@
-#[utoipa::path(
-    get,
-    path = "/servers/{server_id}/channels/{id}",
-    responses((status = 200, body = Channel), (status = 400, body = Error)),
-    params(("server_id" = u64, path), ("id" = u64, path))
-)]
-pub async fn fetch_server_channel(
+use crate::extractors::*;
+use crate::structures::*;
+use crate::utils::*;
+
+pub async fn fetch_one(
     Extension(user): Extension<User>,
     Path((server_id, channel_id)): Path<(u64, u64)>,
 ) -> Result<Json<Channel>> {
@@ -18,13 +16,7 @@ pub async fn fetch_server_channel(
     }
 }
 
-#[utoipa::path(
-    get,
-    path = "/servers/{server_id}/channels",
-    responses((status = 200, body = [Channel]), (status = 400, body = Error)),
-    params(("server_id" = u64, path))
-)]
-pub async fn fetch_server_channels(
+pub async fn fetch_many(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
 ) -> Result<Json<Vec<Channel>>> {

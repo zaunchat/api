@@ -4,24 +4,14 @@ use crate::utils::*;
 use serde::Deserialize;
 use validator::Validate;
 
-
-
-#[derive(Deserialize, Validate, utoipa::Component)]
+#[derive(Deserialize, Validate, OpgModel)]
 pub struct EditMemberOptions {
     #[validate(length(min = 1, max = 32))]
     nickname: Option<String>,
     roles: Option<Vec<u64>>,
 }
 
-
-#[utoipa::path(
-    patch,
-    request_body = EditMemberOptions,
-    path = "/servers/{server_id}/members/{user_id}",
-    responses((status = 200, body = Member), (status = 400, body = Error)),
-    params(("server_id" = u64, path), ("user_id" = u64, path))
-)]
-pub async fn edit_member(
+pub async fn edit(
     Extension(user): Extension<User>,
     Path((server_id, member_id)): Path<(u64, u64)>,
     ValidatedJson(data): ValidatedJson<EditMemberOptions>,
@@ -34,7 +24,11 @@ pub async fn edit_member(
     if let Some(nickname) = &data.nickname {
         p.has(Permissions::CHANGE_NICKNAME)?;
         p.has(Permissions::MANAGE_NICKNAMES)?;
-        member.nickname = if nickname.is_empty() { None } else { Some(nickname.into()) };
+        member.nickname = if nickname.is_empty() {
+            None
+        } else {
+            Some(nickname.into())
+        };
     }
 
     if let Some(ids) = &data.roles {
