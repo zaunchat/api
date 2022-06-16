@@ -5,6 +5,15 @@ pub mod roles;
 pub mod servers;
 
 pub fn routes() -> axum::Router {
+    use axum::{routing::*, Router};
+
+    Router::new()
+        .route("/", post(create_server).get(fetch_servers))
+        .route("/:server_id", get(fetch_server).delete(delete_server))
+}
+
+
+pub fn routes() -> axum::Router {
     use crate::middlewares::*;
     use axum::{middleware, Router};
 

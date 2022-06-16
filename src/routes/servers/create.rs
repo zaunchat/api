@@ -14,31 +14,12 @@ pub struct CreateServerOptions {
 }
 
 #[utoipa::path(
-    get,
-    path = "/servers",
-    responses((status = 200, body = [Server]), (status = 400, body = Error))
-)]
-pub async fn fetch_servers(Extension(user): Extension<User>) -> Json<Vec<Server>> {
-    Json(user.fetch_servers().await)
-}
-
-#[utoipa::path(
-    get,
-    path = "/servers/{id}",
-    responses((status = 200, body = Server), (status = 400, body = Error)),
-    params(("id" = u64, path))
-)]
-pub async fn fetch_server(Path(server_id): Path<u64>) -> Result<Json<Server>> {
-    Ok(Json(server_id.server().await?))
-}
-
-#[utoipa::path(
     post,
     path = "/servers",
     request_body = CreateServerOptions,
     responses((status = 200, body = Server), (status = 400, body = Error))
 )]
-pub async fn create_server(
+pub async fn create(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateServerOptions>,
 ) -> Result<Json<Server>> {
@@ -65,33 +46,4 @@ pub async fn create_server(
     tx.commit().await.unwrap();
 
     Ok(Json(server))
-}
-
-#[utoipa::path(
-    delete,
-    path = "/servers/{id}",
-    responses((status = 400, body = Error)),
-    params(("id" = u64, path))
-)]
-pub async fn delete_server(
-    Extension(user): Extension<User>,
-    Path(server_id): Path<u64>,
-) -> Result<()> {
-    let server = server_id.server().await?;
-
-    if server.owner_id != user.id {
-        return Err(Error::MissingAccess);
-    }
-
-    server.delete().await;
-
-    Ok(())
-}
-
-pub fn routes() -> axum::Router {
-    use axum::{routing::*, Router};
-
-    Router::new()
-        .route("/", post(create_server).get(fetch_servers))
-        .route("/:server_id", get(fetch_server).delete(delete_server))
 }

@@ -20,7 +20,7 @@ pub fn mount(app: Router) -> Router {
         .nest("/users", users::routes())
         .nest("/invites", invites::routes())
         .nest("/bots", bots::routes())
-        .nest("/messages", messages::routes())
         .nest("/channels", channels::routes())
+        .nest("/channels/:channel_id/messages", messages::routes())
         .nest("/servers", servers::routes())
 }

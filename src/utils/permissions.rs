@@ -147,6 +147,13 @@ impl Permissions {
 
         Ok(p)
     }
+
+    pub fn has(&self, bits: Permissions): Result<()> {
+        if !self.contains(bits) {
+            return Err(Error::MissingPermissions)
+        }
+        Ok(())
+    }
 }
 
 impl Default for Permissions {
