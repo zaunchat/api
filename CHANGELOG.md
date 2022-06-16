@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/itchatapp/api/compare/v1.11.0...v1.11.1) (2022-06-16)
+
+
+### Bug Fixes
+
+* replaced utoipa to opg as openapi generator and much more changes that i can't commit ([04e6657](https://github.com/itchatapp/api/commit/04e66577624fb4f30edae79ae0c9e4010a7b118f))
+
 # [1.11.0](https://github.com/itchatapp/api/compare/v1.10.0...v1.11.0) (2022-06-14)
 
 
