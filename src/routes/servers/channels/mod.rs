@@ -1,12 +1,17 @@
+pub mod create;
+pub mod delete;
+pub mod edit;
+pub mod fetch;
+
 pub fn routes() -> axum::Router {
     use axum::{routing::*, Router};
 
     Router::new()
-        .route("/", get(fetch_server_channels).post(create_server_channel))
+        .route("/", get(fetch::fetch_many).post(create::create))
         .route(
             "/:channel_id",
-            get(fetch_server_channel)
-                .patch(edit_server_channel)
-                .delete(delete_server_channel),
+            get(fetch::fetch_one)
+                .patch(edit::edit)
+                .delete(delete::delete),
         )
 }

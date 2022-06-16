@@ -1,22 +1,14 @@
-use crate::config::*;
 use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, utoipa::Component)]
+#[derive(Deserialize, Validate, OpgModel)]
 pub struct CreateInviteOptions {
     channel_id: u64,
 }
 
-
-#[utoipa::path(
-    post,
-    path = "/invites",
-    request_body = CreateInviteOptions,
-    responses((status = 200, body = Invite), (status = 400, body = Error))
-)]
 pub async fn create(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateInviteOptions>,
@@ -28,7 +20,7 @@ pub async fn create(
     p.has(Permissions::INVITE_OTHERS)?;
 
     let invite = Invite::new(user.id, channel.id, channel.server_id);
-    
+
     invite.save().await;
 
     Ok(Json(invite))

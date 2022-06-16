@@ -4,6 +4,8 @@ extern crate rbatis;
 extern crate lazy_static;
 #[macro_use]
 extern crate async_trait;
+#[macro_use]
+extern crate opg;
 
 pub mod config;
 pub mod database;

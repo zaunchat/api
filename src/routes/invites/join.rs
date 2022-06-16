@@ -2,16 +2,7 @@ use crate::config::*;
 use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
-use serde::Deserialize;
-use validator::Validate;
 
-
-#[utoipa::path(
-    post,
-    path = "/invites/{code}",
-    responses((status = 400, body = Error)),
-    params(("code" = String, path))
-)]
 pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) -> Result<()> {
     let invite = Invite::find_one(|q| q.eq("code", &code)).await;
 

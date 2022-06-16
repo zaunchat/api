@@ -56,12 +56,20 @@ impl<'de> Deserialize<'de> for Badges {
     }
 }
 
-use utoipa::openapi::{schema::Component, ComponentType, PropertyBuilder};
+use opg::{Components, Model, ModelData, ModelSimple, ModelType, ModelTypeDescription, OpgModel};
 
-impl utoipa::Component for Badges {
-    fn component() -> Component {
-        PropertyBuilder::new()
-            .component_type(ComponentType::Integer)
-            .into()
+impl OpgModel for Badges {
+    fn get_schema(_cx: &mut Components) -> Model {
+        Model {
+            description: "Badges bits".to_string().into(),
+            data: ModelData::Single(ModelType {
+                nullable: false,
+                type_description: ModelTypeDescription::Number(ModelSimple::default()),
+            }),
+        }
+    }
+
+    fn type_name() -> Option<std::borrow::Cow<'static, str>> {
+        None
     }
 }

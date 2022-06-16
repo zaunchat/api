@@ -4,22 +4,16 @@ use crate::utils::*;
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, utoipa::Component)]
+#[derive(Deserialize, Validate, OpgModel)]
 pub struct CreateMessageOptions {
     #[validate(length(min = 1, max = 2000))]
     content: String,
 }
 
-#[utoipa::path(
-    post,
-    request_body = CreateMessageOptions,
-    path = "/messages",
-    responses((status = 200, body = Message), (status = 400, body = Error))
-)]
 pub async fn create(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateMessageOptions>,
-    Path(channel_id): Path<u64>
+    Path(channel_id): Path<u64>,
 ) -> Result<Json<Message>> {
     let permissions = Permissions::fetch(&user, None, channel_id.into()).await?;
 

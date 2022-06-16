@@ -1,10 +1,8 @@
-#[utoipa::path(
-    post,
-    path = "/channels/{group_id}/{target_id}",
-    responses((status = 400, body = Error)),
-    params(("group_id" = u64, path), ("target_id" = u64, path))    
-)]
-async fn kick(
+use crate::extractors::*;
+use crate::structures::*;
+use crate::utils::*;
+
+pub async fn kick(
     Extension(user): Extension<User>,
     Path((group_id, target_id)): Path<(u64, u64)>,
 ) -> Result<()> {

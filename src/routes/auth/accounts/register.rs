@@ -6,7 +6,7 @@ use argon2::Config;
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, utoipa::Component)]
+#[derive(Deserialize, Validate, OpgModel)]
 pub struct RegisterAccountOptions {
     #[validate(length(min = 3, max = 32))]
     pub username: String,
@@ -17,14 +17,7 @@ pub struct RegisterAccountOptions {
     pub invite_code: Option<String>,
 }
 
-#[utoipa::path(
-    post,
-    path = "/auth/accounts/register",
-    request_body = CreateSessionOptions,
-    responses((status = 200, body = User), (status = 400, body = Error)),
-    security(("captcha" = []))
-)]
-async fn register_account(
+pub async fn register(
     ValidatedJson(mut data): ValidatedJson<RegisterAccountOptions>,
 ) -> Result<Json<User>> {
     data.email = email::normalize(data.email);
@@ -71,33 +64,4 @@ async fn register_account(
     user.save().await;
 
     Ok(Json(user))
-}
-
-#[utoipa::path(
-    get,
-    path = "/auth/accounts/verify/{id}/{code}",
-    responses((status = 400, body = Error)),
-    params(("id" = u64, path), ("code" = String, path))    
-)]
-pub async fn verify_account(Path((user_id, code)): Path<(u64, String)>) -> Result<()> {
-    if email::verify(user_id, &code).await {
-        let mut user = user_id.user().await?;
-        user.verified = true;
-        user.update().await;
-        Ok(())
-    } else {
-        Err(Error::UnknownAccount)
-    }
-}
-
-pub fn routes() -> axum::Router {
-    use crate::middlewares::*;
-    use axum::{middleware, routing::*, Router};
-
-    Router::new()
-        .route(
-            "/register",
-            post(register_account).route_layer(middleware::from_fn(captcha::handle)),
-        )
-        .route("/verify/:user_id/:code", get(verify_account))
 }

@@ -4,20 +4,12 @@ use crate::utils::*;
 use serde::Deserialize;
 use validator::Validate;
 
-
-#[derive(Deserialize, Validate, utoipa::Component)]
+#[derive(Deserialize, Validate, OpgModel)]
 pub struct FetchMembersOptions {
     #[validate(range(min = 2, max = 1000))]
     limit: Option<u64>,
 }
 
-
-#[utoipa::path(
-    get,
-    path = "/servers/{server_id}/members/{user_id}",
-    responses((status = 200, body = Member), (status = 400, body = Error)),
-    params(("server_id" = u64, path), ("user_id" = u64, path))
-)]
 pub async fn fetch_one(
     Extension(user): Extension<User>,
     Path((server_id, member_id)): Path<(u64, u64)>,
@@ -26,12 +18,6 @@ pub async fn fetch_one(
     Ok(Json(member_id.member(server_id).await?))
 }
 
-#[utoipa::path(
-    get,
-    path = "/servers/{server_id}/members",
-    responses((status = 200, body = [Member]), (status = 400, body = Error)),
-    params(("server_id" = u64, path))
-)]
 pub async fn fetch_many(
     Extension(user): Extension<User>,
     Path(server_id): Path<u64>,

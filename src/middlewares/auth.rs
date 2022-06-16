@@ -12,7 +12,8 @@ pub async fn handle<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, E
     let should_ignore = match path {
         "/" => true,
         "/auth/accounts/register" => true,
-        "/auth/sessions/login" => true,
+        "/auth/accounts/login" => true,
+        "/auth/sessions" => true,
         "/openapi.json" => true,
         _ if path.starts_with("/auth/accounts/verify") => true,
         _ => false,

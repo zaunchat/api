@@ -7,18 +7,12 @@ use rbatis::crud::CRUDMut;
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, utoipa::Component)]
+#[derive(Deserialize, Validate, OpgModel)]
 pub struct CreateServerOptions {
     #[validate(length(min = 1, max = 50))]
     name: String,
 }
 
-#[utoipa::path(
-    post,
-    path = "/servers",
-    request_body = CreateServerOptions,
-    responses((status = 200, body = Server), (status = 400, body = Error))
-)]
 pub async fn create(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateServerOptions>,

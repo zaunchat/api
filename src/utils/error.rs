@@ -8,7 +8,7 @@ use serde::Serialize;
 use std::fmt::Debug;
 
 quick_error! {
-    #[derive(Debug, Serialize, utoipa::Component)]
+    #[derive(Debug, Serialize, OpgModel)]
     pub enum Error {
         RateLimited(info: RateLimitInfo) {
             from(RateLimitInfo)

@@ -1,12 +1,10 @@
-use crate::config::*;
 use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
 use serde::Deserialize;
 use validator::Validate;
 
-
-#[derive(Deserialize, Validate, utoipa::Component)]
+#[derive(Deserialize, Validate, OpgModel)]
 pub struct EditRoleOptions {
     #[validate(length(min = 1, max = 32))]
     name: Option<String>,
@@ -15,14 +13,6 @@ pub struct EditRoleOptions {
     hoist: Option<bool>,
 }
 
-
-#[utoipa::path(
-    patch,
-    path = "/servers/{server_id}/roles/{id}",
-    request_body = EditRoleOptions,
-    responses((status = 200, body = Role), (status = 400, body = Error)),
-    params(("server_id" = u64, path), ("id" = u64, path))
-)]
 pub async fn edit(
     Extension(user): Extension<User>,
     Path((server_id, role_id)): Path<(u64, u64)>,
@@ -30,7 +20,9 @@ pub async fn edit(
 ) -> Result<Json<Role>> {
     user.member_of(server_id).await?;
 
-    Permissions::fetch(&user, server_id.into(), None).await?.has(Permissions::MANAGE_ROLES)?;
+    Permissions::fetch(&user, server_id.into(), None)
+        .await?
+        .has(Permissions::MANAGE_ROLES)?;
 
     let mut role = role_id.role(server_id).await?;
 
