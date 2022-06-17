@@ -8,7 +8,7 @@ pub struct Empty {
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[serde(tag = "event")]
 pub enum Payload {
     Authenticate {
         token: String,
@@ -21,9 +21,24 @@ pub enum Payload {
         channels: Vec<Channel>,
     },
     Pong,
+    ChannelCreate(Channel),
+    ChannelDelete(Empty),
+    ChannelUpdate(Channel),
+    GroupUserJoin(User),
+    GroupUserLeave(User),
     MessageCreate(Message),
     MessageDelete(Empty),
     MessageUpdate(Message),
+    RoleCreate(Role),
+    RoleDelete(Empty),
+    RoleUpdate(Role),
+    ServerCreate(Server),
+    ServerDelete(Empty),
+    ServerMemberJoin(Member),
+    ServerMemberLeave(Empty),
+    ServerMemberUpdate(Member),
+    ServerUpdate(Server),
+    UserUpdate(User),
 }
 
 impl From<Payload> for ws::Message {

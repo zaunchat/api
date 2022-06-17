@@ -1,4 +1,5 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
@@ -15,6 +16,12 @@ pub async fn kick(
     }
 
     member_id.member(server_id).await?.delete().await;
+
+    publish(
+        server_id,
+        Payload::ServerMemberLeave(Empty { id: member_id }),
+    )
+    .await;
 
     Ok(())
 }

@@ -1,5 +1,6 @@
 use crate::config::*;
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
@@ -8,21 +9,25 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
 
     match invite {
         Some(mut invite) if invite.server_id.is_some() => {
-            if user.member_of(invite.server_id.unwrap()).await.is_ok() {
+            let server_id = invite.server_id.unwrap();
+
+            if user.member_of(server_id).await.is_ok() {
                 return Err(Error::MissingAccess);
             }
 
-            let count = Member::count(|q| q.eq("server_id", invite.server_id.unwrap())).await;
+            let count = Member::count(|q| q.eq("server_id", server_id)).await;
 
             if count > *MAX_SERVER_MEMBERS {
                 return Err(Error::MaximumChannels);
             }
 
-            let member = Member::new(user.id, invite.server_id.unwrap());
+            let member = Member::new(user.id, server_id);
 
             invite.uses += 1;
             member.save().await;
             invite.update().await;
+
+            publish(server_id, Payload::ServerMemberJoin(member)).await;
 
             Ok(())
         }
@@ -43,6 +48,8 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
             }
 
             group.update().await;
+
+            publish(group.id, Payload::GroupUserJoin(user)).await;
 
             Ok(())
         }
