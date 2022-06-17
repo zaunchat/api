@@ -44,37 +44,3 @@ pub async fn pubsub() -> redis::aio::PubSub {
         .unwrap()
         .into_pubsub()
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use futures::StreamExt;
-
-    #[tokio::test]
-    async fn test() -> Result<(), redis::RedisError> {
-        dotenv::dotenv().ok();
-
-        let mut subscriber = pubsub().await;
-
-        subscriber.subscribe("test").await?;
-
-        let task = tokio::spawn(async move {
-            println!("Spawned task");
-            let mut stream = subscriber.on_message();
-
-            while let Some(msg) = stream.next().await {
-                let channel = msg.get_channel_name();
-                let content: String = msg.get_payload().unwrap();
-
-                assert!(channel == "test");
-                assert!(content == "hello mom");
-            }
-        });
-
-        publish("test", "hello mom").await.unwrap();
-
-        task.await.unwrap();
-
-        Ok(())
-    }
-}
