@@ -18,13 +18,27 @@ pub async fn run(client: &mut SocketClient, payload: Payload) {
         return client.close().await;
     }
 
+    client.send(Payload::Authenticated).await;
+
     let user = user.unwrap();
+
+    let channels = user.fetch_channels().await;
+    let servers = user.fetch_servers().await;
+
+
+    for server in &servers {
+        client.subscriptions.subscribe(server.id).await.unwrap();
+    }
+
+    for channel in &channels {
+        client.subscriptions.subscribe(channel.id).await.unwrap()
+    }
 
     client
         .send(Payload::Ready {
             user: user.clone(),
-            servers: user.fetch_servers().await,
-            channels: user.fetch_channels().await,
+            servers,
+            channels,
         })
         .await;
 }
