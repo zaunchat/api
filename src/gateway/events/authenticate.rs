@@ -25,7 +25,6 @@ pub async fn run(client: &mut SocketClient, payload: Payload) {
     let channels = user.fetch_channels().await;
     let servers = user.fetch_servers().await;
 
-
     for server in &servers {
         client.subscriptions.subscribe(server.id).await.unwrap();
     }
