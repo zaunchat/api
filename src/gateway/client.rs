@@ -55,7 +55,7 @@ impl SocketClient {
                 .get(&target_id)
                 .unwrap_or(&Permissions::ADMINISTRATOR);
 
-            match payload {
+            match &payload {
                 Payload::MessageCreate(_)
                 | Payload::MessageUpdate(_)
                 | Payload::MessageDelete(_) => {

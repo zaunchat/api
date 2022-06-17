@@ -8,14 +8,16 @@ pub async fn delete(
     Path((server_id, channel_id)): Path<(u64, u64)>,
 ) -> Result<()> {
     user.member_of(server_id).await?;
+    
+    let channel = channel_id.channel().await?;
 
-    Permissions::fetch(&user, server_id.into(), None)
+    Permissions::fetch(&user, server_id.into(), channel_id.into())
         .await?
         .has(Permissions::MANAGE_CHANNELS)?;
 
-    channel_id.channel(None).await?.delete().await;
+    channel.delete().await;
 
-    publish(channel.id, Payload::ChannelDelete(EmptyChannel { 
+    publish(server_id, Payload::ChannelDelete(EmptyChannel { 
         r#type: channel.r#type,
         id: channel_id,
         server_id,
