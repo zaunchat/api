@@ -1,6 +1,6 @@
-pub struct SocektConfig;
+pub struct SocketConfig;
 
-impl SocektConfig {
+impl SocketConfig {
     pub fn new() -> Self {
         Self
     }

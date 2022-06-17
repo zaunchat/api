@@ -1,4 +1,4 @@
-use super::{client::SocketClient, config::SocektConfig};
+use super::{client::SocketClient, config::SocketConfig};
 use axum::{
     extract::{ws::WebSocketUpgrade, TypedHeader},
     headers,
@@ -12,7 +12,7 @@ pub async fn upgrade(
     _: Option<TypedHeader<headers::UserAgent>>,
 ) -> impl IntoResponse {
     ws.on_upgrade(|stream| async {
-        let config = SocektConfig::new();
+        let config = SocketConfig::new();
         let client = Arc::new(Mutex::new(SocketClient::new(stream, config).await));
         tokio::join!(
             SocketClient::handle_incoming(client.clone()),
