@@ -24,7 +24,7 @@ pub async fn run(client: &mut SocketClient, payload: Payload) {
         .send(Payload::Ready {
             user: user.clone(),
             servers: user.fetch_servers().await,
-            channels: user.fetch_channels().await
+            channels: user.fetch_channels().await,
         })
         .await;
 }

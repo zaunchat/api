@@ -1,14 +1,20 @@
+use crate::structures::*;
 use axum::extract::ws::Message;
 use serde::{Deserialize, Serialize};
-use crate::structures::*;
 
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum Payload {
-    Authenticate { token: String },
+    Authenticate {
+        token: String,
+    },
     Ping,
     Authenticated,
-    Ready { user: User, servers: Vec<Server>, channels: Vec<Channel> },
+    Ready {
+        user: User,
+        servers: Vec<Server>,
+        channels: Vec<Channel>,
+    },
     Pong,
 }
 
