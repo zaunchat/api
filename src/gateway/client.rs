@@ -1,4 +1,4 @@
-use super::{config::SocektConfig, events::*, payload::Payload};
+use super::{config::SocketConfig, events::*, payload::Payload};
 use crate::utils::Permissions;
 use axum::extract::ws::{Message, WebSocket};
 use futures::{
@@ -12,15 +12,16 @@ use tokio::sync::Mutex;
 pub struct SocketClient {
     pub sender: SplitSink<WebSocket, Message>,
     pub receiver: SplitStream<WebSocket>,
-    pub config: SocektConfig,
+    pub config: SocketConfig,
     pub subscriptions: redis::aio::PubSub,
     pub permissions: HashMap<u64, Permissions>,
     pub authenticated: bool,
     pub closed: bool,
+    pub user_id: u64
 }
 
 impl SocketClient {
-    pub async fn new(stream: WebSocket, config: SocektConfig) -> Self {
+    pub async fn new(stream: WebSocket, config: SocketConfig) -> Self {
         let (sender, receiver) = stream.split();
 
         Self {
@@ -31,6 +32,7 @@ impl SocketClient {
             subscriptions: crate::database::redis::pubsub().await,
             authenticated: false,
             closed: false,
+            user_id: 0
         }
     }
 
@@ -58,10 +60,33 @@ impl SocketClient {
                 | Payload::MessageUpdate(_)
                 | Payload::MessageDelete(_) => {
                     if !permissions.contains(Permissions::VIEW_CHANNEL) {
-                        socket.subscriptions.unsubscribe(target_id).await.unwrap();
+                        socket.subscriptions.unsubscribe(target_id).await.ok();
                         return;
                     }
-                }
+                },
+
+                Payload::ChannelDelete(channel) => {
+                    if channel.server_id.is_none() {
+                        socket.subscriptions.unsubscribe(target_id).await.ok();
+                    }
+                },
+
+                Payload::ServerMemberLeave(data) => {
+                    if data.id == socket.user_id {
+                        socket.subscriptions.unsubscribe(target_id).await.ok();
+                    }
+                },
+
+                Payload::GroupUserLeave(data) => {
+                    if data.id == socket.user_id {
+                        socket.subscriptions.unsubscribe(target_id).await.ok();   
+                    }
+                },
+
+                Payload::ServerDelete(_) => {
+                    socket.subscriptions.unsubscribe(target_id).await.ok();
+                },
+
                 _ => {}
             }
 
