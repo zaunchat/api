@@ -15,6 +15,7 @@ pub async fn handle<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, E
         "/auth/accounts/login" => true,
         "/auth/sessions" => true,
         "/openapi.json" => true,
+        "/ws" => true,
         _ if path.starts_with("/auth/accounts/verify") => true,
         _ => false,
     };
