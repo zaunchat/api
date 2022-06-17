@@ -4,6 +4,8 @@ use axum::{
     headers,
     response::IntoResponse,
 };
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 pub async fn upgrade(
     ws: WebSocketUpgrade,
@@ -11,7 +13,10 @@ pub async fn upgrade(
 ) -> impl IntoResponse {
     ws.on_upgrade(|stream| async {
         let config = SocektConfig::new();
-        let mut client = SocketClient::new(stream, config).await;
-        client.handle().await
+        let client = Arc::new(Mutex::new(SocketClient::new(stream, config).await));
+        tokio::join!(
+            SocketClient::handle_incoming(client.clone()),
+            SocketClient::handle_outcoming(client)
+        );
     })
 }
