@@ -25,7 +25,7 @@ async fn main() {
     env_logger::init();
 
     log::info!("Connecting to database...");
-    database::connect().await;
+    database::postgres::connect().await;
 
     log::info!("Run migration...");
     utils::migration::migrate().await;
