@@ -1,5 +1,6 @@
 use crate::config::*;
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 use serde::Deserialize;
@@ -30,15 +31,15 @@ pub async fn create(
     }
 
     let channel = match data.r#type {
-        ChannelTypes::Text => Ok(Json(Channel::new_text(data.name.clone(), server_id))),
-        ChannelTypes::Category => Ok(Json(Channel::new_category(data.name.clone(), server_id))),
-        ChannelTypes::Voice => Ok(Json(Channel::new_voice(data.name.clone(), server_id))),
-        _ => Err(Error::MissingAccess),
+        ChannelTypes::Text => Channel::new_text(data.name.clone(), server_id),
+        ChannelTypes::Category => Channel::new_category(data.name.clone(), server_id),
+        ChannelTypes::Voice => Channel::new_voice(data.name.clone(), server_id),
+        _ => return Err(Error::MissingAccess),
     };
 
-    if let Ok(channel) = &channel {
-        channel.save().await;
-    }
+    channel.save().await;
 
-    channel
+    publish(server_id, Payload::ChannelCreate(channel.clone())).await;
+
+    Ok(Json(channel))
 }

@@ -149,4 +149,8 @@ impl Channel {
     pub fn is_voice(&self) -> bool {
         self.r#type == ChannelTypes::Voice
     }
+
+    pub fn in_server(&self) -> bool {
+        self.server_id.is_some()
+    }
 }

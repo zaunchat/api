@@ -1,4 +1,5 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
@@ -13,6 +14,8 @@ pub async fn delete(
         .has(Permissions::MANAGE_CHANNELS)?;
 
     channel_id.channel(None).await?.delete().await;
+
+    publish(server_id, Payload::ChannelDelete(Empty { id: channel_id })).await;
 
     Ok(())
 }

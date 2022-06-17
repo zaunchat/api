@@ -30,7 +30,7 @@ pub async fn run(client: &mut SocketClient, payload: Payload) {
     }
 
     for channel in &channels {
-        client.subscriptions.subscribe(channel.id).await.unwrap()
+        client.subscriptions.subscribe(channel.id).await.unwrap();
     }
 
     client

@@ -1,4 +1,5 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 use serde::Deserialize;
@@ -49,6 +50,8 @@ pub async fn edit(
     }
 
     member.update().await;
+
+    publish(server_id, Payload::ServerMemberUpdate(member.clone())).await;
 
     Ok(Json(member))
 }
