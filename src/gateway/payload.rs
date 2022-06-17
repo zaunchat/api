@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Empty {
-    id: u64
+    pub id: u64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -23,7 +23,7 @@ pub enum Payload {
     Pong,
     MessageCreate(Message),
     MessageDelete(Empty),
-    MessageUpdate(Message)
+    MessageUpdate(Message),
 }
 
 impl From<Payload> for ws::Message {

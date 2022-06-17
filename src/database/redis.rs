@@ -2,7 +2,7 @@ use crate::config::REDIS_URI;
 use mobc::Pool;
 pub use mobc_redis::redis::AsyncCommands;
 use mobc_redis::{
-    redis::{Client, RedisError, ToRedisArgs},
+    redis::{Client, ToRedisArgs},
     RedisConnectionManager,
 };
 use once_cell::sync::Lazy;
@@ -20,20 +20,16 @@ pub async fn connection() -> PooledConnection {
     POOL.get().await.unwrap()
 }
 
-pub async fn publish<
-    K: ToRedisArgs + std::marker::Send + std::marker::Sync,
-    T: Serialize + std::fmt::Debug,
->(
+pub async fn publish<K: ToRedisArgs + std::marker::Send + std::marker::Sync, T: Serialize>(
     channel: K,
     data: T,
-) -> Result<(), RedisError> {
+) {
     let mut connection = connection().await;
+    let data = serde_json::json!(data).to_string();
 
-    connection
-        .publish(channel, serde_json::json!(data).to_string())
-        .await?;
-
-    Ok(())
+    if let Err(err) = connection.publish::<K, String, String>(channel, data).await {
+        log::error!("Publish error: {:?}", err);
+    }
 }
 
 pub async fn pubsub() -> redis::aio::PubSub {

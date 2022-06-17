@@ -122,8 +122,4 @@ impl SocketClient {
     pub async fn on_close(&self) {
         log::debug!("Socked closed");
     }
-
-    // pub fn as_mut(self) -> mut Self {
-    //     self
-    // }
 }

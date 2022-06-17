@@ -1,4 +1,5 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
@@ -16,6 +17,8 @@ pub async fn delete(
     }
 
     msg.delete().await;
+
+    publish(channel_id, Payload::MessageDelete(Empty { id: msg.id })).await;
 
     Ok(())
 }
