@@ -37,7 +37,7 @@ pub async fn run(client: &mut SocketClient, payload: Payload) {
     for channel in &channels {
         let permissions = Permissions::fetch(&user, None, channel.id.into()).await.unwrap();
         client.subscriptions.subscribe(channel.id).await.unwrap();
-        client.permissions.insert(server.id, permissions);
+        client.permissions.insert(channel.id, permissions);
     }
 
     client
