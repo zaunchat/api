@@ -1,17 +1,20 @@
 use super::{config::SocektConfig, events::*, payload::Payload};
+use crate::utils::Permissions;
 use axum::extract::ws::{Message, WebSocket};
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
 use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 pub struct SocketClient {
     pub sender: SplitSink<WebSocket, Message>,
     pub receiver: SplitStream<WebSocket>,
     pub config: SocektConfig,
     pub subscriptions: redis::aio::PubSub,
-    pub permissions: HashMap<u64, u64>,
+    pub permissions: HashMap<u64, Permissions>,
     pub authenticated: bool,
     pub closed: bool,
 }
@@ -31,17 +34,54 @@ impl SocketClient {
         }
     }
 
-    pub async fn handle(&mut self) {
-        self.on_open().await;
+    pub async fn handle_outcoming(socket: Arc<Mutex<SocketClient>>) {
+        let mut _socket = socket.lock().await;
+        let mut stream = _socket.subscriptions.on_message();
 
-        while let Some(Ok(msg)) = self.receiver.next().await {
-            if self.closed {
+        while let Some(msg) = stream.next().await {
+            let mut socket = socket.lock().await;
+
+            if socket.closed {
+                return;
+            }
+
+            let data: String = msg.get_payload().unwrap();
+            let target_id: u64 = msg.get_channel_name().parse().unwrap();
+            let payload: Payload = serde_json::from_str(&data).unwrap();
+            let permissions = socket
+                .permissions
+                .get(&target_id)
+                .unwrap_or(&Permissions::ADMINISTRATOR);
+
+            match payload {
+                Payload::MessageCreate(_)
+                | Payload::MessageUpdate(_)
+                | Payload::MessageDelete(_) => {
+                    if !permissions.contains(Permissions::VIEW_CHANNEL) {
+                        socket.subscriptions.unsubscribe(target_id).await.unwrap();
+                        return;
+                    }
+                }
+                _ => {}
+            }
+
+            socket.send(payload).await;
+        }
+    }
+
+    pub async fn handle_incoming(socket: Arc<Mutex<SocketClient>>) {
+        let mut socket = socket.lock().await;
+
+        socket.on_open().await;
+
+        while let Some(Ok(msg)) = socket.receiver.next().await {
+            if socket.closed {
                 return;
             }
 
             match msg {
-                Message::Text(content) => self.on_message(content).await,
-                Message::Close(_) => return self.on_close().await,
+                Message::Text(content) => socket.on_message(content).await,
+                Message::Close(_) => return socket.on_close().await,
                 _ => {}
             }
         }
@@ -82,4 +122,8 @@ impl SocketClient {
     pub async fn on_close(&self) {
         log::debug!("Socked closed");
     }
+
+    // pub fn as_mut(self) -> mut Self {
+    //     self
+    // }
 }
