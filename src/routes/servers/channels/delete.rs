@@ -9,7 +9,7 @@ pub async fn delete(
 ) -> Result<()> {
     user.member_of(server_id).await?;
 
-    let channel = channel_id.channel().await?;
+    let channel = channel_id.channel(None).await?;
 
     Permissions::fetch(&user, server_id.into(), channel_id.into())
         .await?
