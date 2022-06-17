@@ -8,6 +8,13 @@ pub struct Empty {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct EmptyChannel {
+    pub r#type: ChannelTypes,
+    pub id: u64,
+    pub server_id: Option<u64>,
+}
+
+#[derive(Serialize, Deserialize)]
 #[serde(tag = "event")]
 pub enum Payload {
     Authenticate {
@@ -22,7 +29,7 @@ pub enum Payload {
     },
     Pong,
     ChannelCreate(Channel),
-    ChannelDelete(Empty),
+    ChannelDelete(EmptyChannel),
     ChannelUpdate(Channel),
     GroupUserJoin(User),
     GroupUserLeave(User),
