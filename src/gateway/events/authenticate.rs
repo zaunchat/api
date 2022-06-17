@@ -1,5 +1,6 @@
 use crate::gateway::{client::SocketClient, payload::Payload};
 use crate::structures::*;
+use crate::utils::Permissions;
 
 pub async fn run(client: &mut SocketClient, payload: Payload) {
     if client.authenticated {
@@ -28,11 +29,15 @@ pub async fn run(client: &mut SocketClient, payload: Payload) {
     let servers = user.fetch_servers().await;
 
     for server in &servers {
+        let permissions = Permissions::fetch(&user, server.id.into(), None).await.unwrap();
         client.subscriptions.subscribe(server.id).await.unwrap();
+        client.permissions.insert(server.id, permissions);
     }
 
     for channel in &channels {
+        let permissions = Permissions::fetch(&user, None, channel.id.into()).await.unwrap();
         client.subscriptions.subscribe(channel.id).await.unwrap();
+        client.permissions.insert(server.id, permissions);
     }
 
     client
