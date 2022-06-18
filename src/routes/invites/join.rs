@@ -3,6 +3,8 @@ use crate::extractors::*;
 use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
+use crate::gateway::*;
+
 
 pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) -> Result<()> {
     let invite = Invite::find_one(|q| q.eq("code", &code)).await;
@@ -27,6 +29,7 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
             member.save().await;
             invite.update().await;
 
+            publish(user.id, Payload::ServerCreate(server_id.server().await?)).await;
             publish(server_id, Payload::ServerMemberJoin(member)).await;
 
             Ok(())
@@ -50,6 +53,7 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
             group.update().await;
 
             publish(group.id, Payload::GroupUserJoin(user)).await;
+            publish(user.id, Payload::ChannelCreate(group)).await;
 
             Ok(())
         }

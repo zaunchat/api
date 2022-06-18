@@ -87,6 +87,13 @@ impl SocketClient {
                     socket.subscriptions.unsubscribe(target_id).await.ok();
                 },
 
+                Payload::ServerCreate(server) => {
+                    socket.subscriptions.subscribe(server.id).await.ok();
+                },
+
+                Payload::ChannelCreate(channel) => {
+                    socket.subscriptions.subscribe(channel.id).await.ok();
+                },
                 _ => {}
             }
 
