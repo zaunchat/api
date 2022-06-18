@@ -3,7 +3,6 @@ use crate::extractors::*;
 use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
-use crate::gateway::*;
 
 
 pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) -> Result<()> {
@@ -52,7 +51,7 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
 
             group.update().await;
 
-            publish(group.id, Payload::GroupUserJoin(user)).await;
+            publish(group.id, Payload::GroupUserJoin(user.clone())).await;
             publish(user.id, Payload::ChannelCreate(group)).await;
 
             Ok(())

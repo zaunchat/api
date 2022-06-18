@@ -9,7 +9,7 @@ use crate::gateway::*;
 #[derive(Deserialize, Validate, OpgModel)]
 pub struct EditServerOptions {
     #[validate(length(min = 1, max = 50))]
-    name: String,
+    name: Option<String>,
 }
 
 pub async fn edit(
