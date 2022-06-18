@@ -1,5 +1,5 @@
 use crate::structures::*;
-use crate::utils::error::*;
+use crate::utils::{Result, Error, Ref};
 use bitflags::bitflags;
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
@@ -51,13 +51,7 @@ impl Permissions {
         let admin = || Permissions::ADMINISTRATOR;
 
         if let Some(id) = server_id {
-            let server = Server::find_one_by_id(id).await;
-
-            if server.is_none() {
-                return Err(Error::UnknownServer);
-            }
-
-            let server = server.unwrap();
+            let server = id.server().await?;
 
             if server.owner_id == user.id {
                 return Ok(admin());
@@ -70,7 +64,7 @@ impl Permissions {
                 return Ok(p);
             }
 
-            let member = server.fetch_member(user.id).await.unwrap();
+            let member = user.id.member(server.id).await?;
             let roles = server.fetch_roles().await;
 
             for role in roles {
@@ -85,13 +79,7 @@ impl Permissions {
         }
 
         if let Some(id) = channel_id {
-            let channel = Channel::find_one_by_id(id).await;
-
-            if channel.is_none() {
-                return Err(Error::UnknownChannel);
-            }
-
-            let channel = channel.unwrap();
+            let channel = id.channel(None).await?;
 
             if channel.is_dm() {
                 p.insert(*DEFAULT_PERMISSION_DM);
@@ -113,18 +101,13 @@ impl Permissions {
                 if channel.is_group() {
                     p.insert(channel.permissions.unwrap());
                 } else {
-                    member = Member::find_one(|q| {
-                        q.eq("id", user.id)
-                            .eq("server_id", channel.server_id.unwrap())
-                    })
-                    .await;
+                    member = Some(user.id.member(channel.server_id.unwrap()).await?);
                 }
 
                 let mut overwrites = channel.overwrites.unwrap();
 
                 if let Some(parent_id) = channel.parent_id {
-                    let category = Channel::find_one_by_id(parent_id).await;
-                    if let Some(category) = category {
+                    if let Ok(category) = parent_id.channel(None).await {
                         overwrites.append(category.overwrites.unwrap().as_mut());
                     }
                 }
