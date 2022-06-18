@@ -3,6 +3,7 @@ use crate::database::DB as db;
 use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
+use crate::gateway::*;
 use rbatis::crud::CRUDMut;
 use serde::Deserialize;
 use validator::Validate;
@@ -38,6 +39,9 @@ pub async fn create(
     tx.save(&member, &[]).await.unwrap();
 
     tx.commit().await.unwrap();
+
+    publish(user.id, Payload::ServerCreate(server.clone())).await;
+
 
     Ok(Json(server))
 }

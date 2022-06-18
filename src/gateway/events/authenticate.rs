@@ -40,6 +40,8 @@ pub async fn run(client: &mut SocketClient, payload: Payload) {
         client.permissions.insert(channel.id, permissions);
     }
 
+    client.subscriptions.subscribe(client.user_id).await.unwrap();
+
     client
         .send(Payload::Ready {
             user: user.clone(),

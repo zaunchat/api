@@ -13,11 +13,9 @@ pub async fn create(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateInviteOptions>,
 ) -> Result<Json<Invite>> {
-    let channel = data.channel_id.channel(user.id.into()).await?;
+    let channel = data.channel_id.channel(None).await?;
 
-    let p = Permissions::fetch(&user, channel.server_id, channel.id.into()).await?;
-
-    p.has(Permissions::INVITE_OTHERS)?;
+    Permissions::fetch(&user, channel.server_id, channel.id.into()).await?.has(Permissions::INVITE_OTHERS)?;
 
     let invite = Invite::new(user.id, channel.id, channel.server_id);
 
