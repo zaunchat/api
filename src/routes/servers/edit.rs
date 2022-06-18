@@ -21,7 +21,7 @@ pub async fn edit(
 
     Permissions::fetch(&user, server_id.into(), None).await?.has(Permissions::MANAGE_SERVER)?;
 
-    let server = server_id.server().await?;
+    let mut server = server_id.server().await?;
 
     if let Some(name) = data.name {
         server.name = name;
