@@ -19,7 +19,7 @@ mobc-redis = { version = "0.7.0" }
 
 
 # HTTP
-axum = { version = "0.5.7", features = ["ws", "headers"] }
+axum = { version = "0.5.8", features = ["ws", "headers"] }
 reqwest = { version = "0.11", features = ["json"] }
 
 # Serde
