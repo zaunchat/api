@@ -1,4 +1,5 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 use serde::Deserialize;
@@ -17,6 +18,10 @@ pub async fn create(
     let group = Channel::new_group(user.id, data.name);
 
     group.save().await;
+
+    for id in group.recipients.as_ref().unwrap() {
+        publish(*id, Payload::ChannelCreate(group.clone())).await;
+    }
 
     Ok(Json(group))
 }

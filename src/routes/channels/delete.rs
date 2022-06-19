@@ -1,4 +1,5 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
@@ -10,6 +11,16 @@ pub async fn delete(Extension(user): Extension<User>, Path(channel_id): Path<u64
     }
 
     channel.delete().await;
+
+    publish(
+        channel_id,
+        Payload::ChannelDelete(EmptyChannel {
+            r#type: channel.r#type,
+            id: channel_id,
+            server_id: None,
+        }),
+    )
+    .await;
 
     Ok(())
 }

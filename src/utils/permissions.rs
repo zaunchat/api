@@ -1,5 +1,5 @@
 use crate::structures::*;
-use crate::utils::error::*;
+use crate::utils::{Error, Ref, Result};
 use bitflags::bitflags;
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
@@ -42,27 +42,14 @@ lazy_static! {
 }
 
 impl Permissions {
-    pub async fn fetch(
+    pub async fn fetch_cached(
         user: &User,
-        server_id: Option<u64>,
-        channel_id: Option<u64>,
+        server: Option<&Server>,
+        channel: Option<&Channel>,
     ) -> Result<Permissions> {
         let mut p = Permissions::DEFAULT;
-        let admin = || Permissions::ADMINISTRATOR;
 
-        if let Some(id) = server_id {
-            let server = Server::find_one_by_id(id).await;
-
-            if server.is_none() {
-                return Err(Error::UnknownServer);
-            }
-
-            let server = server.unwrap();
-
-            if server.owner_id == user.id {
-                return Ok(admin());
-            }
-
+        if let Some(server) = server {
             p.set(Permissions::ADMINISTRATOR, server.owner_id == user.id);
             p.insert(server.permissions);
 
@@ -70,29 +57,16 @@ impl Permissions {
                 return Ok(p);
             }
 
-            let member = server.fetch_member(user.id).await.unwrap();
-            let roles = server.fetch_roles().await;
+            let member = user.id.member(server.id).await?;
 
-            for role in roles {
+            for role in server.fetch_roles().await {
                 if member.roles.contains(&role.id) {
                     p.insert(role.permissions);
                 }
             }
         }
 
-        if p.contains(Permissions::ADMINISTRATOR) {
-            return Ok(p);
-        }
-
-        if let Some(id) = channel_id {
-            let channel = Channel::find_one_by_id(id).await;
-
-            if channel.is_none() {
-                return Err(Error::UnknownChannel);
-            }
-
-            let channel = channel.unwrap();
-
+        if let Some(channel) = channel {
             if channel.is_dm() {
                 p.insert(*DEFAULT_PERMISSION_DM);
                 // TODO: Check user relations
@@ -105,7 +79,8 @@ impl Permissions {
             {
                 // for group owners
                 if channel.owner_id == Some(user.id) {
-                    return Ok(admin());
+                    p.set(Permissions::ADMINISTRATOR, true);
+                    return Ok(p);
                 }
 
                 let mut member: Option<Member> = None;
@@ -113,18 +88,13 @@ impl Permissions {
                 if channel.is_group() {
                     p.insert(channel.permissions.unwrap());
                 } else {
-                    member = Member::find_one(|q| {
-                        q.eq("id", user.id)
-                            .eq("server_id", channel.server_id.unwrap())
-                    })
-                    .await;
+                    member = Some(user.id.member(channel.server_id.unwrap()).await?);
                 }
 
-                let mut overwrites = channel.overwrites.unwrap();
+                let mut overwrites = channel.overwrites.clone().unwrap();
 
                 if let Some(parent_id) = channel.parent_id {
-                    let category = Channel::find_one_by_id(parent_id).await;
-                    if let Some(category) = category {
+                    if let Ok(category) = parent_id.channel(None).await {
                         overwrites.append(category.overwrites.unwrap().as_mut());
                     }
                 }
@@ -146,6 +116,26 @@ impl Permissions {
         }
 
         Ok(p)
+    }
+
+    pub async fn fetch(
+        user: &User,
+        server_id: Option<u64>,
+        channel_id: Option<u64>,
+    ) -> Result<Permissions> {
+        let server = if let Some(server_id) = server_id {
+            Some(server_id.server().await?)
+        } else {
+            None
+        };
+
+        let channel = if let Some(channel_id) = channel_id {
+            Some(channel_id.channel(None).await?)
+        } else {
+            None
+        };
+
+        Permissions::fetch_cached(user, server.as_ref(), channel.as_ref()).await
     }
 
     pub fn has(&self, bits: Permissions) -> Result<()> {

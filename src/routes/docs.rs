@@ -100,7 +100,7 @@ pub fn document(app: Router) -> Router {
             ("servers" / { server_id: u64 }): {
                 GET: { 200: Server, tags:{servers} },
                 DELETE: { 200: None, tags:{servers} },
-                PATCH: { 200: Server, tags:{servers} }
+                PATCH: { 200: Server, body: servers::edit::EditServerOptions, tags:{servers} }
             },
 
             // Members
@@ -145,7 +145,7 @@ pub fn document(app: Router) -> Router {
             ("servers" / { server_id: u64 } / "channels" / { channel_id: u64 }): {
                 GET: { 200: Channel, tags:{channels} },
                 DELETE: { 200: None, tags:{channels} },
-                PATCH: { 200: Channel, tags:{channels} }
+                PATCH: { 200: Channel, body: servers::channels::edit::EditServerChannelOptions, tags:{channels} }
             },
         }
     };

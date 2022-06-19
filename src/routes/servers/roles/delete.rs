@@ -1,4 +1,5 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
@@ -13,6 +14,8 @@ pub async fn delete(
         .has(Permissions::MANAGE_ROLES)?;
 
     role_id.role(server_id).await?.delete().await;
+
+    publish(server_id, Payload::RoleDelete(Empty { id: role_id })).await;
 
     Ok(())
 }
