@@ -6,7 +6,7 @@ Core Backend API
 ### 🔗 Resources
 - [Docs](https://docs.itchat.world)
 - [Javascript Client](https://github.com/itchatapp/itchat.js)
-- [Python Client](https://github.com/itchat.py)
+- [Python Client](https://github.com/itchatapp/itchat.py)
 
 ### 📝 License
 Refer to the [LICENSE](LICENSE) file.
