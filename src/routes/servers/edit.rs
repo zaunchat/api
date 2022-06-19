@@ -18,11 +18,11 @@ pub async fn edit(
 ) -> Result<Json<Server>> {
     user.member_of(server_id).await?;
 
-    Permissions::fetch(&user, server_id.into(), None)
+    let mut server = server_id.server().await?;
+
+    Permissions::fetch_cached(&user, Some(&server), None)
         .await?
         .has(Permissions::MANAGE_SERVER)?;
-
-    let mut server = server_id.server().await?;
 
     if let Some(name) = data.name {
         server.name = name;

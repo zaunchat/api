@@ -7,13 +7,11 @@ pub async fn run(client: &mut SocketClient, payload: Payload) {
         return client.close().await;
     }
 
-    let user: Option<User>;
-
-    if let Payload::Authenticate { token } = payload {
-        user = User::fetch_by_token(token.as_str()).await.ok();
+    let user = if let Payload::Authenticate { token } = payload {
+        User::fetch_by_token(token.as_str()).await.ok()
     } else {
-        unreachable!()
-    }
+        None
+    };
 
     if user.is_none() {
         return client.close().await;
@@ -23,7 +21,7 @@ pub async fn run(client: &mut SocketClient, payload: Payload) {
 
     let user = user.unwrap();
 
-    client.user = user.clone().into();
+    client.user = Some(user.clone());
     client.subscriptions.subscribe(user.id).await.unwrap();
 
     let mut channels = user.fetch_channels().await;
