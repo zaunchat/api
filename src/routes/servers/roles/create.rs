@@ -1,5 +1,6 @@
 use crate::config::*;
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 use serde::Deserialize;
@@ -36,6 +37,10 @@ pub async fn create(
     role.permissions = data.permissions;
     role.hoist = data.hoist;
     role.color = data.color;
+
+    role.save().await;
+
+    publish(server_id, Payload::RoleCreate(role.clone())).await;
 
     Ok(Json(role))
 }

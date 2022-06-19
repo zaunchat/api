@@ -1,4 +1,5 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 use serde::Deserialize;
@@ -30,6 +31,8 @@ pub async fn create(
     }
 
     msg.save().await;
+
+    publish(channel_id, Payload::MessageCreate(msg.clone())).await;
 
     Ok(Json(msg))
 }

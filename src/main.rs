@@ -10,6 +10,7 @@ extern crate opg;
 pub mod config;
 pub mod database;
 pub mod extractors;
+pub mod gateway;
 pub mod middlewares;
 pub mod routes;
 pub mod structures;
@@ -24,7 +25,7 @@ async fn main() {
     env_logger::init();
 
     log::info!("Connecting to database...");
-    database::connect().await;
+    database::postgres::connect().await;
 
     log::info!("Run migration...");
     utils::migration::migrate().await;
@@ -32,6 +33,7 @@ async fn main() {
     use middlewares::*;
 
     let app = routes::mount(Router::new())
+        .route("/ws", axum::routing::get(gateway::upgrade))
         .layer(cors::handle())
         .layer(middleware::from_fn(auth::handle))
         .layer(middleware::from_fn(ratelimit::handle!(50, 1000 * 60)))

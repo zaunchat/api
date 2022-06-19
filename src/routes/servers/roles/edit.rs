@@ -1,4 +1,5 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 use serde::Deserialize;
@@ -43,6 +44,8 @@ pub async fn edit(
     }
 
     role.update().await;
+
+    publish(server_id, Payload::RoleUpdate(role.clone())).await;
 
     Ok(Json(role))
 }

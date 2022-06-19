@@ -38,7 +38,7 @@ pub async fn migrate() {
         .await
         .ok();
 
-    let index: usize = if let Some(current) = current {
+    let index = if let Some(current) = current {
         current.id as usize
     } else {
         0
