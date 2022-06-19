@@ -1,4 +1,5 @@
 use super::{config::SocketConfig, events::*, payload::Payload};
+use crate::structures::User;
 use crate::utils::Permissions;
 use axum::extract::ws::{Message, WebSocket};
 use futures::{
@@ -17,7 +18,7 @@ pub struct SocketClient {
     pub permissions: HashMap<u64, Permissions>,
     pub authenticated: bool,
     pub closed: bool,
-    pub user_id: u64,
+    pub user: Option<User>,
 }
 
 impl SocketClient {
@@ -32,7 +33,7 @@ impl SocketClient {
             subscriptions: crate::database::redis::pubsub().await,
             authenticated: false,
             closed: false,
-            user_id: 0,
+            user: None,
         }
     }
 
@@ -49,8 +50,9 @@ impl SocketClient {
 
             let data: String = msg.get_payload().unwrap();
             let target_id: u64 = msg.get_channel_name().parse().unwrap();
+            let user = socket.user.as_ref().unwrap();
             let payload: Payload = serde_json::from_str(&data).unwrap();
-            let permissions = socket
+            let p = socket
                 .permissions
                 .get(&target_id)
                 .unwrap_or(&Permissions::ADMINISTRATOR);
@@ -59,8 +61,7 @@ impl SocketClient {
                 Payload::MessageCreate(_)
                 | Payload::MessageUpdate(_)
                 | Payload::MessageDelete(_) => {
-                    if !permissions.contains(Permissions::VIEW_CHANNEL) {
-                        socket.subscriptions.unsubscribe(target_id).await.ok();
+                    if !p.contains(Permissions::VIEW_CHANNEL) {
                         return;
                     }
                 }
@@ -71,14 +72,28 @@ impl SocketClient {
                     }
                 }
 
+                Payload::ChannelUpdate(channel) => {
+                    let p = Permissions::fetch(user, channel.server_id, channel.id.into())
+                        .await
+                        .unwrap();
+                    socket.permissions.insert(channel.id, p);
+                }
+
+                Payload::ServerMemberUpdate(member) => {
+                    let p = Permissions::fetch(user, member.server_id.into(), None)
+                        .await
+                        .unwrap();
+                    socket.permissions.insert(member.server_id, p);
+                }
+
                 Payload::ServerMemberLeave(data) => {
-                    if data.id == socket.user_id {
+                    if data.id == user.id {
                         socket.subscriptions.unsubscribe(target_id).await.ok();
                     }
                 }
 
                 Payload::GroupUserLeave(data) => {
-                    if data.id == socket.user_id {
+                    if data.id == user.id {
                         socket.subscriptions.unsubscribe(target_id).await.ok();
                     }
                 }
