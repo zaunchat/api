@@ -1,3 +1,29 @@
+# [1.12.0](https://github.com/itchatapp/api/compare/v1.11.1...v1.12.0) (2022-06-19)
+
+
+### Bug Fixes
+
+* subscribe to server channels ([b594257](https://github.com/itchatapp/api/commit/b5942575ef7c1a20e7684d0c0bfe494e49a40c8a))
+* typo ([067bf2e](https://github.com/itchatapp/api/commit/067bf2e5981c252b9a23da35b4d982a202882236))
+* unsubsribe from deleted objects ([49ac9a9](https://github.com/itchatapp/api/commit/49ac9a91ee2ca0a30da8a9f100d59e76376e1335))
+* Update cached permissions ([417e5c1](https://github.com/itchatapp/api/commit/417e5c196c842a2504eb0647238416139fe39b90))
+
+
+### Features
+
+* Add redis connection ([ec7ec16](https://github.com/itchatapp/api/commit/ec7ec162ba3ba2c62631bd5a49da54a419423240))
+* Add server edit route ([217461a](https://github.com/itchatapp/api/commit/217461a118218c2bbd10f4a0afdfe67f93d4e36e))
+* basic events ([f4a0475](https://github.com/itchatapp/api/commit/f4a047541055482fd39600283eeaae2a0e246678))
+* Cache permissions ([a9aed37](https://github.com/itchatapp/api/commit/a9aed371dbef969b3b7d5033582bb6804402ce0e))
+* Emit server/channel creation events ([6a15173](https://github.com/itchatapp/api/commit/6a151735fa7ca8a5197fcceb7865bb661a6d3a36))
+* handle outcoming data ([3e465d8](https://github.com/itchatapp/api/commit/3e465d8f4f46e0d19efc4a2ad9eda57be02dc398))
+* Payload struct ([361e0d1](https://github.com/itchatapp/api/commit/361e0d12a3a06cc9fa883f7b6ae390ba5d7a2b63))
+* **Permissions:** Add #fetch_cached ([c866874](https://github.com/itchatapp/api/commit/c86687430b1c0b0ccbee6fcd69740f4424e2be35))
+* Publish other events ([18aa87a](https://github.com/itchatapp/api/commit/18aa87aed1a3184a3068ddb90dd86c06bfbad1d2))
+* Send channel deletion events ([7377c0a](https://github.com/itchatapp/api/commit/7377c0a26e1c987ad36dab8a9f47e0522d28aba3))
+* Send message events! ([a77faaa](https://github.com/itchatapp/api/commit/a77faaa53728266e08ad1b2e7c66de3441e24f0c))
+* subsribe to servers & channels ([e7fa71e](https://github.com/itchatapp/api/commit/e7fa71e30a745c3cfa363a57adbcb72e8a0f4d3f))
+
 ## [1.11.1](https://github.com/itchatapp/api/compare/v1.11.0...v1.11.1) (2022-06-16)
 
 
