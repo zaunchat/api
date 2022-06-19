@@ -4,7 +4,6 @@ use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
-
 pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) -> Result<()> {
     let invite = Invite::find_one(|q| q.eq("code", &code)).await;
 

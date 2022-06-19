@@ -17,7 +17,7 @@ pub struct SocketClient {
     pub permissions: HashMap<u64, Permissions>,
     pub authenticated: bool,
     pub closed: bool,
-    pub user_id: u64
+    pub user_id: u64,
 }
 
 impl SocketClient {
@@ -32,7 +32,7 @@ impl SocketClient {
             subscriptions: crate::database::redis::pubsub().await,
             authenticated: false,
             closed: false,
-            user_id: 0
+            user_id: 0,
         }
     }
 
@@ -63,37 +63,37 @@ impl SocketClient {
                         socket.subscriptions.unsubscribe(target_id).await.ok();
                         return;
                     }
-                },
+                }
 
                 Payload::ChannelDelete(channel) => {
                     if channel.server_id.is_none() {
                         socket.subscriptions.unsubscribe(target_id).await.ok();
                     }
-                },
+                }
 
                 Payload::ServerMemberLeave(data) => {
                     if data.id == socket.user_id {
                         socket.subscriptions.unsubscribe(target_id).await.ok();
                     }
-                },
+                }
 
                 Payload::GroupUserLeave(data) => {
                     if data.id == socket.user_id {
-                        socket.subscriptions.unsubscribe(target_id).await.ok();   
+                        socket.subscriptions.unsubscribe(target_id).await.ok();
                     }
-                },
+                }
 
                 Payload::ServerDelete(_) => {
                     socket.subscriptions.unsubscribe(target_id).await.ok();
-                },
+                }
 
                 Payload::ServerCreate(server) => {
                     socket.subscriptions.subscribe(server.id).await.ok();
-                },
+                }
 
                 Payload::ChannelCreate(channel) => {
                     socket.subscriptions.subscribe(channel.id).await.ok();
-                },
+                }
                 _ => {}
             }
 

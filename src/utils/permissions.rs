@@ -1,5 +1,5 @@
 use crate::structures::*;
-use crate::utils::{Result, Error, Ref};
+use crate::utils::{Error, Ref, Result};
 use bitflags::bitflags;
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;

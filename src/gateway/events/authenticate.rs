@@ -29,18 +29,26 @@ pub async fn run(client: &mut SocketClient, payload: Payload) {
     let servers = user.fetch_servers().await;
 
     for server in &servers {
-        let permissions = Permissions::fetch(&user, server.id.into(), None).await.unwrap();
+        let permissions = Permissions::fetch(&user, server.id.into(), None)
+            .await
+            .unwrap();
         client.subscriptions.subscribe(server.id).await.unwrap();
         client.permissions.insert(server.id, permissions);
     }
 
     for channel in &channels {
-        let permissions = Permissions::fetch(&user, None, channel.id.into()).await.unwrap();
+        let permissions = Permissions::fetch(&user, None, channel.id.into())
+            .await
+            .unwrap();
         client.subscriptions.subscribe(channel.id).await.unwrap();
         client.permissions.insert(channel.id, permissions);
     }
 
-    client.subscriptions.subscribe(client.user_id).await.unwrap();
+    client
+        .subscriptions
+        .subscribe(client.user_id)
+        .await
+        .unwrap();
 
     client
         .send(Payload::Ready {
