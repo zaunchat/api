@@ -1,10 +1,9 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 use serde::Deserialize;
 use validator::Validate;
-use crate::gateway::*;
-
 
 #[derive(Deserialize, Validate, OpgModel)]
 pub struct CreateGroupOptions {
@@ -21,7 +20,7 @@ pub async fn create(
     group.save().await;
 
     for id in group.recipients.as_ref().unwrap() {
-        publish(*id, Payload::ChannelCreate(group.clone())).await
+        publish(*id, Payload::ChannelCreate(group.clone())).await;
     }
 
     Ok(Json(group))
