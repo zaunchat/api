@@ -1,6 +1,6 @@
 use super::{config::SocketConfig, events::*, payload::Payload};
-use crate::structures::User;
 use crate::utils::Permissions;
+use crate::{structures::User, utils::Ref};
 use axum::extract::ws::{Message, WebSocket};
 use futures::{
     stream::{SplitSink, SplitStream},
@@ -73,9 +73,16 @@ impl SocketClient {
                 }
 
                 Payload::ChannelUpdate(channel) => {
-                    let p = Permissions::fetch(user, channel.server_id, channel.id.into())
+                    let server = if let Some(server_id) = channel.server_id {
+                        Some(server_id.server().await.unwrap())
+                    } else {
+                        None
+                    };
+
+                    let p = Permissions::fetch_cached(user, server.as_ref(), channel.into())
                         .await
                         .unwrap();
+
                     socket.permissions.insert(channel.id, p);
                 }
 
