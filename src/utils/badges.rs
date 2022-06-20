@@ -36,11 +36,11 @@ impl<'de> Visitor<'de> for BadgesVisitor {
         formatter.write_str("a valid badges")
     }
 
-    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
     where
         E: serde::de::Error,
     {
-        if let Some(p) = Badges::from_bits(v) {
+        if let Some(p) = Badges::from_bits(v as u64) {
             return Ok(p);
         }
         Err(E::custom("Invalid Badges"))
@@ -52,7 +52,7 @@ impl<'de> Deserialize<'de> for Badges {
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_identifier(BadgesVisitor)
+        deserializer.deserialize_i64(BadgesVisitor)
     }
 }
 
