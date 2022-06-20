@@ -1,3 +1,10 @@
+## [1.12.2](https://github.com/itchatapp/api/compare/v1.12.1...v1.12.2) (2022-06-20)
+
+
+### Bug Fixes
+
+* **user:** refactor #fetch_by_token query ([c7fbee7](https://github.com/itchatapp/api/commit/c7fbee7aa3651dacafb80b17764a539b9095eb10))
+
 ## [1.12.1](https://github.com/itchatapp/api/compare/v1.12.0...v1.12.1) (2022-06-20)
 
 
