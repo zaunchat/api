@@ -71,8 +71,9 @@ impl User {
 
     // pub async fn fetch_relations(&self) {}
 
-    #[sql(crate::database::DB, "SELECT * FROM users LEFT JOIN sessions ON sessions.user_id = users.id WHERE verified = TRUE AND sessions.token = $1 LIMIT 1")]
-    pub async fn fetch_by_token(_token: &str) -> Result<User, rbatis::Error> {}
+    pub async fn fetch_by_token(token: &str) -> Result<User, rbatis::Error> {
+        db.fetch("SELECT * FROM users WHERE id = ( SELECT user_id FROM sessions WHERE verified = TRUE AND token = $1 )", vec![token.into()]).await
+    }
 
     pub fn to_public(&self) -> Self {
         Self {
