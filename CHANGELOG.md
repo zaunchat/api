@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/itchatapp/api/compare/v1.12.0...v1.12.1) (2022-06-20)
+
+
+### Bug Fixes
+
+* deserialize permissions/badges ([5040776](https://github.com/itchatapp/api/commit/5040776ccfa85ef6d0536104bace8b241a242452))
+
 # [1.12.0](https://github.com/itchatapp/api/compare/v1.11.1...v1.12.0) (2022-06-19)
 
 
