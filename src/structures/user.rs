@@ -62,11 +62,14 @@ impl User {
 
     pub async fn fetch_channels(&self) -> Vec<Channel> {
         db.fetch(
-            "SELECT * FROM channels WHERE recipients ? $1",
-            vec![vec![self.id].into()],
+            &format!(
+                "SELECT * FROM channels WHERE recipients @> '[{}]'::JSONB",
+                self.id
+            ),
+            vec![],
         )
         .await
-        .unwrap()
+        .unwrap_or_default()
     }
 
     // pub async fn fetch_relations(&self) {}

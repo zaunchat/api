@@ -59,6 +59,7 @@ pub async fn run(client: &mut SocketClient, payload: Payload) {
     client
         .send(Payload::Ready {
             user,
+            users: vec![], // TODO:
             servers,
             channels,
         })

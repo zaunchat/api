@@ -24,6 +24,7 @@ pub enum Payload {
     Authenticated,
     Ready {
         user: User,
+        users: Vec<User>,
         servers: Vec<Server>,
         channels: Vec<Channel>,
     },

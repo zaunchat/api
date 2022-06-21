@@ -18,7 +18,7 @@ pub trait Base: CRUDTable + DeserializeOwned {
         F: Send + Fn(Wrapper) -> Wrapper,
     {
         let query = query(db.new_wrapper());
-        db.fetch_list_by_wrapper(query).await.unwrap()
+        db.fetch_list_by_wrapper(query).await.unwrap_or_default()
     }
 
     async fn count<F>(query: F) -> u64
@@ -44,15 +44,15 @@ pub trait Base: CRUDTable + DeserializeOwned {
     }
 
     async fn save(&self) {
-        db.save(&self, &[])
+        db.save::<Self>(self, &[])
             .await
             .expect("Couldn't save this target");
     }
 
     async fn update(&self) {
-        db.update_by_column("id", &self)
+        db.update_by_column::<Self>("id", self)
             .await
-            .expect("Could'nt update thus target");
+            .expect("Couldn't update this target");
     }
 
     async fn delete(&self) -> bool {
