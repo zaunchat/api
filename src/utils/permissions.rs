@@ -174,10 +174,17 @@ impl<'de> Visitor<'de> for PermissionsVisitor {
     where
         E: serde::de::Error,
     {
-        if let Some(p) = Permissions::from_bits(v as u64) {
-            return Ok(p);
+        self.visit_u64(v as u64)
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        match Permissions::from_bits(v) {
+            Some(bits) => Ok(bits),
+            _ => Err(E::custom("Invalid bits")),
         }
-        Err(E::custom("Invalid Permissions"))
     }
 }
 
