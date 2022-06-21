@@ -15,8 +15,12 @@ pub trait Ref {
     async fn channel(&self, recipient: Option<u64>) -> Result<Channel> {
         let channel = if let Some(recipient) = recipient {
             db.fetch(
-                "SELECT * FROM channels WHERE id = $1 AND recipients ? $1 LIMIT 1",
-                vec![self.id().into(), recipient.into()],
+                &format!(
+                    "SELECT * FROM channels WHERE id = {} AND recipients @> '[{}]'::JSONB LIMIT 1",
+                    self.id(),
+                    recipient
+                ),
+                vec![],
             )
             .await
             .unwrap()

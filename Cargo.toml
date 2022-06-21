@@ -10,12 +10,11 @@ async-trait = "0.1.56"
 
 
 # Database
-rbatis = { version = "3.1", default-features = false, features = ["postgres", "runtime-tokio-rustls", "upper_case_sql_keyword"] }
-rbson = "2.0"
+rbatis = { version = "3.1.11", default-features = false, features = ["postgres", "runtime-tokio-rustls", "upper_case_sql_keyword"] }
+rbson = "2.0.3"
 mobc = { version = "0.7.3", default-features = false, features = ["tokio"]}
 redis = { version = "0.21.2", default-features = false, features = [ "aio", "tokio-comp" ] }
 mobc-redis = { version = "0.7.0" }
-
 
 
 # HTTP
@@ -25,6 +24,7 @@ reqwest = { version = "0.11", features = ["json"] }
 # Serde
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0.81"
+serde_repr = "0.1.8"
 
 # Logging
 log = "0.4.17"
