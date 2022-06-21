@@ -1,3 +1,10 @@
+## [1.12.3](https://github.com/itchatapp/api/compare/v1.12.2...v1.12.3) (2022-06-21)
+
+
+### Bug Fixes
+
+* bug fixes ([8556a55](https://github.com/itchatapp/api/commit/8556a55aba5ef9de5183c7cda62d06409adb8313))
+
 ## [1.12.2](https://github.com/itchatapp/api/compare/v1.12.1...v1.12.2) (2022-06-20)
 
 
