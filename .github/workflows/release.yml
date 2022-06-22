@@ -21,7 +21,7 @@ jobs:
           toolchain: stable
           override: true
       - name: Install semantic-release-rust
-        run: cargo install semantic-release-rust
+        run: cargo install semantic-release-rust --version 1.0.0-alpha.8
       - name: Setup semantic-release
         run: npm install -g semantic-release @semantic-release/git @semantic-release/changelog @semantic-release/exec -D
       - name: Release
