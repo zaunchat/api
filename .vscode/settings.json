@@ -1,0 +1,10 @@
+{
+    "rust-analyzer.checkOnSave.command": "clippy",
+    "cSpell.words": [
+        "itchat",
+        "dotenv",
+        "middlewares",
+        "ratelimit",
+        "rbatis"
+    ]
+}

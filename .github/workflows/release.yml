@@ -14,6 +14,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '16.x'
+      - name: Install Rust Stable
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Install semantic-release-rust
+        run: cargo install semantic-release-rust
       - name: Setup semantic-release
         run: npm install -g semantic-release @semantic-release/git @semantic-release/changelog @semantic-release/exec -D
       - name: Release
