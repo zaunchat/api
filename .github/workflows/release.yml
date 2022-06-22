@@ -1,7 +1,7 @@
 name: Release
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   workflow_dispatch:
 jobs:
   release:
@@ -13,18 +13,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
-      - name: Install Rust Stable
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - name: Install semantic-release-rust
-        run: cargo install semantic-release-rust --version 1.0.0-alpha.8
-      - name: Setup semantic-release
+          node-version: "16.x"
         run: npm install -g semantic-release @semantic-release/git @semantic-release/changelog @semantic-release/exec -D
       - name: Release
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release

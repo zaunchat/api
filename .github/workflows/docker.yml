@@ -10,7 +10,7 @@ on:
       - "!.github/workflows/docker.yml"
       - ".vscode/**"
       - ".gitignore"
-      - ".gitlab-ci.yml"
+      - ".gitpod.yml"
       - "LICENSE"
       - "README.md"
   workflow_dispatch:
