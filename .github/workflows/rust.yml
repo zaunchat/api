@@ -1,0 +1,55 @@
+name: Rust
+on:
+  push:
+    branches: [master, dev, next]
+    paths-ignore:
+      - ".github/**"
+      - "!.github/workflows/rust.yml"
+      - ".vscode/**"
+      - ".gitignore"
+      - ".gitpod.yml"
+      - "LICENSE"
+      - "README.md"
+  pull_request:
+    branches: [master, dev, next]
+    paths-ignore:
+      - ".github/**"
+      - "!.github/workflows/rust.yml"
+      - ".vscode/**"
+      - ".gitignore"
+      - ".gitpod.yml"
+      - "LICENSE"
+      - "README.md"
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_LOG: debug
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Build
+        run: cargo build --verbose
+      - name: Run unit tests
+        run: cargo test --verbose
+      - name: Run fmt
+        run: cargo fmt -- --check

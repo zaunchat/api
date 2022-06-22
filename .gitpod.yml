@@ -1,4 +1,3 @@
-
 tasks:
   - init: cargo install --path .
     command: cargo test
