@@ -15,8 +15,8 @@ macro_rules! get {
 }
 
 lazy_static! {
-    pub static ref DATABASE_URI: String = get!("DATABASE_URI", "redis://localhost");
-    pub static ref REDIS_URI: String = get!("REDIS_URI");
+    pub static ref DATABASE_URI: String = get!("DATABASE_URI", "postgres://postgres:postgres@localhost:5432/database");
+    pub static ref REDIS_URI: String = get!("REDIS_URI", "redis://localhost");
     pub static ref CAPTCHA_ENABLED: bool = is_true(get!("CAPTCHA_ENABLED", "false"));
     pub static ref CAPTCHA_TOKEN: String = get!("CAPTCHA_TOKEN");
     pub static ref CAPTCHA_KEY: String = get!("CAPTCHA_KEY");
