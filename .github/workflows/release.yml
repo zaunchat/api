@@ -14,6 +14,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "16.x"
+      - name: Install Semantic release packages
         run: npm install -g semantic-release @semantic-release/git @semantic-release/changelog @semantic-release/exec -D
       - name: Release
         env:
