@@ -91,7 +91,7 @@ pub async fn verify(user_id: u64, code: &str) -> bool {
             vec![user_id.into(), code.into()],
         )
         .await
-        .unwrap();
+        .ok();
 
     match p {
         Some(_) => {
