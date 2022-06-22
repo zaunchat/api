@@ -173,47 +173,47 @@ impl Channel {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::database::postgres;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     use crate::database::postgres;
 
-    #[tokio::test]
-    async fn create_channel() {
-        dotenv::dotenv().ok();
-        env_logger::init();
-        postgres::connect().await;
+//     #[tokio::test]
+//     async fn create_channel() {
+//         dotenv::dotenv().ok();
+//         env_logger::init();
+//         postgres::connect().await;
 
-        let channel = Channel::new_group(1, "Test group".to_string());
+//         let channel = Channel::new_group(1, "Test group".to_string());
 
-        channel.save().await;
-        // channel.delete().await;
-    }
+//         channel.save().await;
+//         // channel.delete().await;
+//     }
 
-    #[test]
-    fn serialize() {
-        let channel = Channel::new_group(1, "Test group".to_string());
+//     #[test]
+//     fn serialize() {
+//         let channel = Channel::new_group(1, "Test group".to_string());
 
-        let x = serde_json::to_string_pretty(&channel).unwrap();
+//         let x = serde_json::to_string_pretty(&channel).unwrap();
 
-        println!("{}", x);
-    }
+//         println!("{}", x);
+//     }
 
-    // #[test]
-    // fn deserialize() {
-    //     let channel: Channel = serde_json::from_str(r#"{
-    //         "id": 194565395108204544,
-    //         "type": 2,
-    //         "name": "Test group",
-    //         "recipients": null,
-    //         "overwrites": null,
-    //         "server_id": null,
-    //         "parent_id": null,
-    //         "owner_id": null,
-    //         "topic": null,
-    //         "permissions": 62
-    //       }"#).unwrap();
+//     // #[test]
+//     // fn deserialize() {
+//     //     let channel: Channel = serde_json::from_str(r#"{
+//     //         "id": 194565395108204544,
+//     //         "type": 2,
+//     //         "name": "Test group",
+//     //         "recipients": null,
+//     //         "overwrites": null,
+//     //         "server_id": null,
+//     //         "parent_id": null,
+//     //         "owner_id": null,
+//     //         "topic": null,
+//     //         "permissions": 62
+//     //       }"#).unwrap();
 
-    //       println!("{:?}", channel);
-    // }
-}
+//     //       println!("{:?}", channel);
+//     // }
+// }
