@@ -1,0 +1,10 @@
+branches: ['master']
+plugins:
+    - '@semantic-release/commit-analyzer'
+    - '@semantic-release/release-notes-generator'
+    - '@semantic-release/github'
+    - - '@semantic-release/git'
+      - assets: ['CHANGELOG.md', 'Cargo.toml']
+    - - '@semantic-release/exec'
+      - verifyConditionsCmd: "semantic-release-rust verify-conditions"
+        prepareCmd: "semantic-release-rust prepare ${nextRelease.version}"

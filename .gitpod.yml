@@ -1,3 +1,9 @@
+
 tasks:
   - init: cargo install --path .
     command: cargo test
+vscode:
+  extensions:
+    - streetsidesoftware.code-spell-checker
+    - tamasfe.even-better-toml
+    - matklad.rust-analyzer
