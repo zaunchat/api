@@ -1,3 +1,10 @@
+## [1.12.4](https://github.com/itchatapp/api/compare/v1.12.3...v1.12.4) (2022-06-22)
+
+
+### Bug Fixes
+
+* serialize permissions/badges ([391e802](https://github.com/itchatapp/api/commit/391e802bb7a668f20052b1c5e071530b043f9bf1))
+
 ## [1.12.3](https://github.com/itchatapp/api/compare/v1.12.2...v1.12.3) (2022-06-21)
 
 
