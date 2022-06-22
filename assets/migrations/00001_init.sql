@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS channels (
     topic VARCHAR(1000),
     permissions BIGINT,
     overwrites JSONB,
-    recipients JSONB,
+    recipients BIGINT[],
     parent_id BIGINT,
     owner_id BIGINT,
     server_id BIGINT,
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS members (
     joined_at TIMESTAMP NOT NULL,
     nickname VARCHAR(32),
     server_id BIGINT NOT NULL,
-    roles JSONB NOT NULL,
+    roles BIGINT[] NOT NULL,
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
     FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
 );
