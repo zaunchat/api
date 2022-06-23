@@ -32,4 +32,39 @@ impl Invite {
             uses: 0,
         }
     }
+
+    #[cfg(test)]
+    pub async fn faker() -> Self {
+        use crate::structures::*;
+
+        let user = User::faker();
+        let channel = Channel::faker(ChannelTypes::Group).await;
+
+        user.save().await;
+        channel.save().await;
+
+        Self::new(user.id, channel.id, None)
+    }
+
+    #[cfg(test)]
+    pub async fn cleanup(&self) {
+        use crate::utils::Ref;
+
+        self.delete().await;
+        self.inviter_id.user().await.unwrap().delete().await;
+        self.channel_id.channel(None).await.unwrap().cleanup().await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn create() {
+        crate::tests::setup().await;
+
+        let invite = Invite::faker().await;
+        invite.cleanup().await;
+    }
 }
