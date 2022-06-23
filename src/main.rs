@@ -27,9 +27,6 @@ async fn main() {
     log::info!("Connecting to database...");
     database::postgres::connect().await;
 
-    log::info!("Run migration...");
-    utils::migration::migrate().await;
-
     use middlewares::*;
 
     let app = routes::mount(Router::new())
@@ -47,4 +44,14 @@ async fn main() {
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .unwrap();
+}
+
+pub mod tests {
+    use super::*;
+
+    pub async fn setup() {
+        dotenv::dotenv().ok();
+        env_logger::try_init().ok();
+        database::postgres::connect().await;
+    }
 }

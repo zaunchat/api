@@ -1,6 +1,5 @@
 use super::*;
-use crate::utils::permissions::*;
-use crate::utils::snowflake;
+use crate::utils::{snowflake, Permissions};
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:roles)]
@@ -28,5 +27,34 @@ impl Role {
             server_id,
             ..Default::default()
         }
+    }
+
+    #[cfg(test)]
+    pub async fn faker() -> Self {
+        let server = Server::faker().await;
+        server.save().await;
+        Self::new("Mod".to_string(), server.id)
+    }
+
+    #[cfg(test)]
+    pub async fn cleanup(&self) {
+        use crate::utils::Ref;
+        self.delete().await;
+        self.server_id.server().await.unwrap().delete().await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn create() {
+        crate::tests::setup().await;
+
+        let role = Role::faker().await;
+
+        role.save().await;
+        role.cleanup().await;
     }
 }

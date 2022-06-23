@@ -50,4 +50,32 @@ impl Server {
     pub async fn fetch_channels(&self) -> Vec<Channel> {
         Channel::find(|q| q.eq("server_id", &self.id)).await
     }
+
+    #[cfg(test)]
+    pub async fn faker() -> Self {
+        let owner = User::faker();
+
+        owner.save().await;
+
+        Self::new("Fake Server".to_string(), owner.id)
+    }
+
+    #[cfg(test)]
+    pub async fn cleanup(&self) {
+        use crate::utils::Ref;
+        self.delete().await;
+        self.owner_id.user().await.unwrap().delete().await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn create() {
+        crate::tests::setup().await;
+        let server = Server::faker().await;
+        server.cleanup().await;
+    }
 }
