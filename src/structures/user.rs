@@ -87,4 +87,24 @@ impl User {
             ..Default::default()
         }
     }
+
+    #[cfg(test)]
+    pub fn faker() -> Self {
+        let email = format!("ghost.{}@example.com", nanoid::nanoid!(6));
+        let mut user = Self::new("Ghost".to_string(), email, "passw0rd".to_string());
+        user.verified = true;
+        user
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[tokio::test]
+    async fn create() {
+        crate::tests::setup().await;
+        let user = User::faker();
+        user.save().await;
+        user.delete().await;
+    }
 }

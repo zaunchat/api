@@ -60,7 +60,7 @@ impl Permissions {
             let member = user.id.member(server.id).await?;
 
             for role in server.fetch_roles().await {
-                if member.roles.contains(&role.id) {
+                if member.roles.contains(&(role.id as i64)) {
                     p.insert(role.permissions);
                 }
             }
@@ -106,7 +106,11 @@ impl Permissions {
                     }
 
                     if overwrite.r#type == OverwriteTypes::Role
-                        && member.as_ref().unwrap().roles.contains(&overwrite.id)
+                        && member
+                            .as_ref()
+                            .unwrap()
+                            .roles
+                            .contains(&(overwrite.id as i64))
                     {
                         p.insert(overwrite.allow);
                         p.remove(overwrite.deny);

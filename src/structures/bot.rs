@@ -27,4 +27,32 @@ impl Bot {
             verified: false,
         }
     }
+
+    #[cfg(test)]
+    pub async fn faker() -> Self {
+        let owner = User::faker();
+
+        owner.save().await;
+
+        Self::new("Ghost Bot".to_string(), owner.id)
+    }
+
+    #[cfg(test)]
+    pub async fn cleanup(&self) {
+        use crate::utils::Ref;
+        self.delete().await;
+        self.owner_id.user().await.unwrap().delete().await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn create() {
+        crate::tests::setup().await;
+        let bot = Bot::faker().await;
+        bot.cleanup().await;
+    }
 }
