@@ -37,7 +37,7 @@ pub struct Overwrite {
     pub deny: Permissions,
 }
 
-#[crud_table(formats_pg:"server_id:{}::bigint,parent_id:{}::bigint,owner_id:{}::bigint" | table_name:channels)]
+#[crud_table(formats_pg:"server_id:{}::bigint,parent_id:{}::bigint,owner_id:{}::bigint,recipients:{}::bigint[],permissions:{}::bigint" | table_name:channels)]
 #[derive(Serialize, Deserialize, Clone, OpgModel, Debug)]
 pub struct Channel {
     pub id: u64,
@@ -46,8 +46,8 @@ pub struct Channel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     // DM/Group
-    #[opg(any)]
-    pub recipients: Json<Option<Vec<u64>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recipients: Option<Vec<i64>>,
 
     // Group/Text/Voice/Category
     #[opg(any)]
@@ -80,7 +80,7 @@ impl Default for Channel {
             id: snowflake::generate(),
             r#type: ChannelTypes::Unknown,
             name: None,
-            recipients: None.into(),
+            recipients: None,
             overwrites: None.into(),
             server_id: None,
             parent_id: None,
@@ -102,7 +102,7 @@ impl Channel {
         Self {
             id: snowflake::generate(),
             r#type: ChannelTypes::Direct,
-            recipients: Some(vec![user, target]).into(),
+            recipients: Some(vec![user as i64, target as i64]),
             ..Default::default()
         }
     }
@@ -112,8 +112,9 @@ impl Channel {
             id: snowflake::generate(),
             name: name.into(),
             r#type: ChannelTypes::Group,
-            recipients: Some(vec![user]).into(),
+            recipients: Some(vec![user as i64]),
             permissions: Some(*DEFAULT_PERMISSION_DM),
+            overwrites: Some(vec![]).into(),
             ..Default::default()
         }
     }
@@ -171,49 +172,131 @@ impl Channel {
     pub fn in_server(&self) -> bool {
         self.server_id.is_some()
     }
+
+    #[cfg(test)]
+    pub async fn faker(r#type: ChannelTypes) -> Self {
+        match r#type {
+            ChannelTypes::Group => {
+                let user = User::faker();
+
+                user.save().await;
+
+                Self::new_group(user.id, "Fake group".to_string())
+            }
+
+            ChannelTypes::Direct => {
+                let user = User::faker();
+                let other = User::faker();
+
+                user.save().await;
+                other.save().await;
+
+                Self::new_dm(user.id, other.id)
+            }
+
+            ChannelTypes::Text => {
+                let server = Server::faker().await;
+
+                server.save().await;
+
+                Self::new_text("Test".to_string(), server.id)
+            }
+
+            ChannelTypes::Voice => {
+                let server = Server::faker().await;
+
+                server.save().await;
+
+                Self::new_voice("Test".to_string(), server.id)
+            }
+
+            ChannelTypes::Category => {
+                let server = Server::faker().await;
+
+                server.save().await;
+
+                Self::new_category("Test".to_string(), server.id)
+            }
+
+            _ => panic!("Unsupported type"),
+        }
+    }
+
+    #[cfg(test)]
+    pub async fn cleanup(&self) {
+        use crate::utils::Ref;
+
+        self.delete().await;
+
+        if self.is_group() || self.is_dm() {
+            for id in self.recipients.as_ref().unwrap() {
+                (*id as u64).user().await.unwrap().delete().await;
+            }
+        }
+
+        if self.in_server() {
+            self.server_id
+                .unwrap()
+                .server()
+                .await
+                .unwrap()
+                .cleanup()
+                .await;
+        }
+    }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::database::postgres;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     #[tokio::test]
-//     async fn create_channel() {
-//         dotenv::dotenv().ok();
-//         env_logger::init();
-//         postgres::connect().await;
+    #[tokio::test]
+    async fn create_group() {
+        crate::tests::setup().await;
 
-//         let channel = Channel::new_group(1, "Test group".to_string());
+        let channel = Channel::faker(ChannelTypes::Group).await;
 
-//         channel.save().await;
-//         // channel.delete().await;
-//     }
+        channel.save().await;
+        channel.cleanup().await;
+    }
 
-//     #[test]
-//     fn serialize() {
-//         let channel = Channel::new_group(1, "Test group".to_string());
+    #[tokio::test]
+    async fn create_dm() {
+        crate::tests::setup().await;
 
-//         let x = serde_json::to_string_pretty(&channel).unwrap();
+        let channel = Channel::faker(ChannelTypes::Direct).await;
 
-//         println!("{}", x);
-//     }
+        channel.save().await;
+        channel.cleanup().await;
+    }
 
-//     // #[test]
-//     // fn deserialize() {
-//     //     let channel: Channel = serde_json::from_str(r#"{
-//     //         "id": 194565395108204544,
-//     //         "type": 2,
-//     //         "name": "Test group",
-//     //         "recipients": null,
-//     //         "overwrites": null,
-//     //         "server_id": null,
-//     //         "parent_id": null,
-//     //         "owner_id": null,
-//     //         "topic": null,
-//     //         "permissions": 62
-//     //       }"#).unwrap();
+    #[tokio::test]
+    async fn create_text() {
+        crate::tests::setup().await;
 
-//     //       println!("{:?}", channel);
-//     // }
-// }
+        let channel = Channel::faker(ChannelTypes::Text).await;
+
+        channel.save().await;
+        channel.cleanup().await;
+    }
+
+    #[tokio::test]
+    async fn create_voice() {
+        crate::tests::setup().await;
+
+        let channel = Channel::faker(ChannelTypes::Voice).await;
+
+        channel.save().await;
+        channel.cleanup().await;
+    }
+
+    #[tokio::test]
+    async fn create_category() {
+        crate::tests::setup().await;
+
+        let channel = Channel::faker(ChannelTypes::Category).await;
+
+        channel.save().await;
+        channel.cleanup().await;
+    }
+}

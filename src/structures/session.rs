@@ -25,4 +25,34 @@ impl Session {
             user_id,
         }
     }
+
+    #[cfg(test)]
+    pub async fn faker() -> Self {
+        use crate::structures::User;
+
+        let user = User::faker();
+
+        user.save().await;
+
+        Self::new(user.id)
+    }
+
+    #[cfg(test)]
+    pub async fn cleanup(&self) {
+        use crate::utils::Ref;
+        self.delete().await;
+        self.user_id.user().await.unwrap().delete().await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn create() {
+        crate::tests::setup().await;
+        let session = Session::faker().await;
+        session.cleanup().await;
+    }
 }
