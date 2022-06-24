@@ -8,12 +8,12 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 #[derive(Debug, Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, OpgModel)]
 #[repr(u8)]
 pub enum ChannelTypes {
-    Unknown,
-    Direct,
-    Group,
-    Text,
-    Voice,
-    Category,
+    Unknown = 0,
+    Direct = 1,
+    Group = 2,
+    Category = 3,
+    Text = 4,
+    Voice = 5,
 }
 
 impl Default for ChannelTypes {
@@ -25,8 +25,8 @@ impl Default for ChannelTypes {
 #[derive(Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, OpgModel, Debug)]
 #[repr(u8)]
 pub enum OverwriteTypes {
-    Role,
-    Member,
+    Role = 0,
+    Member = 1,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, OpgModel, Debug)]
