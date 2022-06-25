@@ -27,7 +27,7 @@ pub async fn publish<K: ToRedisArgs + std::marker::Send + std::marker::Sync, T: 
     let mut connection = connection().await;
     let data = serde_json::json!(data).to_string();
 
-    if let Err(err) = connection.publish::<K, String, String>(channel, data).await {
+    if let Err(err) = connection.publish::<K, String, u32>(channel, data).await {
         log::error!("Publish error: {:?}", err);
     }
 }
