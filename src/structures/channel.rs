@@ -37,8 +37,6 @@ pub struct Overwrite {
     pub deny: Permissions,
 }
 
-
-
 #[derive(Serialize, OpgModel)]
 pub struct ChannelOverwrites(Option<Vec<Overwrite>>);
 
@@ -118,6 +116,7 @@ impl Channel {
             name: name.into(),
             r#type: ChannelTypes::Group,
             recipients: Some(vec![user as i64]),
+            owner_id: user.into(),
             permissions: Some(*DEFAULT_PERMISSION_DM),
             overwrites: Some(vec![]).into(),
             ..Default::default()
