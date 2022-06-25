@@ -11,7 +11,7 @@ pub struct Message {
     pub content: Option<String>,
     pub channel_id: u64,
     pub author_id: u64,
-    #[opg(integer)]
+    #[opg(integer, nullable)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub edited_at: Option<Timestamp>, /*
                                       TODO:

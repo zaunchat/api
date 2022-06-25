@@ -1279,8 +1279,7 @@ dependencies = [
 [[package]]
 name = "opg"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5acec38f13673212c9983de8a6fd22df24580acd4d08ed5bda793dc2d2a4bfb2"
+source = "git+https://github.com/abdulrahman1s/opg?rev=24f72e7cf09da7cd61b71aedaa14383502559612#24f72e7cf09da7cd61b71aedaa14383502559612"
 dependencies = [
  "either",
  "http",
@@ -1291,8 +1290,7 @@ dependencies = [
 [[package]]
 name = "opg_derive"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "168a2a2d84b0a0c7d6818a7740f8389a451e32dd6ec1ce7d29ac4af60bcf49d0"
+source = "git+https://github.com/abdulrahman1s/opg?rev=24f72e7cf09da7cd61b71aedaa14383502559612#24f72e7cf09da7cd61b71aedaa14383502559612"
 dependencies = [
  "either",
  "proc-macro2",

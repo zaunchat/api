@@ -52,4 +52,4 @@ futures = "0.3"
 
 
 # Docs
-opg = "0.1.1"
+opg = { git = "https://github.com/abdulrahman1s/opg", rev = "24f72e7cf09da7cd61b71aedaa14383502559612" }
