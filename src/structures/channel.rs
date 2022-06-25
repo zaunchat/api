@@ -37,6 +37,11 @@ pub struct Overwrite {
     pub deny: Permissions,
 }
 
+
+
+#[derive(Serialize, OpgModel)]
+pub struct ChannelOverwrites(Option<Vec<Overwrite>>);
+
 #[crud_table(formats_pg:"server_id:{}::bigint,parent_id:{}::bigint,owner_id:{}::bigint,recipients:{}::bigint[],permissions:{}::bigint" | table_name:channels)]
 #[derive(Serialize, Deserialize, Clone, OpgModel, Debug)]
 pub struct Channel {
@@ -50,7 +55,7 @@ pub struct Channel {
     pub recipients: Option<Vec<i64>>,
 
     // Group/Text/Voice/Category
-    #[opg(any)]
+    #[opg(custom = "ChannelOverwrites")]
     pub overwrites: Json<Option<Vec<Overwrite>>>,
 
     // For server channels
