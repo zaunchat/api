@@ -38,7 +38,7 @@ pub fn document(app: Router) -> Router {
             },
             ("auth/sessions" / { session_id: u64 }): {
                 DELETE: { 200: None, tags: {auth} },
-                GET: { 200: Session, body: User, tags: {auth} }
+                GET: { 200: Session, tags: {auth} }
             },
 
             // Users
