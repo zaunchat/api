@@ -4,15 +4,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub enum Empty {
-    Default {
-        id: u64,
-    },
-    ServerObject {
-        id: u64,
-        server_id: u64,
-    }
+    Default { id: u64 },
+    ServerObject { id: u64, server_id: u64 },
 }
-
 
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "event")]
