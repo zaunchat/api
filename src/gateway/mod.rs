@@ -1,5 +1,4 @@
 mod client;
-mod config;
 mod events;
 mod payload;
 mod upgrade;
