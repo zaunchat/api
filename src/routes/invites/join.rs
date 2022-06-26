@@ -40,10 +40,10 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
                     return Err(Error::MaximumGroupMembers);
                 }
 
-                if recipients.contains(&(user.id as i64)) {
+                if recipients.contains(&user.id) {
                     return Err(Error::MissingAccess);
                 }
-                recipients.push(user.id as i64);
+                recipients.push(user.id);
             } else {
                 unreachable!()
             }

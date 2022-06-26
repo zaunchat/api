@@ -16,7 +16,7 @@ pub trait Ref {
         let channel = if let Some(recipient) = recipient {
             db.fetch(
                 &format!(
-                    "SELECT * FROM channels WHERE id = {} AND recipients @> ARRAY[{}]::BIGINT[] LIMIT 1",
+                    "SELECT * FROM channels WHERE id = {} AND recipients @> ARRAY[{}]::BIGINT[]",
                     self.id(),
                     recipient
                 ),

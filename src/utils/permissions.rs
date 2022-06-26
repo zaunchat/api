@@ -60,7 +60,7 @@ impl Permissions {
             let member = user.id.member(server.id).await?;
 
             for role in server.fetch_roles().await {
-                if member.roles.contains(&(role.id as i64)) {
+                if member.roles.contains(&role.id) {
                     p.insert(role.permissions);
                 }
             }
@@ -106,11 +106,7 @@ impl Permissions {
                     }
 
                     if overwrite.r#type == OverwriteTypes::Role
-                        && member
-                            .as_ref()
-                            .unwrap()
-                            .roles
-                            .contains(&(overwrite.id as i64))
+                        && member.as_ref().unwrap().roles.contains(&overwrite.id)
                     {
                         p.insert(overwrite.allow);
                         p.remove(overwrite.deny);
@@ -161,7 +157,7 @@ impl Serialize for Permissions {
     where
         S: Serializer,
     {
-        serializer.serialize_u64(self.bits())
+        serializer.collect_str(&self.bits())
     }
 }
 
@@ -172,6 +168,14 @@ impl<'de> Visitor<'de> for PermissionsVisitor {
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("a valid permissions")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        let bits = v.parse().map_err(E::custom)?;
+        self.visit_u64(bits)
     }
 
     fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
@@ -201,7 +205,7 @@ impl<'de> Deserialize<'de> for Permissions {
     }
 }
 
-use opg::{Components, Model, ModelData, ModelSimple, ModelType, ModelTypeDescription, OpgModel};
+use opg::{Components, Model, ModelData, ModelString, ModelType, ModelTypeDescription, OpgModel};
 
 impl OpgModel for Permissions {
     fn get_schema(_cx: &mut Components) -> Model {
@@ -209,7 +213,7 @@ impl OpgModel for Permissions {
             description: "Permissions bits".to_string().into(),
             data: ModelData::Single(ModelType {
                 nullable: false,
-                type_description: ModelTypeDescription::Number(ModelSimple::default()),
+                type_description: ModelTypeDescription::String(ModelString::default()),
             }),
         }
     }

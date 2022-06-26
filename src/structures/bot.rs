@@ -2,11 +2,16 @@ use super::*;
 use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:bots)]
+#[crud_table(table_name:bots | formats_pg:"id:{}::bigint")]
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, OpgModel)]
 pub struct Bot {
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub id: u64,
     pub username: String,
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub owner_id: u64,
     pub verified: bool,
 }

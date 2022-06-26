@@ -23,7 +23,7 @@ impl Serialize for Badges {
     where
         S: Serializer,
     {
-        serializer.serialize_u64(self.bits())
+        serializer.collect_str(&self.bits())
     }
 }
 
@@ -34,6 +34,14 @@ impl<'de> Visitor<'de> for BadgesVisitor {
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("a valid badges")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        let bits = v.parse().map_err(E::custom)?;
+        self.visit_u64(bits)
     }
 
     fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
@@ -63,7 +71,7 @@ impl<'de> Deserialize<'de> for Badges {
     }
 }
 
-use opg::{Components, Model, ModelData, ModelSimple, ModelType, ModelTypeDescription, OpgModel};
+use opg::{Components, Model, ModelData, ModelString, ModelType, ModelTypeDescription, OpgModel};
 
 impl OpgModel for Badges {
     fn get_schema(_cx: &mut Components) -> Model {
@@ -71,7 +79,7 @@ impl OpgModel for Badges {
             description: "Badges bits".to_string().into(),
             data: ModelData::Single(ModelType {
                 nullable: false,
-                type_description: ModelTypeDescription::Number(ModelSimple::default()),
+                type_description: ModelTypeDescription::String(ModelString::default()),
             }),
         }
     }

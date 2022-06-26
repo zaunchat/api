@@ -45,7 +45,7 @@ pub async fn edit(
             if !roles.any(|r| r.id == id) {
                 return Err(Error::UnknownRole);
             }
-            member.roles.push(id as i64);
+            member.roles.push(id);
         }
     }
 

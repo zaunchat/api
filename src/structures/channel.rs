@@ -29,8 +29,10 @@ pub enum OverwriteTypes {
     Member = 1,
 }
 
+#[serde_as]
 #[derive(Serialize, Deserialize, Clone, Copy, OpgModel, Debug)]
 pub struct Overwrite {
+    #[serde_as(as = "snowflake::json::ID")]
     pub id: u64,
     pub r#type: OverwriteTypes,
     pub allow: Permissions,
@@ -40,40 +42,45 @@ pub struct Overwrite {
 #[derive(Serialize, OpgModel)]
 pub struct ChannelOverwrites(Option<Vec<Overwrite>>);
 
-#[crud_table(formats_pg:"server_id:{}::bigint,parent_id:{}::bigint,owner_id:{}::bigint,recipients:{}::bigint[],permissions:{}::bigint" | table_name:channels)]
+#[crud_table(formats_pg:"id:{}::bigint,server_id:{}::bigint,parent_id:{}::bigint,owner_id:{}::bigint,recipients:{}::bigint[],permissions:{}::bigint" | table_name:channels)]
+#[serde_as]
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, OpgModel, Debug)]
 pub struct Channel {
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub id: u64,
     pub r#type: ChannelTypes,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    // Text/Voice/Category/Group
     pub name: Option<String>,
     // DM/Group
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub recipients: Option<Vec<i64>>,
+    #[serde_as(as = "Option<Vec<snowflake::json::ID>>")]
+    pub recipients: Option<Vec<u64>>,
 
     // Group/Text/Voice/Category
     #[opg(custom = "ChannelOverwrites")]
     pub overwrites: Json<Option<Vec<Overwrite>>>,
 
     // For server channels
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[opg(string, nullable)]
+    #[serde_as(as = "Option<snowflake::json::ID>")]
     pub server_id: Option<u64>,
 
     // Server channels
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[opg(string, nullable)]
+    #[serde_as(as = "Option<snowflake::json::ID>")]
     pub parent_id: Option<u64>,
 
     // Group
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[opg(string, nullable)]
+    #[serde_as(as = "Option<snowflake::json::ID>")]
     pub owner_id: Option<u64>,
 
     // Text
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub topic: Option<String>,
 
     // Group
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub permissions: Option<Permissions>,
 }
 
@@ -103,19 +110,17 @@ impl Base for Channel {
 impl Channel {
     pub fn new_dm(user: u64, target: u64) -> Self {
         Self {
-            id: snowflake::generate(),
             r#type: ChannelTypes::Direct,
-            recipients: Some(vec![user as i64, target as i64]),
+            recipients: Some(vec![user, target]),
             ..Default::default()
         }
     }
 
     pub fn new_group(user: u64, name: String) -> Self {
         Self {
-            id: snowflake::generate(),
             name: name.into(),
             r#type: ChannelTypes::Group,
-            recipients: Some(vec![user as i64]),
+            recipients: Some(vec![user]),
             owner_id: user.into(),
             permissions: Some(*DEFAULT_PERMISSION_DM),
             overwrites: Some(vec![]).into(),
@@ -234,7 +239,7 @@ impl Channel {
 
         if self.is_group() || self.is_dm() {
             for id in self.recipients.as_ref().unwrap() {
-                (*id as u64).user().await.unwrap().delete().await;
+                id.user().await.unwrap().delete().await;
             }
         }
 

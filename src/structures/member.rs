@@ -1,17 +1,26 @@
 use super::{Base, Role};
+use crate::utils::snowflake;
 use rbatis::types::Timestamp;
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:members)]
+#[derive(Debug, OpgModel)]
+struct MemberRoles(Vec<String>);
+
+#[crud_table(table_name:members | formats_pg:"id:{}::bigint,server_id:{}::bigint,roles:{}::bigint[]")]
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, OpgModel)]
 pub struct Member {
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub id: u64,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub nickname: Option<String>,
     #[opg(integer)]
     pub joined_at: Timestamp,
+    #[serde_as(as = "snowflake::json::ID")]
     pub server_id: u64,
-    pub roles: Vec<i64>,
+    #[serde_as(as = "Vec<snowflake::json::ID>")]
+    #[opg(custom = "MemberRoles")]
+    pub roles: Vec<u64>,
 }
 
 impl Base for Member {
@@ -26,7 +35,7 @@ impl Member {
             id: user_id,
             nickname: None,
             server_id,
-            roles: vec![server_id as i64],
+            roles: vec![server_id],
             joined_at: Timestamp::now(),
         }
     }

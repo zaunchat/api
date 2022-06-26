@@ -2,14 +2,18 @@ use super::*;
 use crate::utils::{snowflake, Permissions};
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:roles)]
+#[crud_table(table_name:roles | formats_pg:"id:{}::bigint,permissions:{}::bigint,server_id:{}::bigint")]
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, OpgModel)]
 pub struct Role {
+    #[serde_as(as = "snowflake::json::ID")]
     pub id: u64,
     pub name: String,
     pub permissions: Permissions,
     pub color: u8,
     pub hoist: bool,
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub server_id: u64,
 }
 

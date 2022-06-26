@@ -3,16 +3,21 @@ use crate::utils::snowflake;
 use rbatis::types::Timestamp;
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:messages | formats_pg:"edited_at:{}::timestamp")]
+#[crud_table(table_name:messages | formats_pg:"id:{}::bigint,channel_id:{}::bigint,author_id:{}::bigint,edited_at:{}::timestamp")]
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, OpgModel)]
 pub struct Message {
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub id: u64,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub channel_id: u64,
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub author_id: u64,
-    #[opg(integer, nullable)]
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[opg(string, nullable)]
     pub edited_at: Option<Timestamp>, /*
                                       TODO:
                                       pub embeds: Vec<Embed>
@@ -59,7 +64,7 @@ impl Message {
     pub async fn cleanup(&self) {
         use crate::utils::Ref;
         self.delete().await;
-        self.author_id.user().await.unwrap().delete().await;
+        // self.author_id.user().await.unwrap().delete().await;
         self.channel_id.channel(None).await.unwrap().cleanup().await;
     }
 }

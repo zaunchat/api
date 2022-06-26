@@ -3,11 +3,16 @@ use crate::utils::snowflake;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:sessions)]
+#[crud_table(table_name:sessions | formats_pg:"id:{}::bigint")]
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, OpgModel)]
 pub struct Session {
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub id: u64,
     pub token: String,
+    #[opg(string)]
+    #[serde_as(as = "snowflake::json::ID")]
     pub user_id: u64,
 }
 
