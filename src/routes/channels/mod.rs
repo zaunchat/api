@@ -11,5 +11,5 @@ pub fn routes() -> axum::Router {
         .route("/", get(fetch::fetch_many).post(create::create))
         .route("/:channel_id", get(fetch::fetch_one).delete(delete::delete))
         .route("/:channel_id/:target", delete(kick::kick))
-        .layer(middleware::from_fn(ratelimit::handle!(15, 1000 * 5)))
+        .layer(middleware::from_fn(ratelimit::handle!(35, 1000 * 5)))
 }
