@@ -3,6 +3,7 @@ use axum::extract::ws;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum Empty {
     Default { id: u64 },
     ServerObject { id: u64, server_id: u64 },

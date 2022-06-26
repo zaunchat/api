@@ -3,15 +3,23 @@ use crate::utils::snowflake;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:invites)]
+#[crud_table(table_name:invites | formats_pg:"id:{}::bigint,channel_id:{}::bigint,inviter_id:{}::bigint,server_id:{}::bigint")]
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, OpgModel)]
 pub struct Invite {
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub id: u64,
     pub code: String,
-    pub uses: u64,
+    pub uses: u32,
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub inviter_id: u64,
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub channel_id: u64,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[opg(string, nullable)]
+    #[serde_as(as = "Option<snowflake::json::ID>")]
     pub server_id: Option<u64>,
 }
 
@@ -51,8 +59,10 @@ impl Invite {
         use crate::utils::Ref;
 
         self.delete().await;
-        self.inviter_id.user().await.unwrap().delete().await;
-        self.channel_id.channel(None).await.unwrap().cleanup().await;
+        // self.inviter_id.user().await.unwrap().delete().await;
+        let channel = self.channel_id.channel(None).await.unwrap();
+
+        channel.cleanup().await;
     }
 }
 

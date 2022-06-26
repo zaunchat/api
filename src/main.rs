@@ -6,6 +6,8 @@ extern crate lazy_static;
 extern crate async_trait;
 #[macro_use]
 extern crate opg;
+#[macro_use]
+extern crate serde_with;
 
 pub mod config;
 pub mod database;

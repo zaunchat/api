@@ -3,17 +3,19 @@ use crate::utils::permissions::*;
 use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:servers)]
+#[crud_table(table_name:servers | formats_pg:"id:{}::bigint,owner_id:{}::bigint,permissions:{}::bigint")]
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, OpgModel)]
 pub struct Server {
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub id: u64,
     pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub icon: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub banner: Option<String>,
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub owner_id: u64,
     pub permissions: Permissions,
 }

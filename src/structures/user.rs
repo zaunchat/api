@@ -3,12 +3,14 @@ use crate::database::DB as db;
 use crate::utils::{snowflake, Badges, Error, Result};
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:users)]
+#[crud_table(table_name:users | formats_pg:"id:{}::bigint,badges:{}::bigint")]
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize, Default, Clone, OpgModel)]
 pub struct User {
+    #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub id: u64,
     pub username: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub avatar: Option<String>,
     pub password: String,
     pub email: String,

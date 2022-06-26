@@ -12,7 +12,7 @@ pub async fn kick(
     if let Some(recipients) = group.recipients.as_mut() {
         let exists = recipients
             .iter()
-            .position(|&id| id as u64 == target.id)
+            .position(|&id| id == target.id)
             .map(|i| recipients.remove(i))
             .is_some();
 
