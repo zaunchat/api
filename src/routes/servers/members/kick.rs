@@ -19,7 +19,7 @@ pub async fn kick(
 
     publish(
         server_id,
-        Payload::ServerMemberLeave(Empty { id: member_id }),
+        Payload::ServerMemberLeave(Empty::ServerObject { id: member_id, server_id }),
     )
     .await;
 

@@ -2,7 +2,10 @@ use super::{
     client::{Client, Subscription},
     Payload,
 };
-use crate::utils::{Permissions, Ref};
+use crate::{
+    gateway::Empty,
+    utils::{Permissions, Ref},
+};
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -80,10 +83,8 @@ async fn handle(ws: WebSocket) {
                             }
                         }
 
-                        Payload::ChannelDelete(channel) => {
-                            if channel.server_id.is_none() {
-                                client.subscriptions = Subscription::Remove(vec![target_id]);
-                            }
+                        Payload::ChannelDelete(Empty::Default { id }) => {
+                            client.subscriptions = Subscription::Remove(vec![*id]);
                         }
 
                         Payload::ChannelUpdate(channel) => {
@@ -108,8 +109,8 @@ async fn handle(ws: WebSocket) {
                             client.permissions.insert(member.server_id, p);
                         }
 
-                        Payload::ServerMemberLeave(data) => {
-                            if data.id == user.id {
+                        Payload::ServerMemberLeave(Empty::ServerObject { id, .. }) => {
+                            if *id == user.id {
                                 client.subscriptions = Subscription::Remove(vec![target_id]);
                             }
                         }

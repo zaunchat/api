@@ -15,7 +15,7 @@ pub async fn delete(
 
     role_id.role(server_id).await?.delete().await;
 
-    publish(server_id, Payload::RoleDelete(Empty { id: role_id })).await;
+    publish(server_id, Payload::RoleDelete(Empty::Default { id: role_id })).await;
 
     Ok(())
 }

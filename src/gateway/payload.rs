@@ -3,16 +3,16 @@ use axum::extract::ws;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct Empty {
-    pub id: u64,
+pub enum Empty {
+    Default {
+        id: u64,
+    },
+    ServerObject {
+        id: u64,
+        server_id: u64,
+    }
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct EmptyChannel {
-    pub r#type: ChannelTypes,
-    pub id: u64,
-    pub server_id: Option<u64>,
-}
 
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "event")]
@@ -30,7 +30,7 @@ pub enum Payload {
     },
     Pong,
     ChannelCreate(Channel),
-    ChannelDelete(EmptyChannel),
+    ChannelDelete(Empty),
     ChannelUpdate(Channel),
     GroupUserJoin(User),
     GroupUserLeave(User),
