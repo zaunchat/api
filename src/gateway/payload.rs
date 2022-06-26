@@ -26,8 +26,6 @@ pub enum Payload {
     ChannelCreate(Channel),
     ChannelDelete(Empty),
     ChannelUpdate(Channel),
-    GroupUserJoin(User),
-    GroupUserLeave(User),
     MessageCreate(Message),
     MessageDelete(Empty),
     MessageUpdate(Message),

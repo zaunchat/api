@@ -115,12 +115,6 @@ async fn handle(ws: WebSocket) {
                             }
                         }
 
-                        Payload::GroupUserLeave(data) => {
-                            if data.id == user.id {
-                                client.subscriptions = Subscription::Remove(vec![target_id]);
-                            }
-                        }
-
                         Payload::ServerDelete(_) => {
                             client.subscriptions = Subscription::Remove(vec![target_id]);
                         }
