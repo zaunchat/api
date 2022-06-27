@@ -139,9 +139,10 @@ impl Permissions {
     }
 
     pub fn has(&self, bits: Permissions) -> Result<()> {
-        if !self.contains(bits) {
+        if !self.contains(Permissions::ADMINISTRATOR) && !self.contains(bits) {
             return Err(Error::MissingPermissions);
         }
+
         Ok(())
     }
 }
