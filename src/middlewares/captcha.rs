@@ -9,6 +9,10 @@ struct CaptchaResponse {
 }
 
 pub async fn handle<B>(req: Request<B>, next: Next<B>) -> Result<Response, Error> {
+    if !*CAPTCHA_ENABLED {
+        return Ok(next.run(req).await);
+    }
+
     let key = req.headers().get("X-Captcha-Key");
 
     if key.is_none() {

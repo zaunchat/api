@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT PRIMARY KEY,
     username VARCHAR(32) NOT NULL,
-    password VARCHAR(32) NOT NULL,
+    password TEXT NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     avatar VARCHAR(64),
     badges BIGINT NOT NULL DEFAULT 0,
