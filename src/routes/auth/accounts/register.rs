@@ -63,5 +63,5 @@ pub async fn register(
 
     user.save().await;
 
-    Ok(Json(user))
+    Ok(Json(user.to_public()))
 }
