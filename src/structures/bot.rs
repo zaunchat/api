@@ -2,7 +2,7 @@ use super::*;
 use crate::utils::snowflake;
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:bots | formats_pg:"id:{}::bigint")]
+#[crud_table(table_name:bots | formats_pg:"id:{}::bigint,owner_id:{}::bigint")]
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, OpgModel)]
 pub struct Bot {
@@ -57,7 +57,13 @@ mod tests {
     #[tokio::test]
     async fn create() {
         crate::tests::setup().await;
+
         let bot = Bot::faker().await;
+
+        bot.save().await;
+
+        let bot = Bot::find_one_by_id(bot.id).await.unwrap();
+
         bot.cleanup().await;
     }
 }

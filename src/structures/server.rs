@@ -77,7 +77,13 @@ mod tests {
     #[tokio::test]
     async fn create() {
         crate::tests::setup().await;
+
         let server = Server::faker().await;
+
+        server.save().await;
+
+        let server = Server::find_one_by_id(server.id).await.unwrap();
+
         server.cleanup().await;
     }
 }
