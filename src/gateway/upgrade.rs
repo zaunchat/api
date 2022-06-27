@@ -78,8 +78,8 @@ async fn handle(ws: WebSocket) {
                         Payload::MessageCreate(_)
                         | Payload::MessageUpdate(_)
                         | Payload::MessageDelete(_) => {
-                            if !p.contains(Permissions::VIEW_CHANNEL) {
-                                return;
+                            if p.has(Permissions::VIEW_CHANNEL).is_err() {
+                                continue;
                             }
                         }
 
@@ -103,10 +103,12 @@ async fn handle(ws: WebSocket) {
                         }
 
                         Payload::ServerMemberUpdate(member) => {
-                            let p = Permissions::fetch(user, member.server_id.into(), None)
-                                .await
-                                .unwrap();
-                            client.permissions.insert(member.server_id, p);
+                            if member.id == user.id {
+                                let p = Permissions::fetch(user, member.server_id.into(), None)
+                                    .await
+                                    .unwrap();
+                                client.permissions.insert(member.server_id, p);
+                            }
                         }
 
                         Payload::ServerMemberLeave(Empty::ServerObject { id, .. }) => {
@@ -125,6 +127,14 @@ async fn handle(ws: WebSocket) {
 
                         Payload::ChannelCreate(channel) => {
                             client.subscriptions = Subscription::Add(vec![channel.id]);
+                            if !channel.in_server() {
+                                client.permissions.insert(
+                                    channel.id,
+                                    Permissions::fetch_cached(user, None, channel.into())
+                                        .await
+                                        .unwrap(),
+                                );
+                            }
                         }
                         _ => {}
                     }
@@ -133,7 +143,6 @@ async fn handle(ws: WebSocket) {
                         break;
                     }
                 }
-
                 _ => break,
             }
         }
@@ -142,4 +151,6 @@ async fn handle(ws: WebSocket) {
     tokio::select!(
         _ = process => {}
     );
+
+    log::debug!("Socket connection closed");
 }
