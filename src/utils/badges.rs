@@ -36,12 +36,18 @@ impl<'de> Visitor<'de> for BadgesVisitor {
         formatter.write_str("a valid badges")
     }
 
+    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        self.visit_u64(v.parse().map_err(E::custom)?)
+    }
+
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
         E: serde::de::Error,
     {
-        let bits = v.parse().map_err(E::custom)?;
-        self.visit_u64(bits)
+        self.visit_u64(v.parse().map_err(E::custom)?)
     }
 
     fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
