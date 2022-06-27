@@ -14,9 +14,10 @@ pub struct Member {
     #[opg(string)]
     pub id: u64,
     pub nickname: Option<String>,
-    #[opg(integer)]
+    #[opg(string)]
     pub joined_at: Timestamp,
     #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub server_id: u64,
     #[serde_as(as = "Vec<snowflake::json::ID>")]
     #[opg(custom = "MemberRoles")]

@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone, Default, OpgModel)]
 pub struct Role {
     #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub id: u64,
     pub name: String,
     pub permissions: Permissions,

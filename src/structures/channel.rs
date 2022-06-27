@@ -33,6 +33,7 @@ pub enum OverwriteTypes {
 #[derive(Serialize, Deserialize, Clone, Copy, OpgModel, Debug)]
 pub struct Overwrite {
     #[serde_as(as = "snowflake::json::ID")]
+    #[opg(string)]
     pub id: u64,
     pub r#type: OverwriteTypes,
     pub allow: Permissions,
@@ -41,6 +42,9 @@ pub struct Overwrite {
 
 #[derive(Serialize, OpgModel)]
 pub struct ChannelOverwrites(Option<Vec<Overwrite>>);
+
+#[derive(Serialize, OpgModel)]
+pub struct ChannelRecipients(Option<Vec<String>>);
 
 #[crud_table(formats_pg:"id:{}::bigint,server_id:{}::bigint,parent_id:{}::bigint,owner_id:{}::bigint,recipients:{}::bigint[],permissions:{}::bigint" | table_name:channels)]
 #[serde_as]
@@ -56,6 +60,7 @@ pub struct Channel {
     pub name: Option<String>,
     // DM/Group
     #[serde_as(as = "Option<Vec<snowflake::json::ID>>")]
+    #[opg(custom = "ChannelRecipients")]
     pub recipients: Option<Vec<u64>>,
 
     // Group/Text/Voice/Category
