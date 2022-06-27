@@ -31,7 +31,9 @@ pub async fn run(client: &mut Client, payload: Payload) {
     let servers = user.fetch_servers().await;
     let server_ids: Vec<u64> = servers.iter().map(|x| x.id).collect();
 
-    channels.append(&mut Channel::find(|q| q.r#in("server_id", &server_ids)).await);
+    if !server_ids.is_empty() {
+        channels.append(&mut Channel::find(|q| q.r#in("server_id", &server_ids)).await);
+    }
 
     for server in &servers {
         subscriptions.push(server.id);
