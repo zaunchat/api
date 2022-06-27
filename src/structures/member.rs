@@ -42,7 +42,11 @@ impl Member {
     }
 
     pub async fn fetch_roles(&self) -> Vec<Role> {
-        Role::find(|q| q.r#in("id", &self.roles)).await
+        if self.roles.is_empty() {
+            return vec![];
+        }
+
+        Role::find(|q| q.eq("server_id", &self.server_id).r#in("id", &self.roles)).await
     }
 
     #[cfg(test)]
