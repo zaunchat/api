@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS invites (
     uses INTEGER DEFAULT 0,
     inviter_id BIGINT NOT NULL,
     channel_id BIGINT NOT NULL,
-    server_id BIGINT NOT NULL,
+    server_id BIGINT,
     FOREIGN KEY (inviter_id) REFERENCES users(id),
     FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
@@ -93,6 +93,7 @@ CREATE TABLE IF NOT EXISTS messages (
 
 CREATE TABLE IF NOT EXISTS bots (
     id BIGINT PRIMARY KEY,
+    username VARCHAR(32) NOT NULL,
     owner_id BIGINT NOT NULL,
     avatar VARCHAR(64),
     presence JSONB,

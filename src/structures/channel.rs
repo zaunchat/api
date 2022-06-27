@@ -70,16 +70,19 @@ pub struct Channel {
     // For server channels
     #[opg(string, nullable)]
     #[serde_as(as = "Option<snowflake::json::ID>")]
+    #[serde(default)]
     pub server_id: Option<u64>,
 
     // Server channels
     #[opg(string, nullable)]
     #[serde_as(as = "Option<snowflake::json::ID>")]
+    #[serde(default)]
     pub parent_id: Option<u64>,
 
     // Group
     #[opg(string, nullable)]
     #[serde_as(as = "Option<snowflake::json::ID>")]
+    #[serde(default)]
     pub owner_id: Option<u64>,
 
     // Text
@@ -271,6 +274,9 @@ mod tests {
         let channel = Channel::faker(ChannelTypes::Group).await;
 
         channel.save().await;
+
+        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
+
         channel.cleanup().await;
     }
 
@@ -281,6 +287,9 @@ mod tests {
         let channel = Channel::faker(ChannelTypes::Direct).await;
 
         channel.save().await;
+
+        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
+
         channel.cleanup().await;
     }
 
@@ -291,6 +300,9 @@ mod tests {
         let channel = Channel::faker(ChannelTypes::Text).await;
 
         channel.save().await;
+
+        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
+
         channel.cleanup().await;
     }
 
@@ -301,6 +313,9 @@ mod tests {
         let channel = Channel::faker(ChannelTypes::Voice).await;
 
         channel.save().await;
+
+        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
+
         channel.cleanup().await;
     }
 
@@ -311,6 +326,9 @@ mod tests {
         let channel = Channel::faker(ChannelTypes::Category).await;
 
         channel.save().await;
+
+        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
+
         channel.cleanup().await;
     }
 }

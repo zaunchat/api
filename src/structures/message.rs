@@ -82,6 +82,9 @@ mod tests {
         msg.content = "Hello world!".to_string().into();
 
         msg.save().await;
+
+        let msg = Message::find_one_by_id(msg.id).await.unwrap();
+
         msg.cleanup().await;
     }
 }

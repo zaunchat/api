@@ -75,6 +75,11 @@ mod tests {
         crate::tests::setup().await;
 
         let invite = Invite::faker().await;
+
+        invite.save().await;
+
+        let invite = Invite::find_one_by_id(invite.id).await.unwrap();
+
         invite.cleanup().await;
     }
 }

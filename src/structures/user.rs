@@ -105,8 +105,13 @@ mod tests {
     #[tokio::test]
     async fn create() {
         crate::tests::setup().await;
+
         let user = User::faker();
+
         user.save().await;
+
+        let user = User::find_one_by_id(user.id).await.unwrap();
+
         user.delete().await;
     }
 }

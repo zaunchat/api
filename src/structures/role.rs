@@ -60,6 +60,9 @@ mod tests {
         let role = Role::faker().await;
 
         role.save().await;
+
+        let role = Role::find_one_by_id(role.id).await.unwrap();
+
         role.cleanup().await;
     }
 }
