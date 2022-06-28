@@ -12,5 +12,5 @@ pub fn routes() -> axum::Router {
             post(register::register).route_layer(middleware::from_fn(captcha::handle)),
         )
         .route("/login", post(login::login))
-        .route("/verify/:user_id/:code", get(verify::verify))
+        .route("/verify", get(verify::verify))
 }
