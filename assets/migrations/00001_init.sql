@@ -101,12 +101,6 @@ CREATE TABLE IF NOT EXISTS bots (
     FOREIGN KEY (owner_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS pending_accounts (
-    user_id BIGINT PRIMARY KEY,
-    code TEXT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS account_invites (
     code TEXT NOT NULL,
     used BOOLEAN DEFAULT FALSE,

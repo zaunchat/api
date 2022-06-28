@@ -1,4 +1,5 @@
 use crate::config::*;
+use crate::database::redis::{connection, AsyncCommands};
 use crate::database::DB as db;
 use crate::structures::{Base, User};
 use nanoid::nanoid;
@@ -6,15 +7,11 @@ use rbatis::crud::CRUD;
 use regex::Regex;
 use serde_json::json;
 
+const THREE_HOURS_IN_SECONDS: usize = 10800;
+
 lazy_static! {
     static ref SPLIT_REGEX: Regex = Regex::new("([^@]+)(@.+)").unwrap();
     static ref SYMBOL_REGEX: Regex = Regex::new("\\+.+|\\.").unwrap();
-}
-
-#[crud_table(table_name:pending_accounts)]
-struct PendingVerification {
-    user_id: u64,
-    code: String,
 }
 
 #[crud_table(table_name:account_invites)]
@@ -74,30 +71,21 @@ pub async fn send(user: &User) -> bool {
         .unwrap();
 
     if res.status().is_success() {
-        let p = PendingVerification {
-            user_id: user.id,
-            code,
-        };
-        db.save(&p, &[]).await.is_ok()
+        let mut con = connection().await;
+        con.set_ex::<String, String, u32>(user.id.to_string(), code, THREE_HOURS_IN_SECONDS)
+            .await
+            .is_ok()
     } else {
         false
     }
 }
 
 pub async fn verify(user_id: u64, code: &str) -> bool {
-    let p: Option<PendingVerification> = db
-        .fetch(
-            "SELECT * FROM pending_accounts WHERE user_id = $1 AND code = $2",
-            vec![user_id.into(), code.into()],
-        )
-        .await
-        .ok();
+    let mut con = connection().await;
 
-    match p {
-        Some(_) => {
-            db.remove_by_column::<PendingVerification, u64>("user_id", user_id)
-                .await
-                .ok();
+    match con.get::<String, String>(user_id.to_string()).await {
+        Ok(token) if code == token => {
+            con.del::<String, u32>(user_id.to_string()).await.ok();
             true
         }
         _ => false,
