@@ -35,11 +35,12 @@ impl Client {
         self.write.lock().await.send(payload.into()).await
     }
 
-    pub async fn on_message(&mut self, content: String) -> Result<(), String> {
+    pub async fn on_message(&mut self, content: String) {
         let payload = serde_json::from_str::<Payload>(&content);
 
         if payload.is_err() {
-            Err("Invalid body".to_string())?;
+            log::debug!("Socket sent an invalid body");
+            return;
         }
 
         let payload = payload.unwrap();
@@ -51,7 +52,5 @@ impl Client {
         }
 
         log::debug!("Socket Message: {:?}", content);
-
-        Ok(())
     }
 }

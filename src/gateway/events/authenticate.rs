@@ -11,7 +11,7 @@ pub async fn run(client: &mut Client, payload: Payload) {
     }
 
     let user = if let Payload::Authenticate { token } = payload {
-        User::fetch_by_token(token.as_str()).await.ok()
+        User::fetch_by_token(token.as_str()).await
     } else {
         None
     };
