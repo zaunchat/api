@@ -7,18 +7,15 @@ use axum::{
 };
 
 pub async fn handle<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, Error> {
-    let path = req.uri().path();
-
-    let should_ignore = match path {
-        "/" => true,
-        "/auth/accounts/register" => true,
-        "/auth/accounts/login" => true,
-        "/auth/sessions" => true,
-        "/openapi.json" => true,
-        "/ws" => true,
-        _ if path.starts_with("/auth/accounts/verify") => true,
-        _ => false,
-    };
+    let should_ignore = matches!(
+        req.uri().path(),
+        "/" | "/auth/accounts/register"
+            | "/auth/accounts/login"
+            | "/auth/accounts/verify"
+            | "/auth/sessions"
+            | "/openapi.json"
+            | "/ws"
+    );
 
     if should_ignore {
         return Ok(next.run(req).await);
@@ -36,7 +33,7 @@ pub async fn handle<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, E
     let user = User::fetch_by_token(token.unwrap()).await;
 
     match user {
-        Ok(user) => {
+        Some(user) => {
             req.extensions_mut().insert(user);
             Ok(next.run(req).await)
         }

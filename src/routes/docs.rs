@@ -27,8 +27,15 @@ pub fn document(app: Router) -> Router {
             // Accounts/Sessions
             ("auth/accounts/login"): {
                 POST: { 200: Session, body: sessions::create::CreateSessionOptions, tags: {auth} } },
-            ("auth/accounts/verify" / { user_id: u64 } / { code: String }): {
-                GET: { 200: None, tags: {auth} }
+            ("auth/accounts/verify"): {
+                GET: {
+                    200: None,
+                    tags: {auth},
+                    parameters: {
+                        (query user_id: u64): {},
+                        (query code: String): {},
+                    }
+                }
             },
             ("auth/accounts/register"): {
                 POST: { 200: User, body: accounts::register::RegisterAccountOptions, tags: {auth} }
