@@ -34,9 +34,13 @@ async fn handle(ws: WebSocket) {
 
     while let Some(Ok(msg)) = receiver.next().await {
         if let Message::Text(content) = msg {
-            client.on_message(content).await.unwrap();
+            client.on_message(content).await;
+
             if client.user.is_some() {
                 break;
+            } else {
+                log::debug!("Socket did not authenticate with valid token");
+                return;
             }
         }
     }
