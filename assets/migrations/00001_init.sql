@@ -106,3 +106,13 @@ CREATE TABLE IF NOT EXISTS account_invites (
     used BOOLEAN DEFAULT FALSE,
     taken_by BIGINT
 );
+
+CREATE TABLE IF NOT EXISTS attachments (
+    id BIGINT PRIMARY KEY,
+    uploader_id BIGINT NOT NULL,
+    name TEXT NOT NULL,
+    meta JSONB NOT NULL DEFAULT '{}'::jsonb,
+    tag TEXT,
+    size INTEGER NOT NULL,
+    FOREIGN KEY (uploader_id) REFERENCES users(id) ON DELETE CASCADE   
+);
