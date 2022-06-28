@@ -76,8 +76,8 @@ impl User {
 
     // pub async fn fetch_relations(&self) {}
 
-    pub async fn fetch_by_token(token: &str) -> Result<User, rbatis::Error> {
-        db.fetch("SELECT * FROM users WHERE id = ( SELECT user_id FROM sessions WHERE verified = TRUE AND token = $1 )", vec![token.into()]).await
+    pub async fn fetch_by_token(token: &str) -> Option<User> {
+        db.fetch("SELECT * FROM users WHERE verified = TRUE AND id = ( SELECT user_id FROM sessions WHERE token = $1 )", vec![token.into()]).await.ok()
     }
 
     pub fn to_public(&self) -> Self {
