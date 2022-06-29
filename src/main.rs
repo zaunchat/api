@@ -24,7 +24,7 @@ use std::net::SocketAddr;
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
-    env_logger::init();
+    env_logger::builder().format_timestamp(None).init();
 
     log::info!("Connecting to database...");
     database::postgres::connect().await;
