@@ -59,7 +59,7 @@ impl Invite {
         use crate::utils::Ref;
 
         self.delete().await;
-        // self.inviter_id.user().await.unwrap().delete().await;
+        self.inviter_id.user().await.unwrap().delete().await;
         let channel = self.channel_id.channel(None).await.unwrap();
 
         channel.cleanup().await;

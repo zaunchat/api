@@ -64,7 +64,7 @@ impl Message {
     pub async fn cleanup(&self) {
         use crate::utils::Ref;
         self.delete().await;
-        // self.author_id.user().await.unwrap().delete().await;
+        self.author_id.user().await.unwrap().delete().await;
         self.channel_id.channel(None).await.unwrap().cleanup().await;
     }
 }
