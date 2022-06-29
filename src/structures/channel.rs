@@ -266,69 +266,70 @@ impl Channel {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create_group() {
-        crate::tests::setup().await;
+    #[test]
+    fn create_group() {
+        run(async {
+            let channel = Channel::faker(ChannelTypes::Group).await;
 
-        let channel = Channel::faker(ChannelTypes::Group).await;
+            channel.save().await;
 
-        channel.save().await;
+            let channel = Channel::find_one_by_id(channel.id).await.unwrap();
 
-        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
-
-        channel.cleanup().await;
+            channel.cleanup().await;
+        })
     }
 
-    #[tokio::test]
-    async fn create_dm() {
-        crate::tests::setup().await;
+    #[test]
+    fn create_dm() {
+        run(async {
+            let channel = Channel::faker(ChannelTypes::Direct).await;
 
-        let channel = Channel::faker(ChannelTypes::Direct).await;
+            channel.save().await;
 
-        channel.save().await;
+            let channel = Channel::find_one_by_id(channel.id).await.unwrap();
 
-        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
-
-        channel.cleanup().await;
+            channel.cleanup().await;
+        })
     }
 
-    #[tokio::test]
-    async fn create_text() {
-        crate::tests::setup().await;
+    #[test]
+    fn create_text() {
+        run(async {
+            let channel = Channel::faker(ChannelTypes::Text).await;
 
-        let channel = Channel::faker(ChannelTypes::Text).await;
+            channel.save().await;
 
-        channel.save().await;
+            let channel = Channel::find_one_by_id(channel.id).await.unwrap();
 
-        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
-
-        channel.cleanup().await;
+            channel.cleanup().await;
+        })
     }
 
-    #[tokio::test]
-    async fn create_voice() {
-        crate::tests::setup().await;
+    #[test]
+    fn create_voice() {
+        run(async {
+            let channel = Channel::faker(ChannelTypes::Voice).await;
 
-        let channel = Channel::faker(ChannelTypes::Voice).await;
+            channel.save().await;
 
-        channel.save().await;
+            let channel = Channel::find_one_by_id(channel.id).await.unwrap();
 
-        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
-
-        channel.cleanup().await;
+            channel.cleanup().await;
+        })
     }
 
-    #[tokio::test]
-    async fn create_category() {
-        crate::tests::setup().await;
+    #[test]
+    fn create_category() {
+        run(async {
+            let channel = Channel::faker(ChannelTypes::Category).await;
 
-        let channel = Channel::faker(ChannelTypes::Category).await;
+            channel.save().await;
 
-        channel.save().await;
+            let channel = Channel::find_one_by_id(channel.id).await.unwrap();
 
-        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
-
-        channel.cleanup().await;
+            channel.cleanup().await;
+        })
     }
 }

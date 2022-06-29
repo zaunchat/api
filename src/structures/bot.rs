@@ -53,17 +53,18 @@ impl Bot {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    #[test]
+    fn create() {
+        run(async {
+            let bot = Bot::faker().await;
 
-        let bot = Bot::faker().await;
+            bot.save().await;
 
-        bot.save().await;
+            let bot = Bot::find_one_by_id(bot.id).await.unwrap();
 
-        let bot = Bot::find_one_by_id(bot.id).await.unwrap();
-
-        bot.cleanup().await;
+            bot.cleanup().await;
+        })
     }
 }

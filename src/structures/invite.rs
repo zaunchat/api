@@ -69,17 +69,18 @@ impl Invite {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    #[test]
+    fn create() {
+        run(async {
+            let invite = Invite::faker().await;
 
-        let invite = Invite::faker().await;
+            invite.save().await;
 
-        invite.save().await;
+            let invite = Invite::find_one_by_id(invite.id).await.unwrap();
 
-        let invite = Invite::find_one_by_id(invite.id).await.unwrap();
-
-        invite.cleanup().await;
+            invite.cleanup().await;
+        })
     }
 }

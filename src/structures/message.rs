@@ -72,19 +72,20 @@ impl Message {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    #[test]
+    fn create() {
+        run(async {
+            let mut msg = Message::faker().await;
 
-        let mut msg = Message::faker().await;
+            msg.content = "Hello world!".to_string().into();
 
-        msg.content = "Hello world!".to_string().into();
+            msg.save().await;
 
-        msg.save().await;
+            let msg = Message::find_one_by_id(msg.id).await.unwrap();
 
-        let msg = Message::find_one_by_id(msg.id).await.unwrap();
-
-        msg.cleanup().await;
+            msg.cleanup().await;
+        })
     }
 }

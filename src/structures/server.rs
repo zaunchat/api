@@ -73,17 +73,18 @@ impl Server {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    #[test]
+    fn create() {
+        run(async {
+            let server = Server::faker().await;
 
-        let server = Server::faker().await;
+            server.save().await;
 
-        server.save().await;
+            let server = Server::find_one_by_id(server.id).await.unwrap();
 
-        let server = Server::find_one_by_id(server.id).await.unwrap();
-
-        server.cleanup().await;
+            server.cleanup().await;
+        })
     }
 }

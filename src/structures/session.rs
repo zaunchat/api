@@ -53,17 +53,18 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    #[test]
+    fn create() {
+        run(async {
+            let session = Session::faker().await;
 
-        let session = Session::faker().await;
+            session.save().await;
 
-        session.save().await;
+            let session = Session::find_one_by_id(session.id).await.unwrap();
 
-        let session = Session::find_one_by_id(session.id).await.unwrap();
-
-        session.cleanup().await;
+            session.cleanup().await;
+        })
     }
 }

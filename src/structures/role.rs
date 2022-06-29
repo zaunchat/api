@@ -52,17 +52,18 @@ impl Role {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    #[test]
+    fn create() {
+        run(async {
+            let role = Role::faker().await;
 
-        let role = Role::faker().await;
+            role.save().await;
 
-        role.save().await;
+            let role = Role::find_one_by_id(role.id).await.unwrap();
 
-        let role = Role::find_one_by_id(role.id).await.unwrap();
-
-        role.cleanup().await;
+            role.cleanup().await;
+        })
     }
 }

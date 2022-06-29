@@ -102,16 +102,18 @@ impl User {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    use crate::tests::run;
 
-        let user = User::faker();
+    #[test]
+    fn create() {
+        run(async {
+            let user = User::faker();
 
-        user.save().await;
+            user.save().await;
 
-        let user = User::find_one_by_id(user.id).await.unwrap();
+            let user = User::find_one_by_id(user.id).await.unwrap();
 
-        user.delete().await;
+            user.delete().await;
+        })
     }
 }

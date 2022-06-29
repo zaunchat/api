@@ -71,19 +71,21 @@ impl Member {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    #[test]
+    fn create() {
+        run(async {
+            let member = Member::faker().await;
 
-        let member = Member::faker().await;
+            member.save().await;
 
-        member.save().await;
+            let member =
+                Member::find_one(|q| q.eq("id", member.id).eq("server_id", member.server_id))
+                    .await
+                    .unwrap();
 
-        let member = Member::find_one(|q| q.eq("id", member.id).eq("server_id", member.server_id))
-            .await
-            .unwrap();
-
-        member.cleanup().await;
+            member.cleanup().await;
+        })
     }
 }
