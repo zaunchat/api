@@ -26,7 +26,7 @@ impl Session {
     pub fn new(user_id: u64) -> Self {
         Self {
             id: snowflake::generate(),
-            token: nanoid!(64),
+            token: nanoid!(64).replace('\u{0000}', ""),
             user_id,
         }
     }

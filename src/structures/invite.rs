@@ -33,7 +33,7 @@ impl Invite {
     pub fn new(inviter_id: u64, channel_id: u64, server_id: Option<u64>) -> Self {
         Self {
             id: snowflake::generate(),
-            code: nanoid!(8),
+            code: nanoid!(8).replace('\u{0000}', ""),
             inviter_id,
             channel_id,
             server_id,
