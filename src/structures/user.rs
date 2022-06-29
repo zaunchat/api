@@ -92,9 +92,14 @@ impl User {
 
     #[cfg(test)]
     pub fn faker() -> Self {
-        let email = format!("ghost.{}@example.com", nanoid::nanoid!(6));
+        let mut email = format!("ghost.{}@example.com", nanoid::nanoid!(6));
+
+        email = email.replace('\u{0000}', "");
+
         let mut user = Self::new("Ghost".to_string(), email, "passw0rd".to_string());
+
         user.verified = true;
+
         user
     }
 }
