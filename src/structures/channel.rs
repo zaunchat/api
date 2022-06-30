@@ -46,7 +46,7 @@ pub struct ChannelOverwrites(Option<Vec<Overwrite>>);
 #[derive(Serialize, OpgModel)]
 pub struct ChannelRecipients(Option<Vec<String>>);
 
-#[crud_table(formats_pg:"id:{}::bigint,server_id:{}::bigint,parent_id:{}::bigint,owner_id:{}::bigint,recipients:{}::bigint[],permissions:{}::bigint" | table_name:channels)]
+#[crud_table(formats_pg:"id:{}::bigint,server_id:{}::bigint,parent_id:{}::bigint,owner_id:{}::bigint,recipients:{}::bigint[],permissions:{}::bigint,overwrites:{}::jsonb" | table_name:channels)]
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, OpgModel, Debug)]
@@ -65,7 +65,7 @@ pub struct Channel {
 
     // Group/Text/Voice/Category
     #[opg(custom = "ChannelOverwrites")]
-    pub overwrites: Json<Option<Vec<Overwrite>>>,
+    pub overwrites: Option<Json<Vec<Overwrite>>>,
 
     // For server channels
     #[opg(string, nullable)]
@@ -99,7 +99,7 @@ impl Default for Channel {
             r#type: ChannelTypes::Unknown,
             name: None,
             recipients: None,
-            overwrites: None.into(),
+            overwrites: None,
             server_id: None,
             parent_id: None,
             owner_id: None,
@@ -131,7 +131,7 @@ impl Channel {
             recipients: Some(vec![user]),
             owner_id: user.into(),
             permissions: Some(*DEFAULT_PERMISSION_DM),
-            overwrites: Some(vec![]).into(),
+            overwrites: Some(vec![].into()),
             ..Default::default()
         }
     }
@@ -139,7 +139,7 @@ impl Channel {
     pub fn new_text(name: String, server_id: u64) -> Self {
         Self {
             r#type: ChannelTypes::Text,
-            overwrites: Some(vec![]).into(),
+            overwrites: Some(vec![].into()),
             name: name.into(),
             server_id: server_id.into(),
             ..Default::default()
@@ -149,7 +149,7 @@ impl Channel {
     pub fn new_voice(name: String, server_id: u64) -> Self {
         Self {
             r#type: ChannelTypes::Voice,
-            overwrites: Some(vec![]).into(),
+            overwrites: Some(vec![].into()),
             name: name.into(),
             server_id: server_id.into(),
             ..Default::default()
@@ -159,7 +159,7 @@ impl Channel {
     pub fn new_category(name: String, server_id: u64) -> Self {
         Self {
             r#type: ChannelTypes::Category,
-            overwrites: Some(vec![]).into(),
+            overwrites: Some(vec![].into()),
             name: name.into(),
             server_id: server_id.into(),
             ..Default::default()

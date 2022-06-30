@@ -91,11 +91,11 @@ impl Permissions {
                     member = Some(user.id.member(channel.server_id.unwrap()).await?);
                 }
 
-                let mut overwrites = channel.overwrites.inner.clone().unwrap();
+                let mut overwrites = channel.overwrites.as_ref().unwrap().inner.clone();
 
                 if let Some(parent_id) = channel.parent_id {
                     if let Ok(category) = parent_id.channel(None).await {
-                        overwrites.append(category.overwrites.inner.unwrap().as_mut());
+                        overwrites.append(&mut category.overwrites.unwrap().inner);
                     }
                 }
 
