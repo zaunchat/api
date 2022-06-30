@@ -33,9 +33,9 @@ async fn main() {
 
     let app = routes::mount(Router::new())
         .route("/ws", axum::routing::get(gateway::upgrade))
-        .layer(cors::handle())
         .layer(middleware::from_fn(auth::handle))
         .layer(middleware::from_fn(ratelimit::handle!(50, 1000 * 60)))
+        .layer(cors::handle())
         .fallback((|| async { StatusCode::NOT_FOUND }).into_service());
 
     let address: SocketAddr = format!("0.0.0.0:{}", *config::PORT).parse().unwrap();

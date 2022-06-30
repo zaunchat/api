@@ -254,7 +254,7 @@ impl Channel {
         if self.in_server() {
             self.server_id
                 .unwrap()
-                .server()
+                .server(None)
                 .await
                 .unwrap()
                 .cleanup()
