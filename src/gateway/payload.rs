@@ -19,6 +19,18 @@ pub enum Empty {
     },
 }
 
+impl From<u64> for Empty {
+    fn from(id: u64) -> Empty {
+        Empty::Default { id }
+    }
+}
+
+impl From<(u64, u64)> for Empty {
+    fn from((id, server_id): (u64, u64)) -> Empty {
+        Empty::ServerObject { id, server_id }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "event")]
 pub enum Payload {
