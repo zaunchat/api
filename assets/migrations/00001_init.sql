@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS servers (
     banner VARCHAR(64),
     owner_id BIGINT NOT NULL,
     permissions BIGINT NOT NULL,
-    FOREIGN KEY (owner_id) REFERENCES users(id)
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS channels (
@@ -40,9 +40,9 @@ CREATE TABLE IF NOT EXISTS channels (
     parent_id BIGINT,
     owner_id BIGINT,
     server_id BIGINT,
-    FOREIGN KEY (owner_id) REFERENCES users(id),
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES channels(id)
+    FOREIGN KEY (parent_id) REFERENCES channels(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS members (
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS invites (
     inviter_id BIGINT NOT NULL,
     channel_id BIGINT NOT NULL,
     server_id BIGINT,
-    FOREIGN KEY (inviter_id) REFERENCES users(id),
+    FOREIGN KEY (inviter_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
 );
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS bots (
     avatar VARCHAR(64),
     presence JSONB,
     verified BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (owner_id) REFERENCES users(id)
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS account_invites (
@@ -114,5 +114,5 @@ CREATE TABLE IF NOT EXISTS attachments (
     meta JSONB NOT NULL DEFAULT '{}'::jsonb,
     tag TEXT,
     size INTEGER NOT NULL,
-    FOREIGN KEY (uploader_id) REFERENCES users(id) ON DELETE CASCADE   
+    FOREIGN KEY (uploader_id) REFERENCES users(id) ON DELETE CASCADE
 );
