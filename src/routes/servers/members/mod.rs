@@ -6,9 +6,11 @@ pub fn routes() -> axum::Router {
     use crate::middlewares::*;
     use axum::{middleware, routing::*, Router};
 
-    Router::new().route("/", get(fetch::fetch_many)).route(
-        "/:member_id",
-        get(fetch::fetch_one).patch(edit::edit).delete(kick::kick),
-    )
-    .layer(middleware::from_fn(member::handle))
+    Router::new()
+        .route("/", get(fetch::fetch_many))
+        .route(
+            "/:member_id",
+            get(fetch::fetch_one).patch(edit::edit).delete(kick::kick),
+        )
+        .layer(middleware::from_fn(member::handle))
 }

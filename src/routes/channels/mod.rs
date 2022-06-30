@@ -1,8 +1,8 @@
 pub mod create;
 pub mod delete;
+pub mod edit;
 pub mod fetch;
 pub mod kick;
-pub mod edit;
 
 pub fn routes() -> axum::Router {
     use crate::middlewares::*;
@@ -10,7 +10,12 @@ pub fn routes() -> axum::Router {
 
     Router::new()
         .route("/", get(fetch::fetch_many).post(create::create))
-        .route("/:channel_id", get(fetch::fetch_one).patch(edit::edit).delete(delete::delete))
+        .route(
+            "/:channel_id",
+            get(fetch::fetch_one)
+                .patch(edit::edit)
+                .delete(delete::delete),
+        )
         .route("/:channel_id/:target", delete(kick::kick))
         .layer(middleware::from_fn(ratelimit::handle!(35, 1000 * 5)))
 }

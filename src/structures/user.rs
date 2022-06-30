@@ -1,6 +1,6 @@
 use super::*;
 use crate::database::DB as db;
-use crate::utils::{snowflake, Badges, Error, Result};
+use crate::utils::{snowflake, Badges};
 use serde::{Deserialize, Serialize};
 
 #[crud_table(table_name:users | formats_pg:"id:{}::bigint,badges:{}::bigint")]

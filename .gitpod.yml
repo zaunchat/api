@@ -6,3 +6,5 @@ vscode:
     - streetsidesoftware.code-spell-checker
     - tamasfe.even-better-toml
     - matklad.rust-analyzer
+ports:
+  - port: 8080

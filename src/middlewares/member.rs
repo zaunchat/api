@@ -1,8 +1,16 @@
+use crate::structures::{Base, Member, User};
 use crate::utils::error::*;
-use axum::{http::Request, middleware::Next, response::Response, extract::{RequestParts, Path} };
-use crate::structures::{Base, User, Member};
+use axum::{
+    extract::{Path, RequestParts},
+    http::Request,
+    middleware::Next,
+    response::Response,
+};
 
-pub async fn handle<B>(req: Request<B>, next: Next<B>) -> Result<Response, Error> {
+pub async fn handle<B: std::marker::Send>(
+    req: Request<B>,
+    next: Next<B>,
+) -> Result<Response, Error> {
     let mut req = RequestParts::new(req);
     let Path((server_id, _)) = req.extract::<Path<(u64, u64)>>().await.unwrap();
     let user = req.extensions().get::<User>().unwrap();

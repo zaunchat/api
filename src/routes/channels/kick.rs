@@ -1,6 +1,6 @@
 use crate::extractors::*;
-use crate::structures::*;
 use crate::gateway::*;
+use crate::structures::*;
 use crate::utils::*;
 
 pub async fn kick(

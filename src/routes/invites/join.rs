@@ -10,7 +10,8 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
     match invite {
         Some(mut invite) if invite.server_id.is_some() => {
             let server_id = invite.server_id.unwrap();
-            let already_joined = Member::count(|q| q.eq("server_id", &server_id).eq("id", &user.id));
+            let already_joined =
+                Member::count(|q| q.eq("server_id", &server_id).eq("id", &user.id)).await;
 
             if already_joined != 0 {
                 return Err(Error::MissingAccess);
@@ -28,7 +29,11 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
             member.save().await;
             invite.update().await;
 
-            publish(user.id, Payload::ServerCreate(server_id.server(None).await?)).await;
+            publish(
+                user.id,
+                Payload::ServerCreate(server_id.server(None).await?),
+            )
+            .await;
             publish(server_id, Payload::ServerMemberJoin(member)).await;
 
             Ok(())
