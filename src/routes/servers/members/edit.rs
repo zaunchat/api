@@ -17,8 +17,6 @@ pub async fn edit(
     Path((server_id, member_id)): Path<(u64, u64)>,
     ValidatedJson(data): ValidatedJson<EditMemberOptions>,
 ) -> Result<Json<Member>> {
-    user.member_of(server_id).await?;
-
     let mut member = member_id.member(server_id).await?;
     let p = Permissions::fetch(&user, server_id.into(), None).await?;
 

@@ -18,8 +18,6 @@ pub async fn create(
     Path(server_id): Path<u64>,
     ValidatedJson(data): ValidatedJson<CreateServerChannelOptions>,
 ) -> Result<Json<Channel>> {
-    user.member_of(server_id).await?;
-
     Permissions::fetch(&user, server_id.into(), None)
         .await?
         .has(Permissions::MANAGE_CHANNELS)?;

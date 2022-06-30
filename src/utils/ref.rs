@@ -37,20 +37,31 @@ pub trait Ref {
             .ok_or(Error::UnknownMessage)
     }
 
-    async fn server(&self) -> Result<Server> {
+    async fn server(&self, user_id: Option<u64>) -> Result<Server> {
+        if let Some(user_id) = user_id {
+            return db.fetch(
+                "SELECT * FROM servers WHERE id = ( SELECT server_id FROM members WHERE id = $1 AND server_id = $2 )",
+                vec![user_id.into(), self.id()],
+            )
+            .await
+            .ok_or(Error::UnknownServer)
+        }
+
         Server::find_one_by_id(self.id())
             .await
             .ok_or(Error::UnknownServer)
     }
 
     async fn role(&self, server_id: u64) -> Result<Role> {
-        let role = Role::find_one(|q| q.eq("id", self.id()).eq("server_id", server_id)).await;
-        role.ok_or(Error::UnknownRole)
+        Role::find_one(|q| q.eq("id", self.id()).eq("server_id", server_id))
+             .await
+             .ok_or(Error::UnknownRole)
     }
 
     async fn session(&self, user_id: u64) -> Result<Session> {
-        let session = Session::find_one(|q| q.eq("id", self.id()).eq("user_id", user_id)).await;
-        session.ok_or(Error::UnknownSession)
+        Session::find_one(|q| q.eq("id", self.id()).eq("user_id", user_id))
+             .await
+             .ok_or(Error::UnknownSession)
     }
 
     async fn bot(&self) -> Result<Bot> {
@@ -60,8 +71,9 @@ pub trait Ref {
     }
 
     async fn member(&self, server_id: u64) -> Result<Member> {
-        let member = Member::find_one(|q| q.eq("id", self.id()).eq("server_id", server_id)).await;
-        member.ok_or(Error::UnknownMember)
+        Member::find_one(|q| q.eq("id", self.id()).eq("server_id", server_id))
+            .await
+            .ok_or(Error::UnknownMember)
     }
 
     async fn invite(&self, server_id: Option<u64>) -> Result<Invite> {

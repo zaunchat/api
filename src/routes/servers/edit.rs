@@ -16,9 +16,7 @@ pub async fn edit(
     Path(server_id): Path<u64>,
     ValidatedJson(data): ValidatedJson<EditServerOptions>,
 ) -> Result<Json<Server>> {
-    user.member_of(server_id).await?;
-
-    let mut server = server_id.server().await?;
+    let mut server = server_id.server(user.id.into()).await?;
 
     Permissions::fetch_cached(&user, Some(&server), None)
         .await?

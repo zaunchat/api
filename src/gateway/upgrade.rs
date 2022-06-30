@@ -93,7 +93,7 @@ async fn handle(ws: WebSocket) {
 
                         Payload::ChannelUpdate(channel) => {
                             let server = if let Some(server_id) = channel.server_id {
-                                Some(server_id.server().await.unwrap())
+                                Some(server_id.server(None).await.unwrap())
                             } else {
                                 None
                             };
