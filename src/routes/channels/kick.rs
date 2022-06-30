@@ -1,5 +1,6 @@
 use crate::extractors::*;
 use crate::structures::*;
+use crate::gateway::*;
 use crate::utils::*;
 
 pub async fn kick(
@@ -8,6 +9,9 @@ pub async fn kick(
 ) -> Result<()> {
     let target = target_id.user().await?;
     let mut group = group_id.channel(user.id.into()).await?;
+    let permissions = Permissions::fetch(&user, None, group.id.into()).await?;
+
+    permissions.has(Permissions::KICK_MEMBERS)?;
 
     if let Some(recipients) = group.recipients.as_mut() {
         let exists = recipients
@@ -21,11 +25,9 @@ pub async fn kick(
         }
     }
 
-    let permissions = Permissions::fetch(&user, None, group.id.into()).await?;
-
-    permissions.has(Permissions::KICK_MEMBERS)?;
-
     group.update().await;
+
+    publish(group_id, Payload::ChannelUpdate(group)).await;
 
     Ok(())
 }
