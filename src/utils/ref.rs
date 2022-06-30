@@ -41,10 +41,10 @@ pub trait Ref {
         if let Some(user_id) = user_id {
             return db.fetch(
                 "SELECT * FROM servers WHERE id = ( SELECT server_id FROM members WHERE id = $1 AND server_id = $2 )",
-                vec![user_id.into(), self.id()],
+                vec![user_id.into(), self.id().into()],
             )
             .await
-            .ok_or(Error::UnknownServer)
+            .map_err(|_| Error::UnknownServer);
         }
 
         Server::find_one_by_id(self.id())
@@ -54,14 +54,14 @@ pub trait Ref {
 
     async fn role(&self, server_id: u64) -> Result<Role> {
         Role::find_one(|q| q.eq("id", self.id()).eq("server_id", server_id))
-             .await
-             .ok_or(Error::UnknownRole)
+            .await
+            .ok_or(Error::UnknownRole)
     }
 
     async fn session(&self, user_id: u64) -> Result<Session> {
         Session::find_one(|q| q.eq("id", self.id()).eq("user_id", user_id))
-             .await
-             .ok_or(Error::UnknownSession)
+            .await
+            .ok_or(Error::UnknownSession)
     }
 
     async fn bot(&self) -> Result<Bot> {

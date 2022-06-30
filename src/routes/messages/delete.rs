@@ -18,11 +18,7 @@ pub async fn delete(
 
     msg.delete().await;
 
-    publish(
-        channel_id,
-        Payload::MessageDelete(msg.id.into()),
-    )
-    .await;
+    publish(channel_id, Payload::MessageDelete(msg.id.into())).await;
 
     Ok(())
 }

@@ -14,5 +14,6 @@ pub fn routes() -> axum::Router {
             get(fetch::fetch_one)
                 .patch(edit::edit)
                 .delete(delete::delete),
-        ).layer(middleware::from_fn(member::handle))
+        )
+        .layer(middleware::from_fn(member::handle))
 }

@@ -15,7 +15,11 @@ pub async fn kick(
 
     member_id.member(server_id).await?.delete().await;
 
-    publish(server_id, Payload::ServerMemberLeave((member_id, server_id).into())).await;
+    publish(
+        server_id,
+        Payload::ServerMemberLeave((member_id, server_id).into()),
+    )
+    .await;
 
     Ok(())
 }

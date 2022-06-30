@@ -10,15 +10,11 @@ pub struct FetchMembersOptions {
     limit: Option<u64>,
 }
 
-pub async fn fetch_one(
-    Extension(user): Extension<User>,
-    Path((server_id, member_id)): Path<(u64, u64)>,
-) -> Result<Json<Member>> {
+pub async fn fetch_one(Path((server_id, member_id)): Path<(u64, u64)>) -> Result<Json<Member>> {
     Ok(Json(member_id.member(server_id).await?))
 }
 
 pub async fn fetch_many(
-    Extension(user): Extension<User>,
     Path(server_id): Path<u64>,
     Query(query): Query<FetchMembersOptions>,
 ) -> Json<Vec<Member>> {
