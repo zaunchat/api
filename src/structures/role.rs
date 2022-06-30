@@ -45,7 +45,7 @@ impl Role {
     pub async fn cleanup(&self) {
         use crate::utils::Ref;
         self.delete().await;
-        self.server_id.server().await.unwrap().delete().await;
+        self.server_id.server(None).await.unwrap().delete().await;
     }
 }
 

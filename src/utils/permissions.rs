@@ -124,7 +124,7 @@ impl Permissions {
         channel_id: Option<u64>,
     ) -> Result<Permissions> {
         let server = if let Some(server_id) = server_id {
-            Some(server_id.server().await?)
+            Some(server_id.server(user.id.into()).await?)
         } else {
             None
         };

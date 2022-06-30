@@ -64,7 +64,7 @@ impl Member {
     pub async fn cleanup(&self) {
         use crate::utils::Ref;
         self.delete().await;
-        self.server_id.server().await.unwrap().cleanup().await;
+        self.server_id.server(None).await.unwrap().cleanup().await;
     }
 }
 

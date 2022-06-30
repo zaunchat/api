@@ -19,8 +19,6 @@ pub async fn edit(
     Path((server_id, role_id)): Path<(u64, u64)>,
     ValidatedJson(data): ValidatedJson<EditRoleOptions>,
 ) -> Result<Json<Role>> {
-    user.member_of(server_id).await?;
-
     Permissions::fetch(&user, server_id.into(), None)
         .await?
         .has(Permissions::MANAGE_ROLES)?;
