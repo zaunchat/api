@@ -12,11 +12,7 @@ pub async fn delete(Extension(user): Extension<User>, Path(channel_id): Path<u64
 
     channel.delete().await;
 
-    publish(
-        channel_id,
-        Payload::ChannelDelete(Empty::Default { id: channel_id }),
-    )
-    .await;
+    publish(channel_id, Payload::ChannelDelete(channel_id.into())).await;
 
     Ok(())
 }

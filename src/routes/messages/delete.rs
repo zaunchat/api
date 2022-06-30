@@ -20,7 +20,7 @@ pub async fn delete(
 
     publish(
         channel_id,
-        Payload::MessageDelete(Empty::Default { id: msg.id }),
+        Payload::MessageDelete(msg.id.into()),
     )
     .await;
 
