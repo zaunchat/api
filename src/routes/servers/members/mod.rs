@@ -9,7 +9,7 @@ pub fn routes() -> axum::Router {
     Router::new()
         .route("/", get(fetch::fetch_many))
         .route(
-            "/:member_id",
+            "/:id",
             get(fetch::fetch_one).patch(edit::edit).delete(kick::kick),
         )
         .layer(middleware::from_fn(member::handle))

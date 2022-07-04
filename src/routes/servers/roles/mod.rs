@@ -10,7 +10,7 @@ pub fn routes() -> axum::Router {
     Router::new()
         .route("/", get(fetch::fetch_many).post(create::create))
         .route(
-            "/:role_id",
+            "/:id",
             get(fetch::fetch_one)
                 .patch(edit::edit)
                 .delete(delete::delete),

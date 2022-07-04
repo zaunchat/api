@@ -7,12 +7,19 @@ use axum::{
     response::Response,
 };
 
+#[derive(Deserialize)]
+struct ID {
+    server_id: u64,
+    #[allow(dead_code)]
+    id: Option<u64>,
+}
+
 pub async fn handle<B: std::marker::Send>(
     req: Request<B>,
     next: Next<B>,
 ) -> Result<Response, Error> {
     let mut req = RequestParts::new(req);
-    let Path((server_id, _)) = req.extract::<Path<(u64, u64)>>().await.unwrap();
+    let Path(ID { server_id, .. }) = req.extract::<Path<ID>>().await.unwrap();
     let user = req.extensions().get::<User>().unwrap();
     let count = Member::count(|q| q.eq("id", user.id).eq("server_id", server_id)).await;
 
