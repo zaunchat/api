@@ -24,6 +24,6 @@ pub trait Base: Model<Postgres> {
     }
 
     async fn remove(self) -> Result<(), ormlite::Error> {
-        self.remove().await
+        self.delete(pool()).await
     }
 }
