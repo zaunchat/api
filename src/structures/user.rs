@@ -112,7 +112,7 @@ mod tests {
     fn create() {
         run(async {
             let user = User::faker();
-            let user = user.insert(pool()).await.unwrap();
+            let user = user.save().await.unwrap();
             let user = User::find_one(user.id).await.unwrap();
             user.remove().await.unwrap();
         })

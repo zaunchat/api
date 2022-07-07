@@ -29,7 +29,7 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
                 return Err(Error::MaximumChannels);
             }
 
-            let member = Member::new(user.id, server_id).insert(pool()).await?;
+            let member = Member::new(user.id, server_id).save().await?;
 
             invite
                 .update_partial()

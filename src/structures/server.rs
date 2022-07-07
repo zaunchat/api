@@ -75,7 +75,7 @@ impl Server {
         let owner = User::faker();
         let server = Self::new("Fake Server".to_string(), owner.id);
 
-        owner.insert(pool()).await.unwrap();
+        owner.save().await.unwrap();
 
         server
     }
@@ -83,13 +83,7 @@ impl Server {
     #[cfg(test)]
     pub async fn cleanup(self) {
         use crate::utils::Ref;
-        self.owner_id
-            .user()
-            .await
-            .unwrap()
-            .delete(pool())
-            .await
-            .unwrap();
+        self.owner_id.user().await.unwrap().remove().await.unwrap();
     }
 }
 
@@ -104,7 +98,7 @@ mod tests {
     fn create() {
         run(async {
             let server = Server::faker().await;
-            let server = server.insert(pool()).await.unwrap();
+            let server = server.save().await.unwrap();
             let server = Server::find_one(server.id).await.unwrap();
             server.cleanup().await;
         })

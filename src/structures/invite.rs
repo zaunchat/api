@@ -44,8 +44,8 @@ impl Invite {
         let channel = Channel::faker(ChannelTypes::Group).await;
         let invite = Self::new(user.id, channel.id, None);
 
-        user.insert(pool()).await.unwrap();
-        channel.insert(pool()).await.unwrap();
+        user.save().await.unwrap();
+        channel.save().await.unwrap();
 
         invite
     }
@@ -57,7 +57,7 @@ impl Invite {
             .user()
             .await
             .unwrap()
-            .delete(pool())
+            .remove()
             .await
             .unwrap();
         self.channel_id.channel(None).await.unwrap().cleanup().await;
@@ -75,7 +75,7 @@ mod tests {
     fn create() {
         run(async {
             let invite = Invite::faker().await;
-            let invite = invite.insert(pool()).await.unwrap();
+            let invite = invite.save().await.unwrap();
             let invite = Invite::find_one(invite.id).await.unwrap();
 
             invite.cleanup().await;
