@@ -93,6 +93,8 @@ impl Server {
     }
 }
 
+impl Base for Server {}
+
 #[cfg(test)]
 mod tests {
     use super::*;

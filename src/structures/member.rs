@@ -1,5 +1,4 @@
-use super::Role;
-use crate::database::pool;
+use super::{pool, Base, Role};
 use chrono::{NaiveDateTime, Utc};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
@@ -67,6 +66,8 @@ impl Member {
         self.id.user().await.unwrap().delete(pool()).await.unwrap();
     }
 }
+
+impl Base for Member {}
 
 #[cfg(test)]
 mod tests {

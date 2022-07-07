@@ -1,4 +1,4 @@
-// use crate::config::*;
+use crate::config::*;
 use crate::extractors::*;
 use crate::gateway::*;
 use crate::structures::*;
@@ -16,11 +16,11 @@ pub async fn create(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateServerOptions>,
 ) -> Result<Json<Server>> {
-    // let count = Member::count(|q| q.eq("id", user.id)).await;
+    let count = Member::count(&format!("id = {}", user.id)).await;
 
-    // if count > *MAX_SERVERS {
-    //     return Err(Error::MaximumServers);
-    // }
+    if count > *MAX_SERVERS {
+        return Err(Error::MaximumServers);
+    }
 
     let server = Server::new(data.name, user.id);
     let member = Member::new(user.id, server.id);

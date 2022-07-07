@@ -1,3 +1,4 @@
+pub mod base;
 pub mod bot;
 pub mod channel;
 pub mod invite;
@@ -9,6 +10,7 @@ pub mod session;
 pub mod user;
 
 pub use crate::database::pool;
+pub use base::*;
 pub use bot::*;
 pub use channel::*;
 pub use invite::*;

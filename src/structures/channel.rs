@@ -1,9 +1,5 @@
-#[cfg(test)]
-use super::{Server, User};
-#[cfg(test)]
-use crate::database::pool;
-use crate::utils::permissions::*;
-use crate::utils::snowflake;
+use super::*;
+use crate::utils::{snowflake, Permissions, DEFAULT_PERMISSION_DM};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -266,6 +262,8 @@ impl Channel {
         }
     }
 }
+
+impl Base for Channel {}
 
 #[cfg(test)]
 mod tests {

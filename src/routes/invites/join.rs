@@ -23,11 +23,11 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
                 return Err(Error::MissingAccess);
             }
 
-            // let count = Member::count(|q| q.eq("server_id", server_id)).await;
+            let count = Member::count(&format!("server_id = {}", server_id)).await;
 
-            // if count > *MAX_SERVER_MEMBERS {
-            //     return Err(Error::MaximumChannels);
-            // }
+            if count > *MAX_SERVER_MEMBERS {
+                return Err(Error::MaximumChannels);
+            }
 
             let member = Member::new(user.id, server_id)
                 .insert(pool())
