@@ -11,7 +11,7 @@ pub async fn delete(
         .await?
         .has(Permissions::MANAGE_ROLES)?;
 
-    role_id.role(server_id).await?.delete(pool()).await.unwrap();
+    role_id.role(server_id).await?.remove().await?;
 
     publish(server_id, Payload::RoleDelete((role_id, server_id).into())).await;
 

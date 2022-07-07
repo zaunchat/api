@@ -76,7 +76,7 @@ mod tests {
         run(async {
             let invite = Invite::faker().await;
             let invite = invite.insert(pool()).await.unwrap();
-            let invite = Invite::get_one(invite.id, pool()).await.unwrap();
+            let invite = Invite::find_one(invite.id).await.unwrap();
 
             invite.cleanup().await;
         });

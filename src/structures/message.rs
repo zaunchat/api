@@ -1,5 +1,4 @@
-#[cfg(test)]
-use crate::database::pool;
+use super::*;
 use crate::utils::snowflake;
 use chrono::{DateTime, Utc};
 use ormlite::model::*;
@@ -39,8 +38,6 @@ impl Message {
 
     #[cfg(test)]
     pub async fn faker() -> Self {
-        use crate::structures::{Channel, ChannelTypes, User};
-
         let user = User::faker();
         let channel = Channel::faker(ChannelTypes::Group).await;
         let message = Self::new(channel.id, user.id);
@@ -65,6 +62,8 @@ impl Message {
     }
 }
 
+impl Base for Message {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -78,7 +77,7 @@ mod tests {
             msg.content = "Hello world!".to_string().into();
 
             let msg = msg.insert(pool()).await.unwrap();
-            let msg = Message::get_one(msg.id, pool()).await.unwrap();
+            let msg = Message::find_one(msg.id).await.unwrap();
 
             msg.cleanup().await;
         });

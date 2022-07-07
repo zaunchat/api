@@ -10,7 +10,7 @@ pub async fn delete(Extension(user): Extension<User>, Path(channel_id): Path<i64
         return Err(Error::MissingPermissions);
     }
 
-    channel.delete(pool()).await.unwrap();
+    channel.remove().await?;
 
     publish(channel_id, Payload::ChannelDelete(channel_id.into())).await;
 

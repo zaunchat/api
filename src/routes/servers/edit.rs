@@ -26,7 +26,7 @@ pub async fn edit(
         server.name = name;
     }
 
-    let server = server.update_all_fields(pool()).await.unwrap();
+    let server = server.update_all_fields(pool()).await?;
 
     publish(server.id, Payload::ServerUpdate(server.clone())).await;
 

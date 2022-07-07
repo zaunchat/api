@@ -17,14 +17,13 @@ pub async fn fetch_one(Path((server_id, member_id)): Path<(i64, i64)>) -> Result
 pub async fn fetch_many(
     Path(server_id): Path<i64>,
     Query(query): Query<FetchMembersOptions>,
-) -> Json<Vec<Member>> {
+) -> Result<Json<Vec<Member>>> {
     let limit = query.limit.unwrap_or(100) as usize;
     let members = Member::select()
         .filter("server_id = $1")
         .bind(server_id)
         .limit(limit)
         .fetch_all(pool())
-        .await
-        .unwrap();
-    Json(members)
+        .await?;
+    Ok(Json(members))
 }

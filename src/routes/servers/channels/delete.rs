@@ -13,7 +13,7 @@ pub async fn delete(
         .await?
         .has(Permissions::MANAGE_CHANNELS)?;
 
-    channel.delete(pool()).await.unwrap();
+    channel.remove().await?;
 
     publish(
         server_id,

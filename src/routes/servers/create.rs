@@ -29,14 +29,14 @@ pub async fn create(
 
     chat.parent_id = Some(category.id);
 
-    let mut tx = pool().begin().await.unwrap();
+    let mut tx = pool().begin().await?;
 
-    let server = server.insert(&mut tx).await.unwrap();
-    category.insert(&mut tx).await.unwrap();
-    chat.insert(&mut tx).await.unwrap();
-    member.insert(&mut tx).await.unwrap();
+    let server = server.insert(&mut tx).await?;
+    category.insert(&mut tx).await?;
+    chat.insert(&mut tx).await?;
+    member.insert(&mut tx).await?;
 
-    tx.commit().await.unwrap();
+    tx.commit().await?;
 
     publish(user.id, Payload::ServerCreate(server.clone())).await;
 

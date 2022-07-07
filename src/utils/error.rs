@@ -25,6 +25,7 @@ quick_error! {
         InviteAlreadyTaken { display("This invite already used") }
         FailedCaptcha { display("Respect the captcha, Respect you") }
         MissingAccess { display("You missing access to perform this action ") }
+        DatabaseError { display("Database cannot process this operation") }
 
         UnknownAccount
         UnknownBot
@@ -49,6 +50,20 @@ quick_error! {
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
+
+impl From<sqlx::Error> for Error {
+    fn from(err: sqlx::Error) -> Self {
+        log::error!("Database Error: {}", err);
+        Self::DatabaseError
+    }
+}
+
+impl From<ormlite::Error> for Error {
+    fn from(err: ormlite::Error) -> Self {
+        log::error!("Database Error: {}", err);
+        Self::DatabaseError
+    }
+}
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {

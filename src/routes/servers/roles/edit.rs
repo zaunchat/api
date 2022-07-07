@@ -41,7 +41,7 @@ pub async fn edit(
         role.color = color;
     }
 
-    let role = role.update_all_fields(pool()).await.unwrap();
+    let role = role.update_all_fields(pool()).await?;
 
     publish(server_id, Payload::RoleUpdate(role.clone())).await;
 

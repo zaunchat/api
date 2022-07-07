@@ -16,7 +16,7 @@ pub async fn delete(
         permissions.has(Permissions::MANAGE_MESSAGES)?;
     }
 
-    msg.delete(pool()).await.unwrap();
+    msg.remove().await?;
 
     publish(channel_id, Payload::MessageDelete(id.into())).await;
 

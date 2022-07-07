@@ -13,12 +13,7 @@ pub async fn kick(
             .has(Permissions::KICK_MEMBERS)?;
     }
 
-    member_id
-        .member(server_id)
-        .await?
-        .delete(pool())
-        .await
-        .unwrap();
+    member_id.member(server_id).await?.delete(pool()).await?;
 
     publish(
         server_id,

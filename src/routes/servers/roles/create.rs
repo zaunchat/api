@@ -36,7 +36,7 @@ pub async fn create(
     role.hoist = data.hoist;
     role.color = data.color;
 
-    let role = role.insert(pool()).await.unwrap();
+    let role = role.insert(pool()).await?;
 
     publish(server_id, Payload::RoleCreate(role.clone())).await;
 

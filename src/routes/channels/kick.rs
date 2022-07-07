@@ -25,7 +25,7 @@ pub async fn kick(
         }
     }
 
-    let group = group.update_all_fields(pool()).await.unwrap();
+    let group = group.update_all_fields(pool()).await?;
 
     publish(group_id, Payload::ChannelUpdate(group)).await;
 

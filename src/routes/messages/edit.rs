@@ -28,7 +28,7 @@ pub async fn edit(
 
     msg.content = data.content.into();
 
-    let msg = msg.update_all_fields(pool()).await.unwrap();
+    let msg = msg.update_all_fields(pool()).await?;
 
     publish(channel_id, Payload::MessageUpdate(msg.clone())).await;
 

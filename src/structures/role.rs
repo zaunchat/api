@@ -60,7 +60,7 @@ mod tests {
         run(async {
             let role = Role::faker().await;
             let role = role.insert(pool()).await.unwrap();
-            let role = Role::get_one(role.id, pool()).await.unwrap();
+            let role = Role::find_one(role.id).await.unwrap();
 
             role.cleanup().await;
         })

@@ -63,9 +63,8 @@ pub async fn register(
             .taken_by(Some(user.id))
             .used(true)
             .update(pool())
-            .await
-            .unwrap();
+            .await?;
     }
 
-    Ok(Json(user.insert(pool()).await.unwrap()))
+    Ok(Json(user.insert(pool()).await?))
 }

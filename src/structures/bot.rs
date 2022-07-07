@@ -62,7 +62,7 @@ mod tests {
         run(async {
             let bot = Bot::faker().await;
             let bot = bot.insert(pool()).await.unwrap();
-            let bot = Bot::get_one(bot.id, pool()).await.unwrap();
+            let bot = Bot::find_one(bot.id).await.unwrap();
 
             bot.cleanup().await;
         });

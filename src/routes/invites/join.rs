@@ -5,7 +5,7 @@ use crate::structures::*;
 use crate::utils::*;
 
 pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) -> Result<()> {
-    let invite = Invite::get_one(code, pool()).await;
+    let invite = Invite::find_one(code).await;
 
     match invite {
         Ok(invite) if invite.server_id.is_some() => {
@@ -29,29 +29,26 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
                 return Err(Error::MaximumChannels);
             }
 
-            let member = Member::new(user.id, server_id)
-                .insert(pool())
-                .await
-                .unwrap();
+            let member = Member::new(user.id, server_id).insert(pool()).await?;
 
             invite
                 .update_partial()
                 .uses(invite.uses + 1)
                 .update(pool())
-                .await
-                .unwrap();
+                .await?;
 
             publish(
                 user.id,
                 Payload::ServerCreate(server_id.server(None).await?),
             )
             .await;
+
             publish(server_id, Payload::ServerMemberJoin(member)).await;
 
             Ok(())
         }
         Ok(invite) => {
-            let mut group = Channel::get_one(invite.channel_id, pool()).await.unwrap();
+            let mut group = Channel::find_one(invite.channel_id).await?;
 
             if let Some(recipients) = group.recipients.as_mut() {
                 if recipients.len() as u64 > *MAX_GROUP_MEMBERS {
@@ -66,7 +63,7 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
                 unreachable!()
             }
 
-            let group = group.update_all_fields(pool()).await.unwrap();
+            let group = group.update_all_fields(pool()).await?;
 
             publish(group.id, Payload::ChannelUpdate(group.clone())).await;
             publish(user.id, Payload::ChannelCreate(group)).await;

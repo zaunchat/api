@@ -105,7 +105,7 @@ mod tests {
         run(async {
             let server = Server::faker().await;
             let server = server.insert(pool()).await.unwrap();
-            let server = Server::get_one(server.id, pool()).await.unwrap();
+            let server = Server::find_one(server.id).await.unwrap();
             server.cleanup().await;
         })
     }

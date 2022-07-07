@@ -10,7 +10,7 @@ pub async fn delete(Extension(user): Extension<User>, Path(server_id): Path<i64>
         return Err(Error::MissingAccess);
     }
 
-    server.delete(pool()).await.unwrap();
+    server.remove().await?;
 
     publish(server_id, Payload::ServerDelete(server_id.into())).await;
 

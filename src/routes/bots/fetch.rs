@@ -3,11 +3,9 @@ use crate::structures::*;
 use crate::utils::*;
 
 pub async fn fetch_one(Path(bot_id): Path<i64>) -> Result<Json<Bot>> {
-    let bot = bot_id.bot().await?;
-    Ok(Json(bot))
+    Ok(Json(bot_id.bot().await?))
 }
 
 pub async fn fetch_many(Extension(user): Extension<User>) -> Json<Vec<Bot>> {
-    let bots = user.fetch_bots().await;
-    Json(bots)
+    Json(user.fetch_bots().await)
 }
