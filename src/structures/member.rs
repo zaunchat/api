@@ -1,43 +1,37 @@
-use super::{Base, Role};
-use crate::utils::snowflake;
-use rbatis::types::Timestamp;
+use super::{pool, Base, Role};
+use chrono::{NaiveDateTime, Utc};
+use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, OpgModel)]
 struct MemberRoles(Vec<String>);
 
-#[crud_table(table_name:members | formats_pg:"id:{}::bigint,server_id:{}::bigint,roles:{}::bigint[]")]
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, OpgModel)]
+#[ormlite(table = "members")]
 pub struct Member {
-    #[serde_as(as = "snowflake::json::ID")]
+    #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub id: u64,
+    pub id: i64,
     pub nickname: Option<String>,
     #[opg(string)]
-    pub joined_at: Timestamp,
-    #[serde_as(as = "snowflake::json::ID")]
+    pub joined_at: NaiveDateTime,
+    #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub server_id: u64,
-    #[serde_as(as = "Vec<snowflake::json::ID>")]
+    pub server_id: i64,
+    #[serde_as(as = "Vec<serde_with::DisplayFromStr>")]
     #[opg(custom = "MemberRoles")]
-    pub roles: Vec<u64>,
-}
-
-impl Base for Member {
-    fn id(&self) -> u64 {
-        self.id
-    }
+    pub roles: Vec<i64>,
 }
 
 impl Member {
-    pub fn new(user_id: u64, server_id: u64) -> Self {
+    pub fn new(user_id: i64, server_id: i64) -> Self {
         Self {
             id: user_id,
             nickname: None,
             server_id,
             roles: vec![server_id],
-            joined_at: Timestamp::now(),
+            joined_at: Utc::now().naive_utc(),
         }
     }
 
@@ -46,7 +40,12 @@ impl Member {
             return vec![];
         }
 
-        Role::find(|q| q.eq("server_id", &self.server_id).r#in("id", &self.roles)).await
+        Role::select()
+            .filter("server_id IN $1")
+            .bind(self.roles.clone())
+            .fetch_all(pool())
+            .await
+            .unwrap()
     }
 
     #[cfg(test)]
@@ -54,36 +53,41 @@ impl Member {
         use crate::structures::Server;
 
         let server = Server::faker().await;
+        let member = Self::new(server.owner_id, server.id);
 
-        server.save().await;
+        server.insert(pool()).await.unwrap();
 
-        Self::new(server.owner_id, server.id)
+        member
     }
 
     #[cfg(test)]
-    pub async fn cleanup(&self) {
+    pub async fn cleanup(self) {
         use crate::utils::Ref;
-        self.delete().await;
-        self.server_id.server(None).await.unwrap().cleanup().await;
+        self.id.user().await.unwrap().delete(pool()).await.unwrap();
     }
 }
+
+impl Base for Member {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    #[test]
+    fn create() {
+        run(async {
+            let member = Member::faker().await;
+            let member = member.insert(pool()).await.unwrap();
+            let member = Member::select()
+                .filter("id = $1 AND server_id = $2")
+                .bind(member.id)
+                .bind(member.server_id)
+                .fetch_one(pool())
+                .await
+                .unwrap();
 
-        let member = Member::faker().await;
-
-        member.save().await;
-
-        let member = Member::find_one(|q| q.eq("id", member.id).eq("server_id", member.server_id))
-            .await
-            .unwrap();
-
-        member.cleanup().await;
+            member.cleanup().await;
+        });
     }
 }

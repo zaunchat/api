@@ -1,29 +1,26 @@
 use crate::config::DATABASE_URI;
-use crate::utils::migration::migrate;
-use once_cell::sync::Lazy;
-use rbatis::rbatis::Rbatis;
+use once_cell::sync::OnceCell;
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
-pub static DB: Lazy<Rbatis> = Lazy::new(Rbatis::new);
-
-static mut CONNECTED: bool = false;
+static DB: OnceCell<Pool<Postgres>> = OnceCell::new();
 
 pub async fn connect() {
-    // FIXME: Remove the unsafe
-    unsafe {
-        if CONNECTED {
-            return;
-        }
-    }
-
-    DB.link((*DATABASE_URI).as_str())
+    let pool = PgPoolOptions::new()
+        .max_connections(100)
+        .connect(&*DATABASE_URI)
         .await
         .expect("Couldn't connect to database");
 
     log::debug!("Run database migration");
 
-    migrate().await;
+    sqlx::migrate!("assets/migrations")
+        .run(&pool)
+        .await
+        .expect("Failed to run the migration");
 
-    unsafe {
-        CONNECTED = true;
-    }
+    DB.set(pool).unwrap();
+}
+
+pub fn pool() -> &'static Pool<Postgres> {
+    DB.get().unwrap()
 }

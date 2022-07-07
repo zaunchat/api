@@ -1,27 +1,25 @@
 use super::*;
-use crate::database::DB as db;
+use crate::database::pool;
 use crate::utils::{snowflake, Badges};
+use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:users | formats_pg:"id:{}::bigint,badges:{}::bigint")]
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Default, Clone, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Model, Default, Clone, OpgModel)]
+#[ormlite(table = "users")]
 pub struct User {
-    #[serde_as(as = "snowflake::json::ID")]
+    #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub id: u64,
+    pub id: i64,
     pub username: String,
     pub avatar: Option<String>,
+    #[serde(skip)]
     pub password: String,
+    #[serde(skip)]
     pub email: String,
     pub badges: Badges,
+    #[serde(skip)]
     pub verified: bool,
-}
-
-impl Base for User {
-    fn id(&self) -> u64 {
-        self.id
-    }
 }
 
 impl User {
@@ -37,47 +35,61 @@ impl User {
     }
 
     pub async fn email_taken(email: &String) -> bool {
-        User::find_one(|q| q.eq("email", &email)).await.is_some()
+        User::select()
+            .filter("email = $1")
+            .bind(email)
+            .fetch_optional(pool())
+            .await
+            .unwrap()
+            .is_some()
     }
 
     pub async fn fetch_sessions(&self) -> Vec<Session> {
-        Session::find(|q| q.eq("user_id", &self.id)).await
+        Session::select()
+            .filter("user_id = $1")
+            .bind(self.id)
+            .fetch_all(pool())
+            .await
+            .unwrap()
     }
 
     pub async fn fetch_servers(&self) -> Vec<Server> {
-        db.fetch("SELECT * FROM servers WHERE owner_id = $1 OR id IN ( SELECT server_id FROM members WHERE id = $1 )", vec![self.id.into()]).await.unwrap()
+        Server::select()
+            .filter("owner_id = $1 OR id IN ( SELECT server_id FROM members WHERE id = $2 )")
+            .bind(self.id)
+            .bind(self.id)
+            .fetch_all(pool())
+            .await
+            .unwrap()
     }
 
     pub async fn fetch_bots(&self) -> Vec<Bot> {
-        Bot::find(|q| q.eq("owner_id", &self.id)).await
+        Bot::select()
+            .filter("owner_id = $1")
+            .bind(self.id)
+            .fetch_all(pool())
+            .await
+            .unwrap()
     }
 
     pub async fn fetch_channels(&self) -> Vec<Channel> {
-        db.fetch(
-            &format!(
-                "SELECT * FROM channels WHERE recipients @> ARRAY[{}]::BIGINT[]",
-                self.id
-            ),
-            vec![],
-        )
-        .await
-        .unwrap()
+        Channel::select()
+            .filter("recipients @> ARRAY[$1]::BIGINT[]")
+            .bind(self.id)
+            .fetch_all(pool())
+            .await
+            .unwrap()
     }
 
     // pub async fn fetch_relations(&self) {}
 
     pub async fn fetch_by_token(token: &str) -> Option<User> {
-        db.fetch("SELECT * FROM users WHERE verified = TRUE AND id = ( SELECT user_id FROM sessions WHERE token = $1 )", vec![token.into()]).await.ok()
-    }
-
-    pub fn to_public(&self) -> Self {
-        Self {
-            id: self.id,
-            username: self.username.clone(),
-            avatar: self.avatar.clone(),
-            badges: self.badges,
-            ..Default::default()
-        }
+        User::select()
+            .filter("verified = TRUE AND id = ( SELECT user_id FROM sessions WHERE token = $1 )")
+            .bind(token)
+            .fetch_optional(pool())
+            .await
+            .unwrap()
     }
 
     #[cfg(test)]
@@ -92,16 +104,15 @@ impl User {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    use crate::tests::run;
 
-        let user = User::faker();
-
-        user.save().await;
-
-        let user = User::find_one_by_id(user.id).await.unwrap();
-
-        user.delete().await;
+    #[test]
+    fn create() {
+        run(async {
+            let user = User::faker();
+            let user = user.insert(pool()).await.unwrap();
+            let user = User::get_one(user.id, pool()).await.unwrap();
+            user.delete(pool()).await.unwrap();
+        })
     }
 }

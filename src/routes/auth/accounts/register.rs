@@ -23,7 +23,9 @@ pub async fn register(
     data.email = email::normalize(data.email);
 
     let invite = if *REQUIRE_INVITE_TO_REGISTER && data.invite_code.is_some() {
-        email::Invite::find_one(|q| q.eq("code", data.invite_code.as_ref().unwrap())).await
+        email::AccountInvite::get_one(data.invite_code.as_ref().unwrap(), pool())
+            .await
+            .ok()
     } else {
         None
     };
@@ -55,13 +57,15 @@ pub async fn register(
         user.verified = true;
     }
 
-    if let Some(mut invite) = invite {
-        invite.taken_by = user.id.into();
-        invite.used = true;
-        invite.update().await;
+    if let Some(invite) = invite {
+        invite
+            .update_partial()
+            .taken_by(Some(user.id))
+            .used(true)
+            .update(pool())
+            .await
+            .unwrap();
     }
 
-    user.save().await;
-
-    Ok(Json(user.to_public()))
+    Ok(Json(user.insert(pool()).await.unwrap()))
 }

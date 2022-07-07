@@ -3,11 +3,8 @@ use crate::structures::*;
 use crate::utils::*;
 
 pub async fn fetch_one(Path(code): Path<String>) -> Result<Json<Invite>> {
-    let invite = Invite::find_one(|q| q.eq("code", &code)).await;
-
-    if let Some(invite) = invite {
-        return Ok(Json(invite));
+    match Invite::get_one(code, pool()).await {
+        Ok(invite) => Ok(Json(invite)),
+        _ => Err(Error::UnknownInvite),
     }
-
-    Err(Error::UnknownInvite)
 }

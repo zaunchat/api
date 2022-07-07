@@ -8,7 +8,7 @@ pub async fn fetch_many(Extension(user): Extension<User>) -> Json<Vec<Server>> {
 
 pub async fn fetch_one(
     Extension(user): Extension<User>,
-    Path(server_id): Path<u64>,
+    Path(server_id): Path<i64>,
 ) -> Result<Json<Server>> {
     Ok(Json(server_id.server(user.id.into()).await?))
 }

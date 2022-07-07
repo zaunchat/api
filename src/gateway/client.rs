@@ -1,5 +1,5 @@
 use super::events::*;
-use super::payload::Payload;
+use super::payload::{ClientPayload, Payload};
 use crate::{structures::User, utils::Permissions};
 use axum::extract::ws::{Message, WebSocket};
 use futures::{stream::SplitSink, SinkExt};
@@ -9,13 +9,13 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 pub enum Subscription {
-    Add(Vec<u64>),
-    Remove(Vec<u64>),
+    Add(Vec<i64>),
+    Remove(Vec<i64>),
     None,
 }
 
 pub struct Client {
-    pub permissions: HashMap<u64, Permissions>,
+    pub permissions: HashMap<i64, Permissions>,
     pub user: Option<User>,
     pub write: Arc<Mutex<SplitSink<WebSocket, Message>>>,
     pub subscriptions: Subscription,
@@ -36,7 +36,7 @@ impl Client {
     }
 
     pub async fn on_message(&mut self, content: String) {
-        let payload = serde_json::from_str::<Payload>(&content);
+        let payload = serde_json::from_str::<ClientPayload>(&content);
 
         if payload.is_err() {
             log::debug!("Socket sent an invalid body");
@@ -46,9 +46,8 @@ impl Client {
         let payload = payload.unwrap();
 
         match &payload {
-            Payload::Authenticate { .. } => authenticate::run(self, payload).await,
-            Payload::Ping => ping::run(self, payload).await,
-            _ => {}
+            ClientPayload::Authenticate { .. } => authenticate::run(self, payload).await,
+            ClientPayload::Ping => ping::run(self, payload).await,
         }
 
         log::debug!("Socket Message: {:?}", content);

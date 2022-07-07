@@ -2,6 +2,12 @@ use crate::structures::*;
 use crate::utils::{Error, Ref, Result};
 use bitflags::bitflags;
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
+use sqlx::{
+    encode::IsNull,
+    error::BoxDynError,
+    postgres::{PgArgumentBuffer, PgTypeInfo, PgValueRef},
+    Decode, Encode, Postgres, Type,
+};
 use std::fmt;
 
 bitflags! {
@@ -91,11 +97,11 @@ impl Permissions {
                     member = Some(user.id.member(channel.server_id.unwrap()).await?);
                 }
 
-                let mut overwrites = channel.overwrites.inner.clone().unwrap();
+                let mut overwrites = channel.overwrites.as_ref().unwrap().0.clone();
 
                 if let Some(parent_id) = channel.parent_id {
                     if let Ok(category) = parent_id.channel(None).await {
-                        overwrites.append(category.overwrites.inner.unwrap().as_mut());
+                        overwrites.append(category.overwrites.unwrap().0.as_mut());
                     }
                 }
 
@@ -120,8 +126,8 @@ impl Permissions {
 
     pub async fn fetch(
         user: &User,
-        server_id: Option<u64>,
-        channel_id: Option<u64>,
+        server_id: Option<i64>,
+        channel_id: Option<i64>,
     ) -> Result<Permissions> {
         let server = if let Some(server_id) = server_id {
             Some(server_id.server(user.id.into()).await?)
@@ -144,6 +150,25 @@ impl Permissions {
         }
 
         Ok(())
+    }
+}
+
+impl Type<Postgres> for Permissions {
+    fn type_info() -> PgTypeInfo {
+        i64::type_info()
+    }
+}
+
+impl Encode<'_, Postgres> for Permissions {
+    fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
+        Encode::<Postgres>::encode(self.bits() as i64, buf)
+    }
+}
+
+impl<'r> Decode<'r, Postgres> for Permissions {
+    fn decode(value: PgValueRef<'r>) -> Result<Self, BoxDynError> {
+        let bits: i64 = Decode::<Postgres>::decode(value)?;
+        Ok(Permissions::from_bits(bits as u64).unwrap())
     }
 }
 

@@ -15,14 +15,14 @@ pub struct CreateServerChannelOptions {
 
 pub async fn create(
     Extension(user): Extension<User>,
-    Path(server_id): Path<u64>,
+    Path(server_id): Path<i64>,
     ValidatedJson(data): ValidatedJson<CreateServerChannelOptions>,
 ) -> Result<Json<Channel>> {
     Permissions::fetch(&user, server_id.into(), None)
         .await?
         .has(Permissions::MANAGE_CHANNELS)?;
 
-    let count = Channel::count(|q| q.eq("server_id", server_id)).await;
+    let count = Channel::count(&format!("server_id = {}", server_id)).await;
 
     if count > *MAX_SERVER_CHANNELS {
         return Err(Error::MaximumChannels);
@@ -35,7 +35,7 @@ pub async fn create(
         _ => return Err(Error::MissingAccess),
     };
 
-    channel.save().await;
+    let channel = channel.insert(pool()).await.unwrap();
 
     publish(server_id, Payload::ChannelCreate(channel.clone())).await;
 
