@@ -1,12 +1,16 @@
-use super::*;
+#[cfg(test)]
+use super::{Server, User};
+#[cfg(test)]
+use crate::database::pool;
 use crate::utils::permissions::*;
 use crate::utils::snowflake;
-use rbatis::Json;
+use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use sqlx::types::Json;
 
-#[derive(Debug, Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, OpgModel)]
-#[repr(u8)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, OpgModel, sqlx::Type)]
+#[repr(i32)]
 pub enum ChannelTypes {
     Unknown = 0,
     Direct = 1,
@@ -23,7 +27,7 @@ impl Default for ChannelTypes {
 }
 
 #[derive(Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, OpgModel, Debug)]
-#[repr(u8)]
+#[repr(i32)]
 pub enum OverwriteTypes {
     Role = 0,
     Member = 1,
@@ -32,9 +36,9 @@ pub enum OverwriteTypes {
 #[serde_as]
 #[derive(Serialize, Deserialize, Clone, Copy, OpgModel, Debug)]
 pub struct Overwrite {
-    #[serde_as(as = "snowflake::json::ID")]
+    #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub id: u64,
+    pub id: i64,
     pub r#type: OverwriteTypes,
     pub allow: Permissions,
     pub deny: Permissions,
@@ -46,44 +50,45 @@ pub struct ChannelOverwrites(Option<Vec<Overwrite>>);
 #[derive(Serialize, OpgModel)]
 pub struct ChannelRecipients(Option<Vec<String>>);
 
-#[crud_table(formats_pg:"id:{}::bigint,server_id:{}::bigint,parent_id:{}::bigint,owner_id:{}::bigint,recipients:{}::bigint[],permissions:{}::bigint" | table_name:channels)]
 #[serde_as]
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, OpgModel, Debug)]
+#[derive(Serialize, Deserialize, Model, FromRow, Clone, OpgModel, Debug)]
+#[ormlite(table = "channels")]
 pub struct Channel {
-    #[serde_as(as = "snowflake::json::ID")]
+    #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub id: u64,
+    pub id: i64,
+
     pub r#type: ChannelTypes,
 
     // Text/Voice/Category/Group
     pub name: Option<String>,
     // DM/Group
-    #[serde_as(as = "Option<Vec<snowflake::json::ID>>")]
+    #[serde_as(as = "Option<Vec<serde_with::DisplayFromStr>>")]
     #[opg(custom = "ChannelRecipients")]
-    pub recipients: Option<Vec<u64>>,
+    pub recipients: Option<Vec<i64>>,
 
     // Group/Text/Voice/Category
     #[opg(custom = "ChannelOverwrites")]
-    pub overwrites: Json<Option<Vec<Overwrite>>>,
+    pub overwrites: Option<Json<Vec<Overwrite>>>,
 
     // For server channels
     #[opg(string, nullable)]
-    #[serde_as(as = "Option<snowflake::json::ID>")]
+    #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
     #[serde(default)]
-    pub server_id: Option<u64>,
+    pub server_id: Option<i64>,
 
     // Server channels
     #[opg(string, nullable)]
-    #[serde_as(as = "Option<snowflake::json::ID>")]
+    #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
     #[serde(default)]
-    pub parent_id: Option<u64>,
+    pub parent_id: Option<i64>,
 
     // Group
     #[opg(string, nullable)]
-    #[serde_as(as = "Option<snowflake::json::ID>")]
+    #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
     #[serde(default)]
-    pub owner_id: Option<u64>,
+    pub owner_id: Option<i64>,
 
     // Text
     pub topic: Option<String>,
@@ -99,7 +104,7 @@ impl Default for Channel {
             r#type: ChannelTypes::Unknown,
             name: None,
             recipients: None,
-            overwrites: None.into(),
+            overwrites: None,
             server_id: None,
             parent_id: None,
             owner_id: None,
@@ -109,14 +114,8 @@ impl Default for Channel {
     }
 }
 
-impl Base for Channel {
-    fn id(&self) -> u64 {
-        self.id
-    }
-}
-
 impl Channel {
-    pub fn new_dm(user: u64, target: u64) -> Self {
+    pub fn new_dm(user: i64, target: i64) -> Self {
         Self {
             r#type: ChannelTypes::Direct,
             recipients: Some(vec![user, target]),
@@ -124,42 +123,42 @@ impl Channel {
         }
     }
 
-    pub fn new_group(user: u64, name: String) -> Self {
+    pub fn new_group(user: i64, name: String) -> Self {
         Self {
             name: name.into(),
             r#type: ChannelTypes::Group,
             recipients: Some(vec![user]),
             owner_id: user.into(),
             permissions: Some(*DEFAULT_PERMISSION_DM),
-            overwrites: Some(vec![]).into(),
+            overwrites: Some(Json(vec![])),
             ..Default::default()
         }
     }
 
-    pub fn new_text(name: String, server_id: u64) -> Self {
+    pub fn new_text(name: String, server_id: i64) -> Self {
         Self {
             r#type: ChannelTypes::Text,
-            overwrites: Some(vec![]).into(),
+            overwrites: Some(Json(vec![])),
             name: name.into(),
             server_id: server_id.into(),
             ..Default::default()
         }
     }
 
-    pub fn new_voice(name: String, server_id: u64) -> Self {
+    pub fn new_voice(name: String, server_id: i64) -> Self {
         Self {
             r#type: ChannelTypes::Voice,
-            overwrites: Some(vec![]).into(),
+            overwrites: Some(Json(vec![])),
             name: name.into(),
             server_id: server_id.into(),
             ..Default::default()
         }
     }
 
-    pub fn new_category(name: String, server_id: u64) -> Self {
+    pub fn new_category(name: String, server_id: i64) -> Self {
         Self {
             r#type: ChannelTypes::Category,
-            overwrites: Some(vec![]).into(),
+            overwrites: Some(Json(vec![])),
             name: name.into(),
             server_id: server_id.into(),
             ..Default::default()
@@ -195,44 +194,49 @@ impl Channel {
         match r#type {
             ChannelTypes::Group => {
                 let user = User::faker();
+                let channel = Self::new_group(user.id, "Fake group".to_string());
 
-                user.save().await;
+                user.insert(pool()).await.unwrap();
 
-                Self::new_group(user.id, "Fake group".to_string())
+                channel
             }
 
             ChannelTypes::Direct => {
                 let user = User::faker();
                 let other = User::faker();
+                let channel = Self::new_dm(user.id, other.id);
 
-                user.save().await;
-                other.save().await;
+                user.insert(pool()).await.unwrap();
+                other.insert(pool()).await.unwrap();
 
-                Self::new_dm(user.id, other.id)
+                channel
             }
 
             ChannelTypes::Text => {
                 let server = Server::faker().await;
+                let channel = Self::new_text("Test".to_string(), server.id);
 
-                server.save().await;
+                server.insert(pool()).await.unwrap();
 
-                Self::new_text("Test".to_string(), server.id)
+                channel
             }
 
             ChannelTypes::Voice => {
                 let server = Server::faker().await;
+                let channel = Self::new_voice("Test".to_string(), server.id);
 
-                server.save().await;
+                server.insert(pool()).await.unwrap();
 
-                Self::new_voice("Test".to_string(), server.id)
+                channel
             }
 
             ChannelTypes::Category => {
                 let server = Server::faker().await;
+                let channel = Self::new_category("Test".to_string(), server.id);
 
-                server.save().await;
+                server.insert(pool()).await.unwrap();
 
-                Self::new_category("Test".to_string(), server.id)
+                channel
             }
 
             _ => panic!("Unsupported type"),
@@ -240,18 +244,18 @@ impl Channel {
     }
 
     #[cfg(test)]
-    pub async fn cleanup(&self) {
+    pub async fn cleanup(self) {
         use crate::utils::Ref;
-
-        self.delete().await;
 
         if self.is_group() || self.is_dm() {
             for id in self.recipients.as_ref().unwrap() {
-                id.user().await.unwrap().delete().await;
+                id.user().await.unwrap().delete(pool()).await.unwrap();
             }
-        }
 
-        if self.in_server() {
+            if self.owner_id.is_none() {
+                self.delete(pool()).await.unwrap();
+            }
+        } else if self.in_server() {
             self.server_id
                 .unwrap()
                 .server(None)
@@ -266,69 +270,59 @@ impl Channel {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create_group() {
-        crate::tests::setup().await;
-
-        let channel = Channel::faker(ChannelTypes::Group).await;
-
-        channel.save().await;
-
-        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
-
-        channel.cleanup().await;
+    #[test]
+    fn create_group() {
+        run(async {
+            let channel = Channel::faker(ChannelTypes::Group).await;
+            let channel = channel.insert(pool()).await.unwrap();
+            let channel = Channel::get_one(channel.id, pool()).await.unwrap();
+            channel.cleanup().await;
+        });
     }
 
-    #[tokio::test]
-    async fn create_dm() {
-        crate::tests::setup().await;
+    #[test]
+    fn create_dm() {
+        run(async {
+            let channel = Channel::faker(ChannelTypes::Direct).await;
+            let channel = channel.insert(pool()).await.unwrap();
+            let channel = Channel::get_one(channel.id, pool()).await.unwrap();
 
-        let channel = Channel::faker(ChannelTypes::Direct).await;
-
-        channel.save().await;
-
-        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
-
-        channel.cleanup().await;
+            channel.cleanup().await;
+        });
     }
 
-    #[tokio::test]
-    async fn create_text() {
-        crate::tests::setup().await;
+    #[test]
+    fn create_text() {
+        run(async {
+            let channel = Channel::faker(ChannelTypes::Text).await;
+            let channel = channel.insert(pool()).await.unwrap();
+            let channel = Channel::get_one(channel.id, pool()).await.unwrap();
 
-        let channel = Channel::faker(ChannelTypes::Text).await;
-
-        channel.save().await;
-
-        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
-
-        channel.cleanup().await;
+            channel.cleanup().await;
+        });
     }
 
-    #[tokio::test]
-    async fn create_voice() {
-        crate::tests::setup().await;
+    #[test]
+    fn create_voice() {
+        run(async {
+            let channel = Channel::faker(ChannelTypes::Voice).await;
+            let channel = channel.insert(pool()).await.unwrap();
+            let channel = Channel::get_one(channel.id, pool()).await.unwrap();
 
-        let channel = Channel::faker(ChannelTypes::Voice).await;
-
-        channel.save().await;
-
-        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
-
-        channel.cleanup().await;
+            channel.cleanup().await;
+        });
     }
 
-    #[tokio::test]
-    async fn create_category() {
-        crate::tests::setup().await;
+    #[test]
+    fn create_category() {
+        run(async {
+            let channel = Channel::faker(ChannelTypes::Category).await;
+            let channel = channel.insert(pool()).await.unwrap();
+            let channel = Channel::get_one(channel.id, pool()).await.unwrap();
 
-        let channel = Channel::faker(ChannelTypes::Category).await;
-
-        channel.save().await;
-
-        let channel = Channel::find_one_by_id(channel.id).await.unwrap();
-
-        channel.cleanup().await;
+            channel.cleanup().await;
+        });
     }
 }

@@ -68,7 +68,7 @@ async fn handle(ws: WebSocket) {
 
             match subscriptions.on_message().next().await {
                 Some(msg) => {
-                    let target_id: u64 = msg.get_channel_name().parse().unwrap();
+                    let target_id: i64 = msg.get_channel_name().parse().unwrap();
                     let user = client.user.as_ref().unwrap();
                     let payload: Payload =
                         serde_json::from_str(&msg.get_payload::<String>().unwrap()).unwrap();

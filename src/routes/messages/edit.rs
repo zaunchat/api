@@ -13,7 +13,7 @@ pub struct EditMessageOptions {
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path((channel_id, id)): Path<(u64, u64)>,
+    Path((channel_id, id)): Path<(i64, i64)>,
     ValidatedJson(data): ValidatedJson<EditMessageOptions>,
 ) -> Result<Json<Message>> {
     let mut msg = id.message().await?;
@@ -27,7 +27,8 @@ pub async fn edit(
         .has(Permissions::VIEW_CHANNEL)?;
 
     msg.content = data.content.into();
-    msg.update().await;
+
+    let msg = msg.update_all_fields(pool()).await.unwrap();
 
     publish(channel_id, Payload::MessageUpdate(msg.clone())).await;
 

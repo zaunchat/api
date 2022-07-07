@@ -13,7 +13,7 @@ pub struct EditServerOptions {
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path(server_id): Path<u64>,
+    Path(server_id): Path<i64>,
     ValidatedJson(data): ValidatedJson<EditServerOptions>,
 ) -> Result<Json<Server>> {
     let mut server = server_id.server(user.id.into()).await?;
@@ -26,7 +26,7 @@ pub async fn edit(
         server.name = name;
     }
 
-    server.update().await;
+    let server = server.update_all_fields(pool()).await.unwrap();
 
     publish(server.id, Payload::ServerUpdate(server.clone())).await;
 

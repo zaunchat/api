@@ -5,7 +5,7 @@ use crate::utils::*;
 
 pub async fn delete(
     Extension(user): Extension<User>,
-    Path((server_id, channel_id)): Path<(u64, u64)>,
+    Path((server_id, channel_id)): Path<(i64, i64)>,
 ) -> Result<()> {
     let channel = channel_id.channel(None).await?;
 
@@ -13,7 +13,7 @@ pub async fn delete(
         .await?
         .has(Permissions::MANAGE_CHANNELS)?;
 
-    channel.delete().await;
+    channel.delete(pool()).await.unwrap();
 
     publish(
         server_id,

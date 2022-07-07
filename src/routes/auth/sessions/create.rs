@@ -15,10 +15,14 @@ pub struct CreateSessionOptions {
 pub async fn create(
     ValidatedJson(data): ValidatedJson<CreateSessionOptions>,
 ) -> Result<Json<Session>> {
-    let user = User::find_one(|q| q.eq("email", &data.email)).await;
+    let user = User::select()
+        .filter("email = $1")
+        .bind(data.email)
+        .fetch_one(pool())
+        .await;
 
     match user {
-        Some(user) => {
+        Ok(user) => {
             if !user.verified {
                 return Err(Error::AccountVerificationRequired);
             }
@@ -31,9 +35,7 @@ pub async fn create(
 
             let session = Session::new(user.id);
 
-            session.save().await;
-
-            Ok(Json(session))
+            Ok(Json(session.insert(pool()).await.unwrap()))
         }
         _ => Err(Error::UnknownAccount),
     }

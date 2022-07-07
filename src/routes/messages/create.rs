@@ -14,7 +14,7 @@ pub struct CreateMessageOptions {
 pub async fn create(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateMessageOptions>,
-    Path(channel_id): Path<u64>,
+    Path(channel_id): Path<i64>,
 ) -> Result<Json<Message>> {
     let permissions = Permissions::fetch(&user, None, channel_id.into()).await?;
 
@@ -30,7 +30,7 @@ pub async fn create(
         return Err(Error::EmptyMessage);
     }
 
-    msg.save().await;
+    let msg = msg.insert(pool()).await.unwrap();
 
     publish(channel_id, Payload::MessageCreate(msg.clone())).await;
 
