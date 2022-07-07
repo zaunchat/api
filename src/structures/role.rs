@@ -1,3 +1,4 @@
+use super::Base;
 #[cfg(test)]
 use super::Server;
 #[cfg(test)]
@@ -46,6 +47,8 @@ impl Role {
         self.server_id.server(None).await.unwrap().cleanup().await;
     }
 }
+
+impl Base for Role {}
 
 #[cfg(test)]
 mod tests {

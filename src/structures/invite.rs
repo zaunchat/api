@@ -1,5 +1,4 @@
-#[cfg(test)]
-use crate::database::pool;
+use super::*;
 use crate::utils::snowflake;
 use nanoid::nanoid;
 use ormlite::model::*;
@@ -64,6 +63,8 @@ impl Invite {
         self.channel_id.channel(None).await.unwrap().cleanup().await;
     }
 }
+
+impl Base for Invite {}
 
 #[cfg(test)]
 mod tests {

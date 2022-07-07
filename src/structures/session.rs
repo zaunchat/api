@@ -1,5 +1,4 @@
-#[cfg(test)]
-use crate::database::pool;
+use super::*;
 use crate::utils::snowflake;
 use nanoid::nanoid;
 use ormlite::model::*;
@@ -29,8 +28,6 @@ impl Session {
 
     #[cfg(test)]
     pub async fn faker() -> Self {
-        use crate::structures::User;
-
         let user = User::faker();
         let session = Self::new(user.id);
 
@@ -51,6 +48,8 @@ impl Session {
             .unwrap();
     }
 }
+
+impl Base for Session {}
 
 #[cfg(test)]
 mod tests {

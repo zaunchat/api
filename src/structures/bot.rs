@@ -1,5 +1,4 @@
-#[cfg(test)]
-use crate::database::pool;
+use super::*;
 use crate::utils::snowflake;
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
@@ -30,8 +29,6 @@ impl Bot {
 
     #[cfg(test)]
     pub async fn faker() -> Self {
-        use super::User;
-
         let owner = User::faker();
         let bot = Self::new("Ghost Bot".to_string(), owner.id);
 
@@ -52,6 +49,8 @@ impl Bot {
             .unwrap();
     }
 }
+
+impl Base for Bot {}
 
 #[cfg(test)]
 mod tests {
