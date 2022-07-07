@@ -47,7 +47,7 @@ impl Client {
 
         match &payload {
             ClientPayload::Authenticate { .. } => authenticate::run(self, payload).await,
-            ClientPayload::Ping => ping::run(self, payload).await
+            ClientPayload::Ping => ping::run(self, payload).await,
         }
 
         log::debug!("Socket Message: {:?}", content);
