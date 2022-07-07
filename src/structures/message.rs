@@ -42,8 +42,8 @@ impl Message {
         let channel = Channel::faker(ChannelTypes::Group).await;
         let message = Self::new(channel.id, user.id);
 
-        channel.insert(pool()).await.unwrap();
-        user.insert(pool()).await.unwrap();
+        channel.save().await.unwrap();
+        user.save().await.unwrap();
 
         message
     }
@@ -51,13 +51,7 @@ impl Message {
     #[cfg(test)]
     pub async fn cleanup(self) {
         use crate::utils::Ref;
-        self.author_id
-            .user()
-            .await
-            .unwrap()
-            .delete(pool())
-            .await
-            .unwrap();
+        self.author_id.user().await.unwrap().remove().await.unwrap();
         self.channel_id.channel(None).await.unwrap().cleanup().await;
     }
 }
@@ -76,7 +70,7 @@ mod tests {
 
             msg.content = "Hello world!".to_string().into();
 
-            let msg = msg.insert(pool()).await.unwrap();
+            let msg = msg.save().await.unwrap();
             let msg = Message::find_one(msg.id).await.unwrap();
 
             msg.cleanup().await;

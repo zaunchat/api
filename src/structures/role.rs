@@ -1,8 +1,4 @@
-use super::Base;
-#[cfg(test)]
-use super::Server;
-#[cfg(test)]
-use crate::database::pool;
+use super::*;
 use crate::utils::{snowflake, Permissions};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
@@ -37,7 +33,7 @@ impl Role {
     pub async fn faker() -> Self {
         let server = Server::faker().await;
         let role = Self::new("Mod".to_string(), server.id);
-        server.insert(pool()).await.unwrap();
+        server.save().await.unwrap();
         role
     }
 
@@ -59,7 +55,7 @@ mod tests {
     fn create() {
         run(async {
             let role = Role::faker().await;
-            let role = role.insert(pool()).await.unwrap();
+            let role = role.save().await.unwrap();
             let role = Role::find_one(role.id).await.unwrap();
 
             role.cleanup().await;

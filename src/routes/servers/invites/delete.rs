@@ -10,11 +10,7 @@ pub async fn delete(
         .await?
         .has(Permissions::MANAGE_INVITES)?;
 
-    invite_id
-        .invite(server_id.into())
-        .await?
-        .delete(pool())
-        .await?;
+    invite_id.invite(server_id.into()).await?.remove().await?;
 
     Ok(())
 }

@@ -66,5 +66,5 @@ pub async fn register(
             .await?;
     }
 
-    Ok(Json(user.insert(pool()).await?))
+    Ok(Json(user.save().await?))
 }

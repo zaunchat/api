@@ -16,6 +16,10 @@ pub trait Base: Model<Postgres> {
         .rows_affected()
     }
 
+    async fn save(self) -> Result<Self, ormlite::Error> {
+        self.insert(pool()).await
+    }
+
     async fn find_one<'a, Arg>(id: Arg) -> Result<Self, ormlite::Error>
     where
         Arg: 'a + Send + sqlx::Encode<'a, sqlx::Postgres> + sqlx::Type<sqlx::Postgres>,

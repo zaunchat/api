@@ -192,7 +192,7 @@ impl Channel {
                 let user = User::faker();
                 let channel = Self::new_group(user.id, "Fake group".to_string());
 
-                user.insert(pool()).await.unwrap();
+                user.save().await.unwrap();
 
                 channel
             }
@@ -202,8 +202,8 @@ impl Channel {
                 let other = User::faker();
                 let channel = Self::new_dm(user.id, other.id);
 
-                user.insert(pool()).await.unwrap();
-                other.insert(pool()).await.unwrap();
+                user.save().await.unwrap();
+                other.save().await.unwrap();
 
                 channel
             }
@@ -212,7 +212,7 @@ impl Channel {
                 let server = Server::faker().await;
                 let channel = Self::new_text("Test".to_string(), server.id);
 
-                server.insert(pool()).await.unwrap();
+                server.save().await.unwrap();
 
                 channel
             }
@@ -221,7 +221,7 @@ impl Channel {
                 let server = Server::faker().await;
                 let channel = Self::new_voice("Test".to_string(), server.id);
 
-                server.insert(pool()).await.unwrap();
+                server.save().await.unwrap();
 
                 channel
             }
@@ -230,7 +230,7 @@ impl Channel {
                 let server = Server::faker().await;
                 let channel = Self::new_category("Test".to_string(), server.id);
 
-                server.insert(pool()).await.unwrap();
+                server.save().await.unwrap();
 
                 channel
             }
@@ -274,7 +274,7 @@ mod tests {
     fn create_group() {
         run(async {
             let channel = Channel::faker(ChannelTypes::Group).await;
-            let channel = channel.insert(pool()).await.unwrap();
+            let channel = channel.save().await.unwrap();
             let channel = Channel::find_one(channel.id).await.unwrap();
             channel.cleanup().await;
         });
@@ -284,7 +284,7 @@ mod tests {
     fn create_dm() {
         run(async {
             let channel = Channel::faker(ChannelTypes::Direct).await;
-            let channel = channel.insert(pool()).await.unwrap();
+            let channel = channel.save().await.unwrap();
             let channel = Channel::find_one(channel.id).await.unwrap();
 
             channel.cleanup().await;
@@ -295,7 +295,7 @@ mod tests {
     fn create_text() {
         run(async {
             let channel = Channel::faker(ChannelTypes::Text).await;
-            let channel = channel.insert(pool()).await.unwrap();
+            let channel = channel.save().await.unwrap();
             let channel = Channel::find_one(channel.id).await.unwrap();
 
             channel.cleanup().await;
@@ -306,7 +306,7 @@ mod tests {
     fn create_voice() {
         run(async {
             let channel = Channel::faker(ChannelTypes::Voice).await;
-            let channel = channel.insert(pool()).await.unwrap();
+            let channel = channel.save().await.unwrap();
             let channel = Channel::find_one(channel.id).await.unwrap();
 
             channel.cleanup().await;
@@ -317,7 +317,7 @@ mod tests {
     fn create_category() {
         run(async {
             let channel = Channel::faker(ChannelTypes::Category).await;
-            let channel = channel.insert(pool()).await.unwrap();
+            let channel = channel.save().await.unwrap();
             let channel = Channel::find_one(channel.id).await.unwrap();
 
             channel.cleanup().await;

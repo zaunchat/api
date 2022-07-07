@@ -55,7 +55,7 @@ impl Member {
         let server = Server::faker().await;
         let member = Self::new(server.owner_id, server.id);
 
-        server.insert(pool()).await.unwrap();
+        server.save().await.unwrap();
 
         member
     }
@@ -78,7 +78,7 @@ mod tests {
     fn create() {
         run(async {
             let member = Member::faker().await;
-            let member = member.insert(pool()).await.unwrap();
+            let member = member.save().await.unwrap();
             let member = Member::select()
                 .filter("id = $1 AND server_id = $2")
                 .bind(member.id)

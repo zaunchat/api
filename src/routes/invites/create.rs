@@ -21,5 +21,5 @@ pub async fn create(
 
     let invite = Invite::new(user.id, channel.id, channel.server_id);
 
-    Ok(Json(invite.insert(pool()).await?))
+    Ok(Json(invite.save().await?))
 }

@@ -15,9 +15,7 @@ pub async fn create(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateGroupOptions>,
 ) -> Result<Json<Channel>> {
-    let group = Channel::new_group(user.id, data.name)
-        .insert(pool())
-        .await?;
+    let group = Channel::new_group(user.id, data.name).save().await?;
 
     for id in group.recipients.as_ref().unwrap() {
         publish(*id, Payload::ChannelCreate(group.clone())).await;

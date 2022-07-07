@@ -32,7 +32,7 @@ impl Bot {
         let owner = User::faker();
         let bot = Self::new("Ghost Bot".to_string(), owner.id);
 
-        owner.insert(pool()).await.unwrap();
+        owner.save().await.unwrap();
 
         bot
     }
@@ -40,13 +40,7 @@ impl Bot {
     #[cfg(test)]
     pub async fn cleanup(self) {
         use crate::utils::Ref;
-        self.owner_id
-            .user()
-            .await
-            .unwrap()
-            .delete(pool())
-            .await
-            .unwrap();
+        self.owner_id.user().await.unwrap().remove().await.unwrap();
     }
 }
 
@@ -61,7 +55,7 @@ mod tests {
     fn create() {
         run(async {
             let bot = Bot::faker().await;
-            let bot = bot.insert(pool()).await.unwrap();
+            let bot = bot.save().await.unwrap();
             let bot = Bot::find_one(bot.id).await.unwrap();
 
             bot.cleanup().await;

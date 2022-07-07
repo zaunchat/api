@@ -31,7 +31,7 @@ impl Session {
         let user = User::faker();
         let session = Self::new(user.id);
 
-        user.insert(pool()).await.unwrap();
+        user.save().await.unwrap();
 
         session
     }
@@ -39,13 +39,7 @@ impl Session {
     #[cfg(test)]
     pub async fn cleanup(self) {
         use crate::utils::Ref;
-        self.user_id
-            .user()
-            .await
-            .unwrap()
-            .delete(pool())
-            .await
-            .unwrap();
+        self.user_id.user().await.unwrap().remove().await.unwrap();
     }
 }
 
@@ -60,7 +54,7 @@ mod tests {
     fn create() {
         run(async {
             let session = Session::faker().await;
-            let session = session.insert(pool()).await.unwrap();
+            let session = session.save().await.unwrap();
             let session = Session::find_one(session.id).await.unwrap();
 
             session.cleanup().await;
