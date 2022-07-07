@@ -13,7 +13,7 @@ pub struct EditServerChannelOptions {
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path((server_id, channel_id)): Path<(u64, u64)>,
+    Path((server_id, channel_id)): Path<(i64, i64)>,
     ValidatedJson(data): ValidatedJson<EditServerChannelOptions>,
 ) -> Result<Json<Channel>> {
     Permissions::fetch(&user, server_id.into(), channel_id.into())
@@ -26,7 +26,7 @@ pub async fn edit(
         channel.name = name.into();
     }
 
-    channel.update().await;
+    let channel = channel.update_all_fields(pool()).await.unwrap();
 
     publish(server_id, Payload::ChannelUpdate(channel.clone())).await;
 

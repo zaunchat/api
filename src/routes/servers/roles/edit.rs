@@ -9,14 +9,14 @@ use validator::Validate;
 pub struct EditRoleOptions {
     #[validate(length(min = 1, max = 32))]
     name: Option<String>,
-    color: Option<u8>,
+    color: Option<i32>,
     permissions: Option<Permissions>,
     hoist: Option<bool>,
 }
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path((server_id, role_id)): Path<(u64, u64)>,
+    Path((server_id, role_id)): Path<(i64, i64)>,
     ValidatedJson(data): ValidatedJson<EditRoleOptions>,
 ) -> Result<Json<Role>> {
     Permissions::fetch(&user, server_id.into(), None)
@@ -41,7 +41,7 @@ pub async fn edit(
         role.color = color;
     }
 
-    role.update().await;
+    let role = role.update_all_fields(pool()).await.unwrap();
 
     publish(server_id, Payload::RoleUpdate(role.clone())).await;
 

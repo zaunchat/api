@@ -1,4 +1,5 @@
-use crate::structures::{Base, Member, User};
+use crate::database::pool;
+use crate::structures::{Member, User};
 use crate::utils::error::*;
 use axum::{
     extract::{Path, RequestParts},
@@ -21,9 +22,16 @@ pub async fn handle<B: std::marker::Send>(
     let mut req = RequestParts::new(req);
     let Path(ID { server_id, .. }) = req.extract::<Path<ID>>().await.unwrap();
     let user = req.extensions().get::<User>().unwrap();
-    let count = Member::count(|q| q.eq("id", user.id).eq("server_id", server_id)).await;
 
-    if count == 0 {
+    let exists = sqlx::query_as::<_, Member>(&format!(
+        "SELECT * FROM members WHERE id = {} AND server_id = {}",
+        user.id, server_id
+    ))
+    .fetch_one(pool())
+    .await
+    .is_ok();
+
+    if exists {
         return Err(Error::UnknownServer);
     }
 

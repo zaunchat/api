@@ -1,9 +1,8 @@
 use crate::config::*;
 use crate::database::redis::{connection, AsyncCommands};
-use crate::database::DB as db;
-use crate::structures::{Base, User};
+use crate::structures::User;
 use nanoid::nanoid;
-use rbatis::crud::CRUD;
+use ormlite::model::*;
 use regex::Regex;
 use serde_json::json;
 
@@ -14,24 +13,13 @@ lazy_static! {
     static ref SYMBOL_REGEX: Regex = Regex::new("\\+.+|\\.").unwrap();
 }
 
-#[crud_table(table_name:account_invites)]
-pub struct Invite {
+#[derive(Model, FromRow)]
+#[ormlite(table = "account_invites")]
+pub struct AccountInvite {
+    #[ormlite(primary_key)]
     pub code: String,
     pub used: bool,
-    pub taken_by: Option<u64>,
-}
-
-#[async_trait]
-impl Base for Invite {
-    fn id(&self) -> u64 {
-        unreachable!()
-    }
-
-    async fn update(&self) {
-        db.update_by_column("code", &self)
-            .await
-            .expect("Couldn't update account invite");
-    }
+    pub taken_by: Option<i64>,
 }
 
 pub fn normalize(email: String) -> String {

@@ -8,7 +8,7 @@ pub async fn fetch_many(Extension(user): Extension<User>) -> Json<Vec<Channel>> 
 
 pub async fn fetch_one(
     Extension(user): Extension<User>,
-    Path(channel_id): Path<u64>,
+    Path(channel_id): Path<i64>,
 ) -> Result<Json<Channel>> {
     let channel = channel_id.channel(user.id.into()).await?;
     Ok(Json(channel))

@@ -4,7 +4,7 @@ use crate::utils::*;
 
 pub async fn fetch_one(
     Extension(user): Extension<User>,
-    Path((channel_id, id)): Path<(u64, u64)>,
+    Path((channel_id, id)): Path<(i64, i64)>,
 ) -> Result<Json<Message>> {
     let msg = id.message().await?;
 

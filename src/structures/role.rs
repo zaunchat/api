@@ -1,31 +1,29 @@
-use super::*;
+#[cfg(test)]
+use super::Server;
+#[cfg(test)]
+use crate::database::pool;
 use crate::utils::{snowflake, Permissions};
+use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:roles | formats_pg:"id:{}::bigint,permissions:{}::bigint,server_id:{}::bigint")]
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
+#[ormlite(table = "roles")]
 pub struct Role {
-    #[serde_as(as = "snowflake::json::ID")]
+    #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub id: u64,
+    pub id: i64,
     pub name: String,
     pub permissions: Permissions,
-    pub color: u8,
+    pub color: i32,
     pub hoist: bool,
-    #[serde_as(as = "snowflake::json::ID")]
+    #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub server_id: u64,
-}
-
-impl Base for Role {
-    fn id(&self) -> u64 {
-        self.id
-    }
+    pub server_id: i64,
 }
 
 impl Role {
-    pub fn new(name: String, server_id: u64) -> Self {
+    pub fn new(name: String, server_id: i64) -> Self {
         Self {
             id: snowflake::generate(),
             name,
@@ -37,32 +35,31 @@ impl Role {
     #[cfg(test)]
     pub async fn faker() -> Self {
         let server = Server::faker().await;
-        server.save().await;
-        Self::new("Mod".to_string(), server.id)
+        let role = Self::new("Mod".to_string(), server.id);
+        server.insert(pool()).await.unwrap();
+        role
     }
 
     #[cfg(test)]
-    pub async fn cleanup(&self) {
+    pub async fn cleanup(self) {
         use crate::utils::Ref;
-        self.delete().await;
-        self.server_id.server(None).await.unwrap().delete().await;
+        self.server_id.server(None).await.unwrap().cleanup().await;
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    #[test]
+    fn create() {
+        run(async {
+            let role = Role::faker().await;
+            let role = role.insert(pool()).await.unwrap();
+            let role = Role::get_one(role.id, pool()).await.unwrap();
 
-        let role = Role::faker().await;
-
-        role.save().await;
-
-        let role = Role::find_one_by_id(role.id).await.unwrap();
-
-        role.cleanup().await;
+            role.cleanup().await;
+        })
     }
 }

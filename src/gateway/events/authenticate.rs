@@ -1,16 +1,17 @@
+use crate::database::pool;
 use crate::gateway::{
     client::{Client, Subscription},
-    payload::Payload,
+    payload::{ClientPayload, Payload},
 };
 use crate::structures::*;
 use crate::utils::Permissions;
 
-pub async fn run(client: &mut Client, payload: Payload) {
+pub async fn run(client: &mut Client, payload: ClientPayload) {
     if client.user.is_some() {
         return;
     }
 
-    let user = if let Payload::Authenticate { token } = payload {
+    let user = if let ClientPayload::Authenticate { token } = payload {
         User::fetch_by_token(token.as_str()).await
     } else {
         None
@@ -29,10 +30,17 @@ pub async fn run(client: &mut Client, payload: Payload) {
     let mut subscriptions = vec![user.id];
     let mut channels = user.fetch_channels().await;
     let servers = user.fetch_servers().await;
-    let server_ids: Vec<u64> = servers.iter().map(|x| x.id).collect();
+    let server_ids: String = servers.iter().map(|s| s.id.to_string() + ",").collect();
 
     if !server_ids.is_empty() {
-        channels.append(&mut Channel::find(|q| q.r#in("server_id", &server_ids)).await);
+        let mut other_channels: Vec<Channel> = sqlx::query_as(&format!(
+            "SELECT * FROM channels WHERE server_id = ({})",
+            server_ids
+        ))
+        .fetch_all(pool())
+        .await
+        .unwrap();
+        channels.append(&mut other_channels);
     }
 
     for server in &servers {

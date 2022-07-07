@@ -10,9 +10,12 @@ pub struct VerifyQuery {
 
 pub async fn verify(Query(opts): Query<VerifyQuery>) -> Result<()> {
     if email::verify(opts.user_id, &opts.code).await {
-        let mut user = opts.user_id.user().await?;
-        user.verified = true;
-        user.update().await;
+        let user = opts.user_id.user().await?;
+        user.update_partial()
+            .verified(true)
+            .update(pool())
+            .await
+            .unwrap();
         Ok(())
     } else {
         Err(Error::UnknownAccount)

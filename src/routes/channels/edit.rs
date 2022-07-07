@@ -14,7 +14,7 @@ pub struct EditGroupOptions {
 pub async fn edit(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<EditGroupOptions>,
-    Path(channel_id): Path<u64>,
+    Path(channel_id): Path<i64>,
 ) -> Result<Json<Channel>> {
     let mut group = channel_id.channel(user.id.into()).await?;
 
@@ -26,7 +26,7 @@ pub async fn edit(
         group.name = name.into();
     }
 
-    group.update().await;
+    let group = group.update_all_fields(pool()).await.unwrap();
 
     publish(group.id, Payload::ChannelUpdate(group.clone())).await;
 

@@ -1,29 +1,25 @@
-use super::Base;
+#[cfg(test)]
+use crate::database::pool;
 use crate::utils::snowflake;
 use nanoid::nanoid;
+use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:sessions | formats_pg:"id:{}::bigint,user_id:{}::bigint")]
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
+#[ormlite(table = "sessions")]
 pub struct Session {
-    #[serde_as(as = "snowflake::json::ID")]
+    #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub id: u64,
+    pub id: i64,
     pub token: String,
     #[opg(string)]
-    #[serde_as(as = "snowflake::json::ID")]
-    pub user_id: u64,
-}
-
-impl Base for Session {
-    fn id(&self) -> u64 {
-        self.id
-    }
+    #[serde_as(as = "serde_with::DisplayFromStr")]
+    pub user_id: i64,
 }
 
 impl Session {
-    pub fn new(user_id: u64) -> Self {
+    pub fn new(user_id: i64) -> Self {
         Self {
             id: snowflake::generate(),
             token: nanoid!(64),
@@ -36,34 +32,39 @@ impl Session {
         use crate::structures::User;
 
         let user = User::faker();
+        let session = Self::new(user.id);
 
-        user.save().await;
+        user.insert(pool()).await.unwrap();
 
-        Self::new(user.id)
+        session
     }
 
     #[cfg(test)]
-    pub async fn cleanup(&self) {
+    pub async fn cleanup(self) {
         use crate::utils::Ref;
-        self.delete().await;
-        self.user_id.user().await.unwrap().delete().await;
+        self.user_id
+            .user()
+            .await
+            .unwrap()
+            .delete(pool())
+            .await
+            .unwrap();
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    #[test]
+    fn create() {
+        run(async {
+            let session = Session::faker().await;
+            let session = session.insert(pool()).await.unwrap();
+            let session = Session::get_one(session.id, pool()).await.unwrap();
 
-        let session = Session::faker().await;
-
-        session.save().await;
-
-        let session = Session::find_one_by_id(session.id).await.unwrap();
-
-        session.cleanup().await;
+            session.cleanup().await;
+        });
     }
 }
