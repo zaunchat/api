@@ -1,6 +1,4 @@
 #[macro_use]
-extern crate rbatis;
-#[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate async_trait;
@@ -49,11 +47,25 @@ async fn main() {
 }
 
 pub mod tests {
-    use super::*;
+    use once_cell::sync::Lazy;
+    use tokio::runtime::Runtime;
 
-    pub async fn setup() {
+    pub fn run<F: std::future::Future>(f: F) -> F::Output {
+        static RT: Lazy<Runtime> = Lazy::new(|| {
+            tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .unwrap()
+        });
+
+        RT.block_on(f)
+    }
+
+    #[cfg(test)]
+    #[ctor::ctor]
+    fn setup() {
         dotenv::dotenv().ok();
-        env_logger::try_init().ok();
-        database::postgres::connect().await;
+        env_logger::builder().format_timestamp(None).try_init().ok();
+        run(super::database::postgres::connect());
     }
 }

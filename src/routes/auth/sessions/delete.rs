@@ -12,7 +12,7 @@ pub struct DeleteSessionOptions {
 
 pub async fn delete(
     Extension(user): Extension<User>,
-    Path(id): Path<u64>,
+    Path(id): Path<i64>,
     ValidatedJson(data): ValidatedJson<DeleteSessionOptions>,
 ) -> Result<()> {
     let session = id.session(user.id).await?;
@@ -21,7 +21,7 @@ pub async fn delete(
         return Err(Error::InvalidToken);
     }
 
-    session.delete().await;
+    session.delete(pool()).await.unwrap();
 
     Ok(())
 }

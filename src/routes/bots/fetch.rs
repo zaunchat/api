@@ -2,7 +2,7 @@ use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
 
-pub async fn fetch_one(Path(bot_id): Path<u64>) -> Result<Json<Bot>> {
+pub async fn fetch_one(Path(bot_id): Path<i64>) -> Result<Json<Bot>> {
     let bot = bot_id.bot().await?;
     Ok(Json(bot))
 }

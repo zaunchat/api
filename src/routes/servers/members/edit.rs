@@ -9,12 +9,12 @@ use validator::Validate;
 pub struct EditMemberOptions {
     #[validate(length(min = 1, max = 32))]
     nickname: Option<String>,
-    roles: Option<Vec<u64>>,
+    roles: Option<Vec<i64>>,
 }
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path((server_id, member_id)): Path<(u64, u64)>,
+    Path((server_id, member_id)): Path<(i64, i64)>,
     ValidatedJson(data): ValidatedJson<EditMemberOptions>,
 ) -> Result<Json<Member>> {
     let mut member = member_id.member(server_id).await?;
@@ -33,8 +33,12 @@ pub async fn edit(
     if let Some(ids) = &data.roles {
         p.has(Permissions::MANAGE_ROLES)?;
 
-        let mut roles = Role::find(|q| q.eq("server_id", server_id))
+        let mut roles = Role::select()
+            .filter("server_id = $1")
+            .bind(server_id)
+            .fetch_all(pool())
             .await
+            .unwrap()
             .into_iter();
 
         member.roles = vec![];
@@ -47,7 +51,7 @@ pub async fn edit(
         }
     }
 
-    member.update().await;
+    let member = member.update_all_fields(pool()).await.unwrap();
 
     publish(server_id, Payload::ServerMemberUpdate(member.clone())).await;
 

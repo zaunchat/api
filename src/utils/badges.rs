@@ -1,5 +1,11 @@
 use bitflags::bitflags;
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
+use sqlx::{
+    encode::IsNull,
+    error::BoxDynError,
+    postgres::{PgArgumentBuffer, PgTypeInfo, PgValueRef},
+    Decode, Encode, Postgres, Type,
+};
 use std::fmt;
 
 bitflags! {
@@ -15,6 +21,25 @@ bitflags! {
 impl Default for Badges {
     fn default() -> Self {
         Badges::DEFAULT
+    }
+}
+
+impl Type<Postgres> for Badges {
+    fn type_info() -> PgTypeInfo {
+        i64::type_info()
+    }
+}
+
+impl Encode<'_, Postgres> for Badges {
+    fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
+        Encode::<Postgres>::encode(self.bits() as i64, buf)
+    }
+}
+
+impl<'r> Decode<'r, Postgres> for Badges {
+    fn decode(value: PgValueRef<'r>) -> Result<Self, BoxDynError> {
+        let bits: i64 = Decode::<Postgres>::decode(value)?;
+        Ok(Badges::from_bits(bits as u64).unwrap())
     }
 }
 

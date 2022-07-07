@@ -1,40 +1,30 @@
-use super::Base;
+#[cfg(test)]
+use crate::database::pool;
 use crate::utils::snowflake;
-use rbatis::types::Timestamp;
+use chrono::{DateTime, Utc};
+use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
-#[crud_table(table_name:messages | formats_pg:"id:{}::bigint,channel_id:{}::bigint,author_id:{}::bigint,edited_at:{}::timestamp")]
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
+#[ormlite(table = "messages")]
 pub struct Message {
-    #[serde_as(as = "snowflake::json::ID")]
+    #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub id: u64,
+    pub id: i64,
     pub content: Option<String>,
-    #[serde_as(as = "snowflake::json::ID")]
+    #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub channel_id: u64,
-    #[serde_as(as = "snowflake::json::ID")]
+    pub channel_id: i64,
+    #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub author_id: u64,
+    pub author_id: i64,
     #[opg(string, nullable)]
-    pub edited_at: Option<Timestamp>, /*
-                                      TODO:
-                                      pub embeds: Vec<Embed>
-                                      pub attachments: Vec<Attachment>
-                                      pub mentions: Vec<u64>
-                                      pub replies: Vec<Reply>
-                                      */
-}
-
-impl Base for Message {
-    fn id(&self) -> u64 {
-        self.id
-    }
+    pub edited_at: Option<DateTime<Utc>>,
 }
 
 impl Message {
-    pub fn new(channel_id: u64, author_id: u64) -> Self {
+    pub fn new(channel_id: i64, author_id: i64) -> Self {
         Self {
             id: snowflake::generate(),
             channel_id,
@@ -53,18 +43,24 @@ impl Message {
 
         let user = User::faker();
         let channel = Channel::faker(ChannelTypes::Group).await;
+        let message = Self::new(channel.id, user.id);
 
-        channel.save().await;
-        user.save().await;
+        channel.insert(pool()).await.unwrap();
+        user.insert(pool()).await.unwrap();
 
-        Self::new(channel.id, user.id)
+        message
     }
 
     #[cfg(test)]
-    pub async fn cleanup(&self) {
+    pub async fn cleanup(self) {
         use crate::utils::Ref;
-        self.delete().await;
-        // self.author_id.user().await.unwrap().delete().await;
+        self.author_id
+            .user()
+            .await
+            .unwrap()
+            .delete(pool())
+            .await
+            .unwrap();
         self.channel_id.channel(None).await.unwrap().cleanup().await;
     }
 }
@@ -72,19 +68,19 @@ impl Message {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::run;
 
-    #[tokio::test]
-    async fn create() {
-        crate::tests::setup().await;
+    #[test]
+    fn create() {
+        run(async {
+            let mut msg = Message::faker().await;
 
-        let mut msg = Message::faker().await;
+            msg.content = "Hello world!".to_string().into();
 
-        msg.content = "Hello world!".to_string().into();
+            let msg = msg.insert(pool()).await.unwrap();
+            let msg = Message::get_one(msg.id, pool()).await.unwrap();
 
-        msg.save().await;
-
-        let msg = Message::find_one_by_id(msg.id).await.unwrap();
-
-        msg.cleanup().await;
+            msg.cleanup().await;
+        });
     }
 }

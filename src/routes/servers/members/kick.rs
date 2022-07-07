@@ -5,7 +5,7 @@ use crate::utils::*;
 
 pub async fn kick(
     Extension(user): Extension<User>,
-    Path((server_id, member_id)): Path<(u64, u64)>,
+    Path((server_id, member_id)): Path<(i64, i64)>,
 ) -> Result<()> {
     if user.id != member_id {
         Permissions::fetch(&user, server_id.into(), None)
@@ -13,7 +13,12 @@ pub async fn kick(
             .has(Permissions::KICK_MEMBERS)?;
     }
 
-    member_id.member(server_id).await?.delete().await;
+    member_id
+        .member(server_id)
+        .await?
+        .delete(pool())
+        .await
+        .unwrap();
 
     publish(
         server_id,

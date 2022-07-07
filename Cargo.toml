@@ -10,10 +10,19 @@ async-trait = "0.1.56"
 
 
 # Database
-rbatis = { version = "3.1.11", default-features = false, features = ["postgres", "runtime-tokio-rustls", "upper_case_sql_keyword"] }
-rbson = "2.0.3"
-mobc = { version = "0.7.3", default-features = false, features = ["tokio"]}
-redis = { version = "0.21.2", default-features = false, features = [ "aio", "tokio-comp" ] }
+sqlx = { version = "0.6.0", features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "json",
+    "time",
+    "chrono",
+] }
+ormlite = { version = "0.3.1", features = ["postgres", "runtime-tokio-rustls"] }
+mobc = { version = "0.7.3", default-features = false, features = ["tokio"] }
+redis = { version = "0.21.2", default-features = false, features = [
+    "aio",
+    "tokio-comp",
+] }
 mobc-redis = { version = "0.7.0" }
 
 
@@ -50,7 +59,14 @@ include_dir = "0.7.2"
 regex = "1.5.6"
 quick-error = "2.0.1"
 futures = "0.3"
+ctor = "0.1.22"
+rs-snowflake = "0.6.0"
+chrono = { version = "0.4.19", features = ["serde"] }
 
 
 # Docs
 opg = { git = "https://github.com/abdulrahman1s/opg", rev = "24f72e7cf09da7cd61b71aedaa14383502559612" }
+
+
+[patch.crates-io]
+ormlite-macro = { git = "https://github.com/abdulrahman1s/ormlite" }

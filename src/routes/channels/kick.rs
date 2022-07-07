@@ -5,7 +5,7 @@ use crate::utils::*;
 
 pub async fn kick(
     Extension(user): Extension<User>,
-    Path((group_id, target_id)): Path<(u64, u64)>,
+    Path((group_id, target_id)): Path<(i64, i64)>,
 ) -> Result<()> {
     let target = target_id.user().await?;
     let mut group = group_id.channel(user.id.into()).await?;
@@ -25,7 +25,7 @@ pub async fn kick(
         }
     }
 
-    group.update().await;
+    let group = group.update_all_fields(pool()).await.unwrap();
 
     publish(group_id, Payload::ChannelUpdate(group)).await;
 
