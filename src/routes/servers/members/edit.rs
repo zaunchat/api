@@ -37,8 +37,7 @@ pub async fn edit(
             .filter("server_id = $1")
             .bind(server_id)
             .fetch_all(pool())
-            .await
-            .unwrap()
+            .await?
             .into_iter();
 
         member.roles = vec![];
@@ -51,7 +50,7 @@ pub async fn edit(
         }
     }
 
-    let member = member.update_all_fields(pool()).await.unwrap();
+    let member = member.update_all_fields(pool()).await?;
 
     publish(server_id, Payload::ServerMemberUpdate(member.clone())).await;
 

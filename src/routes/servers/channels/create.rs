@@ -35,7 +35,7 @@ pub async fn create(
         _ => return Err(Error::MissingAccess),
     };
 
-    let channel = channel.insert(pool()).await.unwrap();
+    let channel = channel.insert(pool()).await?;
 
     publish(server_id, Payload::ChannelCreate(channel.clone())).await;
 

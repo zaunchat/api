@@ -26,7 +26,7 @@ pub async fn edit(
         channel.name = name.into();
     }
 
-    let channel = channel.update_all_fields(pool()).await.unwrap();
+    let channel = channel.update_all_fields(pool()).await?;
 
     publish(server_id, Payload::ChannelUpdate(channel.clone())).await;
 

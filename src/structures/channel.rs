@@ -245,11 +245,11 @@ impl Channel {
 
         if self.is_group() || self.is_dm() {
             for id in self.recipients.as_ref().unwrap() {
-                id.user().await.unwrap().delete(pool()).await.unwrap();
+                id.user().await.unwrap().remove().await.unwrap();
             }
 
             if self.owner_id.is_none() {
-                self.delete(pool()).await.unwrap();
+                self.remove().await.unwrap();
             }
         } else if self.in_server() {
             self.server_id
@@ -275,7 +275,7 @@ mod tests {
         run(async {
             let channel = Channel::faker(ChannelTypes::Group).await;
             let channel = channel.insert(pool()).await.unwrap();
-            let channel = Channel::get_one(channel.id, pool()).await.unwrap();
+            let channel = Channel::find_one(channel.id).await.unwrap();
             channel.cleanup().await;
         });
     }
@@ -285,7 +285,7 @@ mod tests {
         run(async {
             let channel = Channel::faker(ChannelTypes::Direct).await;
             let channel = channel.insert(pool()).await.unwrap();
-            let channel = Channel::get_one(channel.id, pool()).await.unwrap();
+            let channel = Channel::find_one(channel.id).await.unwrap();
 
             channel.cleanup().await;
         });
@@ -296,7 +296,7 @@ mod tests {
         run(async {
             let channel = Channel::faker(ChannelTypes::Text).await;
             let channel = channel.insert(pool()).await.unwrap();
-            let channel = Channel::get_one(channel.id, pool()).await.unwrap();
+            let channel = Channel::find_one(channel.id).await.unwrap();
 
             channel.cleanup().await;
         });
@@ -307,7 +307,7 @@ mod tests {
         run(async {
             let channel = Channel::faker(ChannelTypes::Voice).await;
             let channel = channel.insert(pool()).await.unwrap();
-            let channel = Channel::get_one(channel.id, pool()).await.unwrap();
+            let channel = Channel::find_one(channel.id).await.unwrap();
 
             channel.cleanup().await;
         });
@@ -318,7 +318,7 @@ mod tests {
         run(async {
             let channel = Channel::faker(ChannelTypes::Category).await;
             let channel = channel.insert(pool()).await.unwrap();
-            let channel = Channel::get_one(channel.id, pool()).await.unwrap();
+            let channel = Channel::find_one(channel.id).await.unwrap();
 
             channel.cleanup().await;
         });

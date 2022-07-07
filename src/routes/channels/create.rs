@@ -17,8 +17,7 @@ pub async fn create(
 ) -> Result<Json<Channel>> {
     let group = Channel::new_group(user.id, data.name)
         .insert(pool())
-        .await
-        .unwrap();
+        .await?;
 
     for id in group.recipients.as_ref().unwrap() {
         publish(*id, Payload::ChannelCreate(group.clone())).await;

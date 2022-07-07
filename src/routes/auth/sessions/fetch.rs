@@ -9,13 +9,12 @@ pub async fn fetch_one(
     Ok(Json(id.session(user.id).await?))
 }
 
-pub async fn fetch_many(Extension(user): Extension<User>) -> Json<Vec<Session>> {
-    Json(
+pub async fn fetch_many(Extension(user): Extension<User>) -> Result<Json<Vec<Session>>> {
+    Ok(Json(
         Session::select()
             .filter("user_id = $1")
             .bind(user.id)
             .fetch_all(pool())
-            .await
-            .unwrap(),
-    )
+            .await?,
+    ))
 }

@@ -9,7 +9,7 @@ pub async fn delete(Extension(user): Extension<User>, Path(bot_id): Path<i64>) -
         return Err(Error::MissingAccess);
     }
 
-    bot.delete(pool()).await.unwrap();
+    bot.remove().await?;
 
     Ok(())
 }

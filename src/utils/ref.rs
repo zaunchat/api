@@ -7,7 +7,7 @@ pub trait Ref {
     fn id(&self) -> i64;
 
     async fn user(&self) -> Result<User> {
-        User::get_one(self.id(), pool())
+        User::find_one(self.id())
             .await
             .map_err(|_| Error::UnknownUser)
     }
@@ -21,14 +21,14 @@ pub trait Ref {
                 .fetch_one(pool())
                 .await
         } else {
-            Channel::get_one(self.id(), pool()).await
+            Channel::find_one(self.id()).await
         };
 
         channel.map_err(|_| Error::UnknownChannel)
     }
 
     async fn message(&self) -> Result<Message> {
-        Message::get_one(self.id(), pool())
+        Message::find_one(self.id())
             .await
             .map_err(|_| Error::UnknownMessage)
     }
@@ -42,7 +42,7 @@ pub trait Ref {
                 .fetch_one(pool())
                 .await
         } else {
-            Server::get_one(self.id(), pool()).await
+            Server::find_one(self.id()).await
         };
 
         server.map_err(|_| Error::UnknownServer)
@@ -54,8 +54,7 @@ pub trait Ref {
             .bind(self.id())
             .bind(server_id)
             .fetch_optional(pool())
-            .await
-            .unwrap()
+            .await?
             .ok_or(Error::UnknownRole)
     }
 
@@ -65,13 +64,12 @@ pub trait Ref {
             .bind(self.id())
             .bind(user_id)
             .fetch_optional(pool())
-            .await
-            .unwrap()
+            .await?
             .ok_or(Error::UnknownSession)
     }
 
     async fn bot(&self) -> Result<Bot> {
-        Bot::get_one(self.id(), pool())
+        Bot::find_one(self.id())
             .await
             .map_err(|_| Error::UnknownBot)
     }
@@ -82,8 +80,7 @@ pub trait Ref {
             .bind(self.id())
             .bind(server_id)
             .fetch_optional(pool())
-            .await
-            .unwrap()
+            .await?
             .ok_or(Error::UnknownMember)
     }
 
@@ -96,7 +93,7 @@ pub trait Ref {
                 .fetch_one(pool())
                 .await
         } else {
-            Invite::get_one(self.id(), pool()).await
+            Invite::find_one(self.id()).await
         };
 
         invite.map_err(|_| Error::UnknownInvite)

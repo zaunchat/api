@@ -35,7 +35,7 @@ pub async fn create(
 
             let session = Session::new(user.id);
 
-            Ok(Json(session.insert(pool()).await.unwrap()))
+            Ok(Json(session.insert(pool()).await?))
         }
         _ => Err(Error::UnknownAccount),
     }

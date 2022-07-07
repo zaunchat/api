@@ -14,8 +14,7 @@ pub async fn delete(
         .invite(server_id.into())
         .await?
         .delete(pool())
-        .await
-        .unwrap();
+        .await?;
 
     Ok(())
 }

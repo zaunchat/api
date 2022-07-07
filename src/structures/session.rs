@@ -61,7 +61,7 @@ mod tests {
         run(async {
             let session = Session::faker().await;
             let session = session.insert(pool()).await.unwrap();
-            let session = Session::get_one(session.id, pool()).await.unwrap();
+            let session = Session::find_one(session.id).await.unwrap();
 
             session.cleanup().await;
         });

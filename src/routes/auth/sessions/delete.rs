@@ -21,7 +21,7 @@ pub async fn delete(
         return Err(Error::InvalidToken);
     }
 
-    session.delete(pool()).await.unwrap();
+    session.remove().await?;
 
     Ok(())
 }

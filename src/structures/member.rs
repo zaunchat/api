@@ -63,7 +63,7 @@ impl Member {
     #[cfg(test)]
     pub async fn cleanup(self) {
         use crate::utils::Ref;
-        self.id.user().await.unwrap().delete(pool()).await.unwrap();
+        self.id.user().await.unwrap().remove().await.unwrap();
     }
 }
 

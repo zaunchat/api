@@ -30,7 +30,7 @@ pub async fn create(
         return Err(Error::EmptyMessage);
     }
 
-    let msg = msg.insert(pool()).await.unwrap();
+    let msg = msg.insert(pool()).await?;
 
     publish(channel_id, Payload::MessageCreate(msg.clone())).await;
 

@@ -101,6 +101,8 @@ impl User {
     }
 }
 
+impl Base for User {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -111,8 +113,8 @@ mod tests {
         run(async {
             let user = User::faker();
             let user = user.insert(pool()).await.unwrap();
-            let user = User::get_one(user.id, pool()).await.unwrap();
-            user.delete(pool()).await.unwrap();
+            let user = User::find_one(user.id).await.unwrap();
+            user.remove().await.unwrap();
         })
     }
 }
