@@ -70,5 +70,6 @@ pub mod tests {
         dotenv::dotenv().ok();
         env_logger::builder().format_timestamp(None).try_init().ok();
         run(super::database::postgres::connect());
+        run(super::database::redis::connect());
     }
 }
