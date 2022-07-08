@@ -2,7 +2,7 @@ use super::events::*;
 use super::payload::{ClientPayload, Payload};
 use crate::{structures::User, utils::Permissions};
 use axum::extract::ws::{Message, WebSocket};
-use fred::clients::RedisClient;
+use fred::clients::SubscriberClient;
 use futures::{stream::SplitSink, SinkExt};
 use std::collections::HashMap;
 
@@ -13,13 +13,13 @@ pub struct Client {
     pub permissions: Mutex<HashMap<i64, Permissions>>,
     pub user: Mutex<Option<User>>,
     pub write: Arc<Mutex<SplitSink<WebSocket, Message>>>,
-    pub subscriptions: RedisClient,
+    pub subscriptions: SubscriberClient,
 }
 
 impl Client {
     pub fn from(
         stream: Arc<tokio::sync::Mutex<SplitSink<WebSocket, Message>>>,
-        subscriptions: RedisClient,
+        subscriptions: SubscriberClient,
     ) -> Self {
         Self {
             permissions: Mutex::new(HashMap::new()),

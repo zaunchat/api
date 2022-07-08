@@ -26,7 +26,13 @@ pub async fn upgrade(
 async fn handle(ws: WebSocket) {
     let (sender, mut receiver) = ws.split();
     let sender = Arc::new(Mutex::new(sender));
-    let original_client = Arc::new(Client::from(sender, pubsub().await));
+
+    let subscriber = pubsub().await;
+
+    // Resubscribe on reconnect
+    subscriber.manage_subscriptions();
+
+    let original_client = Arc::new(Client::from(sender, subscriber));
 
     let client = original_client.clone();
     let mut receiver_task = tokio::spawn(async move {
