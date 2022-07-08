@@ -18,7 +18,7 @@ sqlx = { version = "0.6.0", features = [
     "chrono",
 ] }
 ormlite = { version = "0.3.1", features = ["postgres", "runtime-tokio-rustls"] }
-fred = "5.1.0"
+fred = { version = "5.1.0", features = ["subscriber-client"] }
 
 # HTTP
 axum = { version = "0.5.8", features = ["ws", "headers"] }

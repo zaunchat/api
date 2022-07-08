@@ -1,6 +1,6 @@
 use crate::config::{REDIS_POOL_SIZE, REDIS_URI};
-use fred::pool::RedisPool;
 pub use fred::prelude::*;
+use fred::{clients::SubscriberClient, pool::RedisPool};
 use once_cell::sync::Lazy;
 use serde::Serialize;
 
@@ -19,9 +19,9 @@ pub async fn connect() {
         .expect("Failed to connect to redis");
 }
 
-pub async fn pubsub() -> RedisClient {
+pub async fn pubsub() -> SubscriberClient {
     let config = RedisConfig::from_url((*REDIS_URI).as_str()).unwrap();
-    let client = RedisClient::new(config);
+    let client = SubscriberClient::new(config);
 
     let policy = ReconnectPolicy::default();
     let _ = client.connect(Some(policy));
