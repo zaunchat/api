@@ -1,13 +1,15 @@
+use fred::interfaces::PubsubInterface;
+
 use crate::database::pool;
 use crate::gateway::{
-    client::{Client, Subscription},
+    client::Client,
     payload::{ClientPayload, Payload},
 };
 use crate::structures::*;
 use crate::utils::Permissions;
 
-pub async fn run(client: &mut Client, payload: ClientPayload) {
-    if client.user.is_some() {
+pub async fn run(client: &Client, payload: ClientPayload) {
+    if client.user.lock().await.is_some() {
         return;
     }
 
@@ -25,9 +27,10 @@ pub async fn run(client: &mut Client, payload: ClientPayload) {
 
     let user = user.unwrap();
 
-    client.user = Some(user.clone());
+    *client.user.lock().await = Some(user.clone());
 
-    let mut subscriptions = vec![user.id];
+    let mut subscriptions: Vec<i64> = vec![user.id];
+    let mut permissions = client.permissions.lock().await;
     let mut channels = user.fetch_channels().await.unwrap();
     let servers = user.fetch_servers().await.unwrap();
 
@@ -49,7 +52,7 @@ pub async fn run(client: &mut Client, payload: ClientPayload) {
 
     for server in &servers {
         subscriptions.push(server.id);
-        client.permissions.insert(
+        permissions.insert(
             server.id,
             Permissions::fetch_cached(&user, server.into(), None)
                 .await
@@ -65,7 +68,7 @@ pub async fn run(client: &mut Client, payload: ClientPayload) {
         };
 
         subscriptions.push(channel.id);
-        client.permissions.insert(
+        permissions.insert(
             channel.id,
             Permissions::fetch_cached(&user, server, channel.into())
                 .await
@@ -73,7 +76,9 @@ pub async fn run(client: &mut Client, payload: ClientPayload) {
         );
     }
 
-    client.subscriptions = Subscription::Add(subscriptions);
+    for id in subscriptions {
+        client.subscriptions.subscribe(id.to_string()).await.ok();
+    }
 
     client
         .send(Payload::Ready {

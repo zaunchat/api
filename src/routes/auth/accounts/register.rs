@@ -79,7 +79,7 @@ mod tests {
         run(async {
             let payload = RegisterAccountOptions {
                 username: "test".to_string(),
-                email: "test@example.com".to_string(),
+                email: format!("test.{}@example.com", nanoid::nanoid!(6)),
                 password: "passw0rd".to_string(),
                 invite_code: None,
             };

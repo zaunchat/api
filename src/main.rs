@@ -27,6 +27,9 @@ async fn main() {
     log::info!("Connecting to database...");
     database::postgres::connect().await;
 
+    log::info!("Connecting to redis...");
+    database::redis::connect().await;
+
     use middlewares::*;
 
     let app = routes::mount(Router::new())
@@ -67,5 +70,6 @@ pub mod tests {
         dotenv::dotenv().ok();
         env_logger::builder().format_timestamp(None).try_init().ok();
         run(super::database::postgres::connect());
+        run(super::database::redis::connect());
     }
 }
