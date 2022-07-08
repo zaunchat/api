@@ -34,7 +34,7 @@ impl User {
         }
     }
 
-    pub async fn email_taken(email: &String) -> bool {
+    pub async fn email_taken(email: &str) -> bool {
         User::select()
             .filter("email = $1")
             .bind(email)
@@ -44,41 +44,37 @@ impl User {
             .is_some()
     }
 
-    pub async fn fetch_sessions(&self) -> Vec<Session> {
+    pub async fn fetch_sessions(&self) -> Result<Vec<Session>, ormlite::Error> {
         Session::select()
             .filter("user_id = $1")
             .bind(self.id)
             .fetch_all(pool())
             .await
-            .unwrap()
     }
 
-    pub async fn fetch_servers(&self) -> Vec<Server> {
+    pub async fn fetch_servers(&self) -> Result<Vec<Server>, ormlite::Error> {
         Server::select()
             .filter("owner_id = $1 OR id IN ( SELECT server_id FROM members WHERE id = $2 )")
             .bind(self.id)
             .bind(self.id)
             .fetch_all(pool())
             .await
-            .unwrap()
     }
 
-    pub async fn fetch_bots(&self) -> Vec<Bot> {
+    pub async fn fetch_bots(&self) -> Result<Vec<Bot>, ormlite::Error> {
         Bot::select()
             .filter("owner_id = $1")
             .bind(self.id)
             .fetch_all(pool())
             .await
-            .unwrap()
     }
 
-    pub async fn fetch_channels(&self) -> Vec<Channel> {
+    pub async fn fetch_channels(&self) -> Result<Vec<Channel>, ormlite::Error> {
         Channel::select()
             .filter("recipients @> ARRAY[$1]::BIGINT[]")
             .bind(self.id)
             .fetch_all(pool())
             .await
-            .unwrap()
     }
 
     // pub async fn fetch_relations(&self) {}

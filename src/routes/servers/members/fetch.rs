@@ -10,8 +10,8 @@ pub struct FetchMembersOptions {
     limit: Option<u64>,
 }
 
-pub async fn fetch_one(Path((server_id, member_id)): Path<(i64, i64)>) -> Result<Json<Member>> {
-    Ok(Json(member_id.member(server_id).await?))
+pub async fn fetch_one(Path((server_id, id)): Path<(i64, i64)>) -> Result<Json<Member>> {
+    Ok(id.member(server_id).await?.into())
 }
 
 pub async fn fetch_many(
@@ -19,11 +19,12 @@ pub async fn fetch_many(
     Query(query): Query<FetchMembersOptions>,
 ) -> Result<Json<Vec<Member>>> {
     let limit = query.limit.unwrap_or(100) as usize;
-    let members = Member::select()
+
+    Ok(Member::select()
         .filter("server_id = $1")
         .bind(server_id)
         .limit(limit)
         .fetch_all(pool())
-        .await?;
-    Ok(Json(members))
+        .await?
+        .into())
 }

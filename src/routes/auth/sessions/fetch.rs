@@ -6,17 +6,16 @@ pub async fn fetch_one(
     Extension(user): Extension<User>,
     Path(id): Path<i64>,
 ) -> Result<Json<Session>> {
-    Ok(Json(id.session(user.id).await?))
+    Ok(id.session(user.id).await?.into())
 }
 
 pub async fn fetch_many(Extension(user): Extension<User>) -> Result<Json<Vec<Session>>> {
-    Ok(Json(
-        Session::select()
-            .filter("user_id = $1")
-            .bind(user.id)
-            .fetch_all(pool())
-            .await?,
-    ))
+    Ok(Session::select()
+        .filter("user_id = $1")
+        .bind(user.id)
+        .fetch_all(pool())
+        .await?
+        .into())
 }
 
 #[cfg(test)]
@@ -37,7 +36,7 @@ mod tests {
 
             fetch_one(Extension(user), Path(session.id)).await.unwrap();
 
-            session.cleanup().await;
+            session.cleanup().await.unwrap();
         })
     }
 }

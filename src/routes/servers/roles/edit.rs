@@ -16,14 +16,14 @@ pub struct EditRoleOptions {
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path((server_id, role_id)): Path<(i64, i64)>,
+    Path((server_id, id)): Path<(i64, i64)>,
     ValidatedJson(data): ValidatedJson<EditRoleOptions>,
 ) -> Result<Json<Role>> {
     Permissions::fetch(&user, server_id.into(), None)
         .await?
         .has(Permissions::MANAGE_ROLES)?;
 
-    let mut role = role_id.role(server_id).await?;
+    let mut role = id.role(server_id).await?;
 
     if let Some(name) = &data.name {
         role.name = name.clone();

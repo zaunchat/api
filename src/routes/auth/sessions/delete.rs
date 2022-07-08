@@ -48,7 +48,7 @@ mod tests {
             .await
             .unwrap();
 
-            session.cleanup().await;
+            session.cleanup().await.unwrap();
         })
     }
 }
