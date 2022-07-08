@@ -1,4 +1,4 @@
-use crate::config::REDIS_URI;
+use crate::config::{REDIS_POOL_SIZE, REDIS_URI};
 use fred::pool::RedisPool;
 pub use fred::prelude::*;
 use once_cell::sync::Lazy;
@@ -6,7 +6,7 @@ use serde::Serialize;
 
 pub static REDIS: Lazy<RedisPool> = Lazy::new(|| {
     let config = RedisConfig::from_url((*REDIS_URI).as_str()).unwrap();
-    RedisPool::new(config, 100).unwrap()
+    RedisPool::new(config, *REDIS_POOL_SIZE).unwrap()
 });
 
 pub async fn connect() {
