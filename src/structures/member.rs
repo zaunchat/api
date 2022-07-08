@@ -40,12 +40,17 @@ impl Member {
             return vec![];
         }
 
-        Role::select()
-            .filter("server_id IN $1")
-            .bind(self.roles.clone())
-            .fetch_all(pool())
-            .await
-            .unwrap()
+        // FIXME: Do this in efficient way
+        let mut roles: String = self.roles.iter().map(|&id| id.to_string() + ",").collect();
+        roles.remove(roles.len() - 1);
+
+        Role::query(&format!(
+            "SELECT * FROM roles WHERE server_id IN ({})",
+            roles
+        ))
+        .fetch_all(pool())
+        .await
+        .unwrap()
     }
 
     #[cfg(test)]
@@ -73,6 +78,7 @@ impl Base for Member {}
 mod tests {
     use super::*;
     use crate::tests::run;
+    use crate::utils::Ref;
 
     #[test]
     fn create() {
@@ -88,6 +94,33 @@ mod tests {
                 .unwrap();
 
             member.cleanup().await;
+        });
+    }
+
+    #[test]
+    fn fetch_roles() {
+        run(async {
+            let mut member = Member::faker().await;
+            let role = Role::new("Test".to_string(), member.server_id)
+                .save()
+                .await
+                .unwrap();
+
+            member.roles.push(role.id);
+
+            let member = member.save().await.unwrap();
+            let roles = member.fetch_roles().await;
+
+            assert_eq!(roles.len(), 1);
+
+            member
+                .server_id
+                .server(None)
+                .await
+                .unwrap()
+                .remove()
+                .await
+                .unwrap();
         });
     }
 }
