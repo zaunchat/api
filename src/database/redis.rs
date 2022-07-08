@@ -47,8 +47,6 @@ mod tests {
     #[test]
     fn simple() {
         run(async {
-            connect().await;
-
             let _: () = REDIS
                 .set("hello", "world", None, None, false)
                 .await
@@ -63,8 +61,6 @@ mod tests {
     #[test]
     fn subscriber() {
         run(async {
-            connect().await;
-
             let subscriber = pubsub().await;
 
             subscriber
