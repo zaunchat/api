@@ -26,23 +26,28 @@ pub async fn upgrade(
 async fn handle(ws: WebSocket) {
     let (sender, mut receiver) = ws.split();
     let sender = Arc::new(Mutex::new(sender));
+    let original_client = Arc::new(Client::from(sender, pubsub().await));
 
-    let client = Client::from(sender, pubsub().await);
+    let client = original_client.clone();
+    let mut receiver_task = tokio::spawn(async move {
+        while let Some(Ok(msg)) = receiver.next().await {
+            match msg {
+                Message::Text(content) => {
+                    client.on_message(content).await;
 
-    while let Some(Ok(msg)) = receiver.next().await {
-        if let Message::Text(content) = msg {
-            client.on_message(content).await;
-
-            if client.user.lock().await.is_some() {
-                break;
-            } else {
-                log::debug!("Socket did not authenticate with valid token");
-                return;
+                    if client.user.lock().await.is_none() {
+                        log::debug!("Socket did not authenticate with valid token");
+                        break;
+                    }
+                }
+                Message::Close(_) => break,
+                _ => {}
             }
         }
-    }
+    });
 
-    let process = tokio::spawn(async move {
+    let client = original_client.clone();
+    let mut sender_task = tokio::spawn(async move {
         while let Some((channel, payload)) = client.subscriptions.on_message().next().await {
             let target_id: i64 = channel.parse().unwrap();
             let user = client.user.lock().await;
@@ -141,9 +146,10 @@ async fn handle(ws: WebSocket) {
         }
     });
 
-    if let Err(err) = process.await {
-        log::error!("Socket disconnected with error: {:?}", err);
-    } else {
-        log::debug!("Socket connection closed");
-    }
+    tokio::select! {
+        _ = (&mut sender_task) => receiver_task.abort(),
+        _ = (&mut receiver_task) => sender_task.abort(),
+    };
+
+    log::debug!("Socket connection closed");
 }
