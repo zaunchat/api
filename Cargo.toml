@@ -18,13 +18,7 @@ sqlx = { version = "0.6.0", features = [
     "chrono",
 ] }
 ormlite = { version = "0.3.1", features = ["postgres", "runtime-tokio-rustls"] }
-mobc = { version = "0.7.3", default-features = false, features = ["tokio"] }
-redis = { version = "0.21.2", default-features = false, features = [
-    "aio",
-    "tokio-comp",
-] }
-mobc-redis = { version = "0.7.0" }
-
+fred = "5.1.0"
 
 # HTTP
 axum = { version = "0.5.8", features = ["ws", "headers"] }

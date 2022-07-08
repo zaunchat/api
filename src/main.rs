@@ -27,6 +27,9 @@ async fn main() {
     log::info!("Connecting to database...");
     database::postgres::connect().await;
 
+    log::info!("Connecting to redis...");
+    database::redis::connect().await;
+
     use middlewares::*;
 
     let app = routes::mount(Router::new())
