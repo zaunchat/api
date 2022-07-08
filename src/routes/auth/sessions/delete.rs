@@ -25,3 +25,30 @@ pub async fn delete(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tests::run;
+
+    #[test]
+    fn execute() {
+        run(async {
+            let session = Session::faker().await;
+            let session = session.save().await.unwrap();
+            let payload = DeleteSessionOptions {
+                token: session.token.clone(),
+            };
+
+            delete(
+                Extension(session.user_id.user().await.unwrap()),
+                Path(session.id),
+                ValidatedJson(payload),
+            )
+            .await
+            .unwrap();
+
+            session.cleanup().await;
+        })
+    }
+}

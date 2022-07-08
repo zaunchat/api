@@ -1,6 +1,6 @@
 use super::*;
 use crate::utils::snowflake;
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
@@ -19,7 +19,7 @@ pub struct Message {
     #[opg(string)]
     pub author_id: i64,
     #[opg(string, nullable)]
-    pub edited_at: Option<DateTime<Utc>>,
+    pub edited_at: Option<NaiveDateTime>,
 }
 
 impl Message {

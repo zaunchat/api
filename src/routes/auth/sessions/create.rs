@@ -40,3 +40,27 @@ pub async fn create(
         _ => Err(Error::UnknownAccount),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tests::run;
+
+    #[test]
+    fn execute() {
+        run(async {
+            let user = User::faker();
+            let email = user.email.clone();
+
+            user.save().await.unwrap();
+
+            let payload = CreateSessionOptions {
+                email,
+                password: "passw0rd".to_string(),
+            };
+            let result = create(ValidatedJson(payload)).await.unwrap();
+
+            result.0.remove().await.unwrap();
+        })
+    }
+}

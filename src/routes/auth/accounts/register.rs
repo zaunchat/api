@@ -68,3 +68,25 @@ pub async fn register(
 
     Ok(Json(user.save().await?))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tests::run;
+
+    #[test]
+    fn execute() {
+        run(async {
+            let payload = RegisterAccountOptions {
+                username: "test".to_string(),
+                email: "test@example.com".to_string(),
+                password: "passw0rd".to_string(),
+                invite_code: None,
+            };
+
+            let result = register(ValidatedJson(payload)).await.unwrap();
+
+            result.0.remove().await.unwrap();
+        })
+    }
+}

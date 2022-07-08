@@ -94,8 +94,15 @@ impl User {
 
     #[cfg(test)]
     pub fn faker() -> Self {
+        use argon2::Config;
+
+        let config = Config::default();
+        let salt = nanoid::nanoid!(24);
+        let hashed_password =
+            argon2::hash_encoded("passw0rd".as_bytes(), salt.as_bytes(), &config).unwrap();
+
         let email = format!("ghost.{}@example.com", nanoid::nanoid!(6));
-        let mut user = Self::new("Ghost".to_string(), email, "passw0rd".to_string());
+        let mut user = Self::new("Ghost".to_string(), email, hashed_password);
         user.verified = true;
         user
     }
