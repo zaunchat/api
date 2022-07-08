@@ -2,6 +2,7 @@ use crate::extractors::*;
 use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
+use chrono::Utc;
 use serde::Deserialize;
 use validator::Validate;
 
@@ -27,6 +28,7 @@ pub async fn edit(
         .has(Permissions::VIEW_CHANNEL)?;
 
     msg.content = data.content.into();
+    msg.edited_at = Some(Utc::now().naive_utc());
 
     let msg = msg.update_all_fields(pool()).await?;
 
