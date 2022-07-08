@@ -240,26 +240,27 @@ impl Channel {
     }
 
     #[cfg(test)]
-    pub async fn cleanup(self) {
+    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
         use crate::utils::Ref;
 
         if self.is_group() || self.is_dm() {
             for id in self.recipients.as_ref().unwrap() {
-                id.user().await.unwrap().remove().await.unwrap();
+                id.user().await?.remove().await?;
             }
 
             if self.owner_id.is_none() {
-                self.remove().await.unwrap();
+                self.remove().await?;
             }
         } else if self.in_server() {
             self.server_id
                 .unwrap()
                 .server(None)
-                .await
-                .unwrap()
+                .await?
                 .cleanup()
-                .await;
+                .await?;
         }
+
+        Ok(())
     }
 }
 
@@ -273,54 +274,65 @@ mod tests {
     #[test]
     fn create_group() {
         run(async {
-            let channel = Channel::faker(ChannelTypes::Group).await;
-            let channel = channel.save().await.unwrap();
+            let channel = Channel::faker(ChannelTypes::Group)
+                .await
+                .save()
+                .await
+                .unwrap();
             let channel = Channel::find_one(channel.id).await.unwrap();
-            channel.cleanup().await;
+            channel.cleanup().await.unwrap();
         });
     }
 
     #[test]
     fn create_dm() {
         run(async {
-            let channel = Channel::faker(ChannelTypes::Direct).await;
-            let channel = channel.save().await.unwrap();
+            let channel = Channel::faker(ChannelTypes::Direct)
+                .await
+                .save()
+                .await
+                .unwrap();
             let channel = Channel::find_one(channel.id).await.unwrap();
-
-            channel.cleanup().await;
+            channel.cleanup().await.unwrap();
         });
     }
 
     #[test]
     fn create_text() {
         run(async {
-            let channel = Channel::faker(ChannelTypes::Text).await;
-            let channel = channel.save().await.unwrap();
+            let channel = Channel::faker(ChannelTypes::Text)
+                .await
+                .save()
+                .await
+                .unwrap();
             let channel = Channel::find_one(channel.id).await.unwrap();
-
-            channel.cleanup().await;
-        });
+            channel.cleanup().await.unwrap();
+        })
     }
 
     #[test]
     fn create_voice() {
         run(async {
-            let channel = Channel::faker(ChannelTypes::Voice).await;
-            let channel = channel.save().await.unwrap();
+            let channel = Channel::faker(ChannelTypes::Voice)
+                .await
+                .save()
+                .await
+                .unwrap();
             let channel = Channel::find_one(channel.id).await.unwrap();
-
-            channel.cleanup().await;
-        });
+            channel.cleanup().await.unwrap();
+        })
     }
 
     #[test]
     fn create_category() {
         run(async {
-            let channel = Channel::faker(ChannelTypes::Category).await;
-            let channel = channel.save().await.unwrap();
+            let channel = Channel::faker(ChannelTypes::Category)
+                .await
+                .save()
+                .await
+                .unwrap();
             let channel = Channel::find_one(channel.id).await.unwrap();
-
-            channel.cleanup().await;
-        });
+            channel.cleanup().await.unwrap();
+        })
     }
 }
