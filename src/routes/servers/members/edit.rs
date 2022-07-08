@@ -14,10 +14,10 @@ pub struct EditMemberOptions {
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path((server_id, member_id)): Path<(i64, i64)>,
+    Path((server_id, id)): Path<(i64, i64)>,
     ValidatedJson(data): ValidatedJson<EditMemberOptions>,
 ) -> Result<Json<Member>> {
-    let mut member = member_id.member(server_id).await?;
+    let mut member = id.member(server_id).await?;
     let p = Permissions::fetch(&user, server_id.into(), None).await?;
 
     if let Some(nickname) = &data.nickname {

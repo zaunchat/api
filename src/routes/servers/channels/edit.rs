@@ -13,14 +13,14 @@ pub struct EditServerChannelOptions {
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path((server_id, channel_id)): Path<(i64, i64)>,
+    Path((server_id, id)): Path<(i64, i64)>,
     ValidatedJson(data): ValidatedJson<EditServerChannelOptions>,
 ) -> Result<Json<Channel>> {
-    Permissions::fetch(&user, server_id.into(), channel_id.into())
+    Permissions::fetch(&user, server_id.into(), id.into())
         .await?
         .has(Permissions::MANAGE_CHANNELS)?;
 
-    let mut channel = channel_id.channel(None).await?;
+    let mut channel = id.channel(None).await?;
 
     if let Some(name) = data.name {
         channel.name = name.into();

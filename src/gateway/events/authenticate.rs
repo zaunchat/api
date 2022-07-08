@@ -28,18 +28,22 @@ pub async fn run(client: &mut Client, payload: ClientPayload) {
     client.user = Some(user.clone());
 
     let mut subscriptions = vec![user.id];
-    let mut channels = user.fetch_channels().await;
-    let servers = user.fetch_servers().await;
-    let server_ids: String = servers.iter().map(|s| s.id.to_string() + ",").collect();
+    let mut channels = user.fetch_channels().await.unwrap();
+    let servers = user.fetch_servers().await.unwrap();
 
-    if !server_ids.is_empty() {
-        let mut other_channels: Vec<Channel> = sqlx::query_as(&format!(
-            "SELECT * FROM channels WHERE server_id = ({})",
+    if !servers.is_empty() {
+        let mut server_ids: String = servers.iter().map(|s| s.id.to_string() + ",").collect();
+        server_ids.remove(server_ids.len() - 1);
+
+        let mut other_channels = Channel::query(&format!(
+            "SELECT * FROM {} WHERE server_id = ({})",
+            Channel::table_name(),
             server_ids
         ))
         .fetch_all(pool())
         .await
         .unwrap();
+
         channels.append(&mut other_channels);
     }
 

@@ -30,7 +30,7 @@ pub async fn create(
         return Err(Error::MaximumRoles);
     }
 
-    let mut role = Role::new(data.name.clone(), server_id);
+    let mut role = Role::new(data.name, server_id);
 
     role.permissions = data.permissions;
     role.hoist = data.hoist;

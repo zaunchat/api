@@ -14,9 +14,9 @@ pub struct EditGroupOptions {
 pub async fn edit(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<EditGroupOptions>,
-    Path(channel_id): Path<i64>,
+    Path(id): Path<i64>,
 ) -> Result<Json<Channel>> {
-    let mut group = channel_id.channel(user.id.into()).await?;
+    let mut group = id.channel(user.id.into()).await?;
 
     let permissions = Permissions::fetch(&user, None, group.id.into()).await?;
 

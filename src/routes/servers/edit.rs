@@ -13,10 +13,10 @@ pub struct EditServerOptions {
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path(server_id): Path<i64>,
+    Path(id): Path<i64>,
     ValidatedJson(data): ValidatedJson<EditServerOptions>,
 ) -> Result<Json<Server>> {
-    let mut server = server_id.server(user.id.into()).await?;
+    let mut server = id.server(user.id.into()).await?;
 
     Permissions::fetch_cached(&user, Some(&server), None)
         .await?
