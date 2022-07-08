@@ -3,6 +3,6 @@ use crate::gateway::{
     payload::{ClientPayload, Payload},
 };
 
-pub async fn run(client: &mut Client, _: ClientPayload) {
+pub async fn run(client: &Client, _: ClientPayload) {
     client.send(Payload::Pong).await.ok();
 }
