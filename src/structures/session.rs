@@ -11,9 +11,10 @@ pub struct Session {
     #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
     pub id: i64,
+    #[serde(skip)]
     pub token: String,
     #[opg(string)]
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde(skip)]
     pub user_id: i64,
 }
 
