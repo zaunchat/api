@@ -1,12 +1,12 @@
 use crate::config::*;
-use crate::database::redis::{connection, AsyncCommands};
+use crate::database::redis::*;
 use crate::structures::User;
 use nanoid::nanoid;
 use ormlite::model::*;
 use regex::Regex;
 use serde_json::json;
 
-const THREE_HOURS_IN_SECONDS: usize = 10800;
+const THREE_HOURS_IN_SECONDS: i64 = 10800;
 
 lazy_static! {
     static ref SPLIT_REGEX: Regex = Regex::new("([^@]+)(@.+)").unwrap();
@@ -59,8 +59,14 @@ pub async fn send(user: &User) -> bool {
         .unwrap();
 
     if res.status().is_success() {
-        let mut con = connection().await;
-        con.set_ex::<String, String, u32>(user.id.to_string(), code, THREE_HOURS_IN_SECONDS)
+        REDIS
+            .set::<(), _, _>(
+                user.id,
+                code,
+                Expiration::EX(THREE_HOURS_IN_SECONDS).into(),
+                None,
+                false,
+            )
             .await
             .is_ok()
     } else {
@@ -69,11 +75,9 @@ pub async fn send(user: &User) -> bool {
 }
 
 pub async fn verify(user_id: u64, code: &str) -> bool {
-    let mut con = connection().await;
-
-    match con.get::<String, String>(user_id.to_string()).await {
+    match REDIS.get::<String, _>(user_id.to_string()).await {
         Ok(token) if code == token => {
-            con.del::<String, u32>(user_id.to_string()).await.ok();
+            REDIS.del::<u32, _>(user_id.to_string()).await.ok();
             true
         }
         _ => false,
