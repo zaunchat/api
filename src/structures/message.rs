@@ -40,7 +40,9 @@ impl Message {
     pub async fn faker() -> Self {
         let user = User::faker();
         let channel = Channel::faker(ChannelTypes::Group).await;
-        let message = Self::new(channel.id, user.id);
+        let mut message = Self::new(channel.id, user.id);
+
+        message.content = "Hello world!".to_string().into();
 
         channel.save().await.unwrap();
         user.save().await.unwrap();
@@ -49,10 +51,11 @@ impl Message {
     }
 
     #[cfg(test)]
-    pub async fn cleanup(self) {
+    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
         use crate::utils::Ref;
-        self.author_id.user().await.unwrap().remove().await.unwrap();
-        self.channel_id.channel(None).await.unwrap().cleanup().await;
+        self.author_id.user().await?.remove().await?;
+        self.channel_id.channel(None).await?.cleanup().await?;
+        Ok(())
     }
 }
 
@@ -66,14 +69,9 @@ mod tests {
     #[test]
     fn create() {
         run(async {
-            let mut msg = Message::faker().await;
-
-            msg.content = "Hello world!".to_string().into();
-
-            let msg = msg.save().await.unwrap();
+            let msg = Message::faker().await.save().await.unwrap();
             let msg = Message::find_one(msg.id).await.unwrap();
-
-            msg.cleanup().await;
+            msg.cleanup().await.unwrap();
         });
     }
 }

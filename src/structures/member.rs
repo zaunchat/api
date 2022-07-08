@@ -66,9 +66,11 @@ impl Member {
     }
 
     #[cfg(test)]
-    pub async fn cleanup(self) {
+    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
         use crate::utils::Ref;
-        self.id.user().await.unwrap().remove().await.unwrap();
+        self.server_id.server(None).await?.remove().await?;
+        self.id.user().await?.remove().await?;
+        Ok(())
     }
 }
 
@@ -78,23 +80,22 @@ impl Base for Member {}
 mod tests {
     use super::*;
     use crate::tests::run;
-    use crate::utils::Ref;
 
     #[test]
     fn create() {
         run(async {
-            let member = Member::faker().await;
-            let member = member.save().await.unwrap();
+            let member = Member::faker().await.save().await.unwrap();
+
             let member = Member::select()
                 .filter("id = $1 AND server_id = $2")
                 .bind(member.id)
                 .bind(member.server_id)
                 .fetch_one(pool())
                 .await
-                .unwrap();
+                .expect("Cannot fetch member after it get saved");
 
-            member.cleanup().await;
-        });
+            member.cleanup().await.unwrap();
+        })
     }
 
     #[test]
@@ -113,14 +114,7 @@ mod tests {
 
             assert_eq!(roles.len(), 1);
 
-            member
-                .server_id
-                .server(None)
-                .await
-                .unwrap()
-                .remove()
-                .await
-                .unwrap();
+            member.cleanup().await.unwrap();
         });
     }
 }

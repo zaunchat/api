@@ -81,9 +81,10 @@ impl Server {
     }
 
     #[cfg(test)]
-    pub async fn cleanup(self) {
+    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
         use crate::utils::Ref;
-        self.owner_id.user().await.unwrap().remove().await.unwrap();
+        self.owner_id.user().await?.remove().await?;
+        Ok(())
     }
 }
 
@@ -97,10 +98,11 @@ mod tests {
     #[test]
     fn create() {
         run(async {
-            let server = Server::faker().await;
-            let server = server.save().await.unwrap();
-            let server = Server::find_one(server.id).await.unwrap();
-            server.cleanup().await;
+            let server = Server::faker().await.save().await.unwrap();
+            let server = Server::find_one(server.id)
+                .await
+                .expect("Server not found after save");
+            server.cleanup().await.unwrap();
         })
     }
 }

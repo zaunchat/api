@@ -38,9 +38,10 @@ impl Role {
     }
 
     #[cfg(test)]
-    pub async fn cleanup(self) {
+    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
         use crate::utils::Ref;
-        self.server_id.server(None).await.unwrap().cleanup().await;
+        self.server_id.server(None).await?.cleanup().await?;
+        Ok(())
     }
 }
 
@@ -54,11 +55,9 @@ mod tests {
     #[test]
     fn create() {
         run(async {
-            let role = Role::faker().await;
-            let role = role.save().await.unwrap();
+            let role = Role::faker().await.save().await.unwrap();
             let role = Role::find_one(role.id).await.unwrap();
-
-            role.cleanup().await;
+            role.cleanup().await.unwrap();
         })
     }
 }

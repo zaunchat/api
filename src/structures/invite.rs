@@ -51,16 +51,11 @@ impl Invite {
     }
 
     #[cfg(test)]
-    pub async fn cleanup(self) {
+    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
         use crate::utils::Ref;
-        self.inviter_id
-            .user()
-            .await
-            .unwrap()
-            .remove()
-            .await
-            .unwrap();
-        self.channel_id.channel(None).await.unwrap().cleanup().await;
+        self.inviter_id.user().await?.remove().await?;
+        self.channel_id.channel(None).await?.cleanup().await?;
+        Ok(())
     }
 }
 
@@ -74,11 +69,9 @@ mod tests {
     #[test]
     fn create() {
         run(async {
-            let invite = Invite::faker().await;
-            let invite = invite.save().await.unwrap();
+            let invite = Invite::faker().await.save().await.unwrap();
             let invite = Invite::find_one(invite.id).await.unwrap();
-
-            invite.cleanup().await;
+            invite.cleanup().await.unwrap();
         });
     }
 }
