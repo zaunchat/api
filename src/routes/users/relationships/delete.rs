@@ -1,41 +1,51 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
 pub async fn delete(Extension(mut user): Extension<User>, Path(id): Path<i64>) -> Result<()> {
-    match user.relations.0.get(&id) {
-        Some(&status) => {
-            let mut target = id.user().await?;
-            let target_status = target.relations.0.get(&user.id).unwrap();
+    let status = user.relations.0.get(&id);
 
-            if status != RelationshipStatus::BlockedByOther {
-                if target_status == &RelationshipStatus::Blocked {
-                    user.relations
-                        .0
-                        .insert(target.id, RelationshipStatus::BlockedByOther);
-                } else {
-                    target.relations.0.remove(&user.id);
-                    user.relations.0.remove(&target.id);
-                }
-
-                let mut tx = pool().begin().await?;
-
-                user.update_partial()
-                    .relations(user.relations.clone())
-                    .update(&mut tx)
-                    .await?;
-
-                target
-                    .update_partial()
-                    .relations(target.relations.clone())
-                    .update(&mut tx)
-                    .await?;
-
-                tx.commit().await?;
-            }
-
-            Ok(())
-        }
-        _ => Err(Error::UnknownUser),
+    if status.is_none() {
+        return Err(Error::UnknownUser);
     }
+
+    // He blocked you. you can't remove it by yourself
+    if status.unwrap() != &RelationshipStatus::BlockedByOther {
+        let mut target = id.user().await?;
+
+        if target.relations.0.get(&user.id).unwrap() == &RelationshipStatus::Blocked {
+            // If you trying to unblock him but he also blocked you thats will happen
+            user.relations
+                .0
+                .insert(target.id, RelationshipStatus::BlockedByOther);
+        } else {
+            target.relations.0.remove(&user.id);
+            user.relations.0.remove(&target.id);
+        }
+
+        let mut tx = pool().begin().await?;
+
+        let mut user = user
+            .update_partial()
+            .relations(user.relations.clone())
+            .update(&mut tx)
+            .await?;
+
+        let mut target = target
+            .update_partial()
+            .relations(target.relations.clone())
+            .update(&mut tx)
+            .await?;
+
+        tx.commit().await?;
+
+        user.relationship = target.relations.0.get(&user.id).copied();
+        target.relationship = user.relations.0.get(&target.id).copied();
+
+        publish(user.id, Payload::UserUpdate(target.clone())).await;
+        publish(target.id, Payload::UserUpdate(user)).await;
+    }
+
+    Ok(())
 }

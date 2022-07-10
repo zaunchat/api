@@ -32,7 +32,16 @@ pub async fn run(client: &Client, payload: ClientPayload) {
     let mut permissions = client.permissions.lock().await;
     let mut channels = user.fetch_channels().await.unwrap();
     let servers = user.fetch_servers().await.unwrap();
-    let users = user.fetch_relations().await.unwrap();
+    let users = user
+        .fetch_relations()
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|mut u| {
+            u.relationship = user.relations.0.get(&u.id).copied();
+            u
+        })
+        .collect();
 
     if !servers.is_empty() {
         let server_ids: Vec<i64> = servers.iter().map(|s| s.id).collect();

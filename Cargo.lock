@@ -1408,7 +1408,7 @@ dependencies = [
 [[package]]
 name = "ormlite-macro"
 version = "0.3.1"
-source = "git+https://github.com/abdulrahman1s/ormlite#087ed11287e64899996cea779466482013480c00"
+source = "git+https://github.com/abdulrahman1s/ormlite?rev=9f8ef977d3516c12e2cf7e35e7a484d7f5911c38#9f8ef977d3516c12e2cf7e35e7a484d7f5911c38"
 dependencies = [
  "derive_builder",
  "ormlite-core",

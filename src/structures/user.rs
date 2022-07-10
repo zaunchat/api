@@ -27,9 +27,12 @@ pub struct User {
     pub username: String,
     pub avatar: Option<String>,
     pub badges: Badges,
-    // Private fields
     #[serde(skip)]
     pub relations: Json<HashMap<i64, RelationshipStatus>>,
+    #[ormlite(skip)]
+    #[sqlx(default)]
+    pub relationship: Option<RelationshipStatus>,
+    // Private fields
     #[serde(skip)]
     pub email: String,
     #[serde(skip)]
@@ -93,7 +96,7 @@ impl User {
     }
 
     pub async fn fetch_relations(&self) -> Result<Vec<User>, ormlite::Error> {
-        let ids: Vec<i64> = self.relations.0.keys().copied().collect();
+        let ids: Vec<i64> = vec![]; //self.relations.0.keys().copied().collect();
 
         if ids.is_empty() {
             return Ok(vec![]);
