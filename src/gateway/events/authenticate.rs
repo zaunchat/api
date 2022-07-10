@@ -57,9 +57,7 @@ pub async fn run(client: &Client, payload: ClientPayload) {
     }
 
     for user in &users {
-        if user.relationship == Some(RelationshipStatus::Friend) {
-            subscriptions.push(user.id);
-        }
+        subscriptions.push(user.id);
     }
 
     for server in &servers {
