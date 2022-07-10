@@ -1,9 +1,14 @@
+use crate::config::MAX_BLOCKED;
 use crate::extractors::*;
 use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
 pub async fn block(Extension(mut user): Extension<User>, Path(id): Path<i64>) -> Result<()> {
+    if *MAX_BLOCKED <= user.relations.len() as u64 {
+        return Err(Error::MaximumBlocked);
+    }
+
     if Some(&RelationshipStatus::Blocked) == user.relations.0.get(&id) {
         return Ok(());
     }

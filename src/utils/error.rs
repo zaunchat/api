@@ -52,6 +52,8 @@ quick_error! {
         MaximumChannels { display("Maximum number of channels reached") }
         MaximumGroupMembers { display("Maximum number of group members reached") }
         MaximumBots { display("Maximum number of bots reached") }
+        MaximumFriendRequests { display("Maximum number of friend requests reached") }
+        MaximumBlocked { display("Maximum number of blocked user reached") }
     }
 }
 
