@@ -32,7 +32,7 @@ pub async fn run(client: &Client, payload: ClientPayload) {
     let mut permissions = client.permissions.lock().await;
     let mut channels = user.fetch_channels().await.unwrap();
     let servers = user.fetch_servers().await.unwrap();
-    let users = user
+    let users: Vec<User> = user
         .fetch_relations()
         .await
         .unwrap()
@@ -54,6 +54,12 @@ pub async fn run(client: &Client, payload: ClientPayload) {
             .unwrap();
 
         channels.append(&mut other_channels);
+    }
+
+    for user in &users {
+        if user.relationship == Some(RelationshipStatus::Friend) {
+            subscriptions.push(user.id);
+        }
     }
 
     for server in &servers {
