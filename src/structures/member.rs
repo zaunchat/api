@@ -40,17 +40,12 @@ impl Member {
             return vec![];
         }
 
-        // FIXME: Do this in efficient way
-        let mut roles: String = self.roles.iter().map(|&id| id.to_string() + ",").collect();
-        roles.remove(roles.len() - 1);
-
-        Role::query(&format!(
-            "SELECT * FROM roles WHERE server_id IN ({})",
-            roles
-        ))
-        .fetch_all(pool())
-        .await
-        .unwrap()
+        Role::select()
+            .filter("server_id IN ANY($1)")
+            .bind(self.roles.clone())
+            .fetch_all(pool())
+            .await
+            .unwrap()
     }
 
     #[cfg(test)]
