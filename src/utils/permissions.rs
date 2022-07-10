@@ -76,15 +76,18 @@ impl Permissions {
             if channel.is_dm() {
                 p.insert(*DEFAULT_PERMISSION_DM);
 
-                for id in channel.recipients.as_ref().unwrap() {
-                    if let Some(&status) = user.relations.0.get(id) {
-                        if status == RelationshipStatus::Blocked
-                            || status == RelationshipStatus::BlockedByOther
-                        {
-                            p.remove(Permissions::SEND_MESSAGES);
-                            break;
-                        }
-                    }
+                let target_id = channel
+                    .recipients
+                    .as_ref()
+                    .unwrap()
+                    .iter()
+                    .find(|&x| *x != user.id)
+                    .unwrap();
+
+                let status = user.relations.0.get(target_id).unwrap();
+
+                if status != &RelationshipStatus::Friend {
+                    p.remove(Permissions::SEND_MESSAGES);
                 }
             }
 
