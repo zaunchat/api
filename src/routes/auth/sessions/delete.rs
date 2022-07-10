@@ -1,7 +1,6 @@
 use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
-use crypto::util::fixed_time_eq;
 use serde::Deserialize;
 use validator::Validate;
 
@@ -17,7 +16,7 @@ pub async fn delete(
 ) -> Result<()> {
     let session = id.session(user.id).await?;
 
-    if !fixed_time_eq(session.token.as_bytes(), data.token.as_bytes()) {
+    if session.token != data.token {
         return Err(Error::InvalidToken);
     }
 

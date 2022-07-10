@@ -40,7 +40,6 @@ tower-http = { version = "0.3.0", features = ["cors"] }
 rust-argon2 = "1.0.0"
 governor = "0.4.2"
 validator = { version = "0.15", features = ["derive"] }
-rust-crypto = "0.2.36"
 
 # Utility
 dotenv = "0.15.0"
@@ -63,4 +62,4 @@ opg = { git = "https://github.com/abdulrahman1s/opg", rev = "24f72e7cf09da7cd61b
 
 
 [patch.crates-io]
-ormlite-macro = { git = "https://github.com/abdulrahman1s/ormlite" }
+ormlite-macro = { git = "https://github.com/abdulrahman1s/ormlite", rev = "9f8ef977d3516c12e2cf7e35e7a484d7f5911c38" }

@@ -1,5 +1,6 @@
 use crate::middlewares::ratelimit::RateLimitInfo;
 use axum::{
+    extract::rejection::JsonRejection,
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
@@ -27,6 +28,12 @@ quick_error! {
         MissingAccess { display("You missing access to perform this action ") }
         DatabaseError { display("Database cannot process this operation") }
 
+
+        Blocked
+        BlockedByOther
+        AlreadyFriends
+        AlreadySendRequest
+
         UnknownAccount
         UnknownBot
         UnknownChannel
@@ -46,6 +53,8 @@ quick_error! {
         MaximumChannels { display("Maximum number of channels reached") }
         MaximumGroupMembers { display("Maximum number of group members reached") }
         MaximumBots { display("Maximum number of bots reached") }
+        MaximumFriendRequests { display("Maximum number of friend requests reached") }
+        MaximumBlocked { display("Maximum number of blocked user reached") }
     }
 }
 
@@ -62,6 +71,12 @@ impl From<ormlite::Error> for Error {
     fn from(err: ormlite::Error) -> Self {
         log::error!("Database Error: {}", err);
         Self::DatabaseError
+    }
+}
+
+impl From<JsonRejection> for Error {
+    fn from(_: JsonRejection) -> Self {
+        Self::InvalidBody
     }
 }
 

@@ -75,7 +75,12 @@ impl Permissions {
         if let Some(channel) = channel {
             if channel.is_dm() {
                 p.insert(*DEFAULT_PERMISSION_DM);
-                // TODO: Check user relations
+
+                let status = user.relations.0.values().next().unwrap();
+
+                if status != &RelationshipStatus::Friend {
+                    p.remove(Permissions::SEND_MESSAGES);
+                }
             }
 
             if channel.is_group()

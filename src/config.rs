@@ -31,6 +31,7 @@ lazy_static! {
     // User related
     pub static ref MAX_FRIENDS: u64 = get!("MAX_FRIENDS", "1000").parse().unwrap();
     pub static ref MAX_BLOCKED: u64 = get!("MAX_BLOCKED", "1000").parse().unwrap();
+    pub static ref MAX_FRIEND_REQUESTS: u64 = get!("MAX_FRIEND_REQUESTS", "100").parse().unwrap();
 
     // Group related
     pub static ref MAX_GROUPS: u64 = get!("MAX_GROUPS", "100").parse().unwrap();
