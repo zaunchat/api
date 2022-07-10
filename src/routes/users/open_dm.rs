@@ -1,4 +1,5 @@
 use crate::extractors::*;
+use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
@@ -7,7 +8,7 @@ pub async fn open_dm(
     Path(id): Path<i64>,
 ) -> Result<Json<Channel>> {
     let channel = Channel::select()
-        .filter("type = $1 AND recipients @> $2 AND recipients @> $3")
+        .filter("type = $1 AND recipients @> ARRAY[$2, $3]::BIGINT[]")
         .bind(ChannelTypes::Direct)
         .bind(user.id)
         .bind(id)
@@ -19,7 +20,13 @@ pub async fn open_dm(
     }
 
     let target = id.user().await?;
-    let channel = Channel::new_dm(user.id, target.id);
+    let channel = Channel::new_dm(user.id, target.id).save().await?;
 
-    Ok(channel.save().await?.into())
+    publish(user.id, Payload::ChannelCreate(channel.clone())).await;
+
+    if target.id != user.id {
+        publish(target.id, Payload::ChannelCreate(channel.clone())).await;
+    }
+
+    Ok(channel.into())
 }

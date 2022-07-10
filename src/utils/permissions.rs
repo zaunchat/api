@@ -76,10 +76,14 @@ impl Permissions {
             if channel.is_dm() {
                 p.insert(*DEFAULT_PERMISSION_DM);
 
-                let status = user.relations.0.values().next().unwrap();
+                let recipients = channel.recipients.as_ref().unwrap();
+                let is_notes = || recipients[0] == recipients[1];
 
-                if status != &RelationshipStatus::Friend {
-                    p.remove(Permissions::SEND_MESSAGES);
+                if !is_notes() {
+                    let status = user.relations.0.get(&recipients[1]).unwrap();
+                    if status != &RelationshipStatus::Friend {
+                        p.remove(Permissions::SEND_MESSAGES);
+                    }
                 }
             }
 
