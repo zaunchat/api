@@ -53,10 +53,10 @@ pub fn document(app: Router) -> Router {
             ("users" / { user_id: u64 }): { GET: { 200: User, tags: {users} } },
             ("users" / { user_id: u64 } / "dm"): { GET: { 200: Channel, tags: {users} } },
             ("users/@me/relationships"): { GET: { 200: Vec<User>, tags: {users}} },
-            ("users/@me/relationships" / { user_id: u64 }): { 
+            ("users/@me/relationships" / { user_id: u64 }): {
               POST: { 200: None, tags: {users} },
               PUT: { 200: None, tags: {users} },
-              DELETE: { 200: None, tags: {users} }  
+              DELETE: { 200: None, tags: {users} }
             },
 
             // Channels
