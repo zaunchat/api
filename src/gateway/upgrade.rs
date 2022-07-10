@@ -143,6 +143,12 @@ async fn handle(ws: WebSocket) {
                         );
                     }
                 }
+                Payload::UserUpdate(u) => {
+                    // Newly friend, blocked, request
+                    if u.id != target_id && u.id != user.id {
+                        client.subscriptions.subscribe(u.id.to_string()).await.ok();
+                    }
+                }
                 _ => {}
             }
 

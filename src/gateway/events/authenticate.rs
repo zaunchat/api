@@ -1,5 +1,3 @@
-use fred::interfaces::PubsubInterface;
-
 use crate::database::pool;
 use crate::gateway::{
     client::Client,
@@ -7,6 +5,7 @@ use crate::gateway::{
 };
 use crate::structures::*;
 use crate::utils::Permissions;
+use fred::interfaces::PubsubInterface;
 
 pub async fn run(client: &Client, payload: ClientPayload) {
     if client.user.lock().await.is_some() {
@@ -33,21 +32,32 @@ pub async fn run(client: &Client, payload: ClientPayload) {
     let mut permissions = client.permissions.lock().await;
     let mut channels = user.fetch_channels().await.unwrap();
     let servers = user.fetch_servers().await.unwrap();
+    let users: Vec<User> = user
+        .fetch_relations()
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|mut u| {
+            u.relationship = user.relations.0.get(&u.id).copied();
+            u
+        })
+        .collect();
 
     if !servers.is_empty() {
-        let mut server_ids: String = servers.iter().map(|s| s.id.to_string() + ",").collect();
-        server_ids.remove(server_ids.len() - 1);
+        let server_ids: Vec<i64> = servers.iter().map(|s| s.id).collect();
 
-        let mut other_channels = Channel::query(&format!(
-            "SELECT * FROM {} WHERE server_id = ({})",
-            Channel::table_name(),
-            server_ids
-        ))
-        .fetch_all(pool())
-        .await
-        .unwrap();
+        let mut other_channels = Channel::select()
+            .filter("server_id = ANY($1)")
+            .bind(server_ids)
+            .fetch_all(pool())
+            .await
+            .unwrap();
 
         channels.append(&mut other_channels);
+    }
+
+    for user in &users {
+        subscriptions.push(user.id);
     }
 
     for server in &servers {
@@ -83,7 +93,7 @@ pub async fn run(client: &Client, payload: ClientPayload) {
     client
         .send(Payload::Ready {
             user,
-            users: vec![], // TODO:
+            users,
             servers,
             channels,
         })
