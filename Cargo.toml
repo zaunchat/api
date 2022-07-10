@@ -62,4 +62,4 @@ opg = { git = "https://github.com/abdulrahman1s/opg", rev = "24f72e7cf09da7cd61b
 
 
 [patch.crates-io]
-ormlite-macro = { git = "https://github.com/abdulrahman1s/ormlite" }
+ormlite-macro = { git = "https://github.com/abdulrahman1s/ormlite", rev = "9f8ef977d3516c12e2cf7e35e7a484d7f5911c38" }

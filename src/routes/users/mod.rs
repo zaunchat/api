@@ -8,6 +8,7 @@ pub fn routes() -> axum::Router {
 
     Router::new()
         .nest("/@me/relationships", relationships::routes())
+        .route("/", get(fetch::fetch_many))
         .route("/@me", get(fetch::fetch_me))
         .route("/:user_id", get(fetch::fetch_one))
         .route("/:user_id/dm", get(open_dm::open_dm))
