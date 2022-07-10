@@ -1,9 +1,14 @@
+use crate::config::MAX_FRIEND_REQUESTS;
 use crate::extractors::*;
 use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
 pub async fn add(Extension(mut user): Extension<User>, Path(id): Path<i64>) -> Result<()> {
+    if *MAX_FRIEND_REQUESTS <= user.relations.len() as u64 {
+        return Err(Error::MaximumFriendRequests);
+    }
+
     if let Some(&status) = user.relations.0.get(&id) {
         match status {
             RelationshipStatus::Friend => return Err(Error::AlreadyFriends),
