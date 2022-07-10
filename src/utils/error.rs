@@ -27,6 +27,12 @@ quick_error! {
         MissingAccess { display("You missing access to perform this action ") }
         DatabaseError { display("Database cannot process this operation") }
 
+
+        Blocked
+        BlockedByOther
+        AlreadyFriends
+        AlreadySendRequest
+
         UnknownAccount
         UnknownBot
         UnknownChannel

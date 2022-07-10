@@ -33,6 +33,7 @@ pub async fn run(client: &Client, payload: ClientPayload) {
     let mut permissions = client.permissions.lock().await;
     let mut channels = user.fetch_channels().await.unwrap();
     let servers = user.fetch_servers().await.unwrap();
+    let users = user.fetch_relations().await.unwrap();
 
     if !servers.is_empty() {
         let mut server_ids: String = servers.iter().map(|s| s.id.to_string() + ",").collect();
@@ -83,7 +84,7 @@ pub async fn run(client: &Client, payload: ClientPayload) {
     client
         .send(Payload::Ready {
             user,
-            users: vec![], // TODO:
+            users,
             servers,
             channels,
         })
