@@ -1,5 +1,6 @@
 use crate::middlewares::ratelimit::RateLimitInfo;
 use axum::{
+    extract::rejection::JsonRejection,
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
@@ -70,6 +71,12 @@ impl From<ormlite::Error> for Error {
     fn from(err: ormlite::Error) -> Self {
         log::error!("Database Error: {}", err);
         Self::DatabaseError
+    }
+}
+
+impl From<JsonRejection> for Error {
+    fn from(_: JsonRejection) -> Self {
+        Self::InvalidBody
     }
 }
 

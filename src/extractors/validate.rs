@@ -21,16 +21,10 @@ where
     type Rejection = Error;
 
     async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
-        let data = Json::from_request(req).await;
+        let data: Json<T> = Json::from_request(req).await?;
 
-        if let Ok(data) = data {
-            let data: Json<T> = data;
+        data.validate().map_err(|_| Error::InvalidBody)?;
 
-            data.validate().map_err(|_| Error::InvalidBody)?;
-
-            Ok(Self(data.0))
-        } else {
-            Err(Error::InvalidBody)
-        }
+        Ok(Self(data.0))
     }
 }
