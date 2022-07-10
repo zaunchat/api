@@ -49,6 +49,7 @@ pub fn document(app: Router) -> Router {
             },
 
             // Users
+            ("users"): { GET: { 200: Vec<User>, tags: {users}} },
             ("users/@me"): { GET: { 200: User, tags: {users} } },
             ("users" / { user_id: u64 }): { GET: { 200: User, tags: {users} } },
             ("users" / { user_id: u64 } / "dm"): { GET: { 200: Channel, tags: {users} } },
