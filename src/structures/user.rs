@@ -3,6 +3,19 @@ use crate::database::pool;
 use crate::utils::{snowflake, Badges};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+use sqlx::types::Json;
+use std::collections::HashMap;
+
+#[derive(Debug, Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, OpgModel, sqlx::Type)]
+#[repr(i32)]
+pub enum RelationshipStatus {
+    Friend = 0,
+    Incoming = 1,
+    Outgoing = 2,
+    Blocked = 3,
+    BlockedByOther = 4,
+}
 
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, FromRow, Model, Default, Clone, OpgModel)]
@@ -13,11 +26,14 @@ pub struct User {
     pub id: i64,
     pub username: String,
     pub avatar: Option<String>,
+    pub badges: Badges,
+    // Private fields
     #[serde(skip)]
-    pub password: String,
+    pub relations: Json<HashMap<i64, RelationshipStatus>>,
     #[serde(skip)]
     pub email: String,
-    pub badges: Badges,
+    #[serde(skip)]
+    pub password: String,
     #[serde(skip)]
     pub verified: bool,
 }
@@ -29,7 +45,6 @@ impl User {
             username,
             email,
             password,
-            verified: false,
             ..Default::default()
         }
     }
@@ -77,7 +92,14 @@ impl User {
             .await
     }
 
-    // pub async fn fetch_relations(&self) {}
+    pub async fn fetch_relations(&self) -> Result<Vec<User>, ormlite::Error> {
+        let ids: Vec<i64> = self.relations.0.keys().copied().collect();
+        User::select()
+            .filter("id IN $1")
+            .bind(ids)
+            .fetch_all(pool())
+            .await
+    }
 
     pub async fn fetch_by_token(token: &str) -> Option<User> {
         User::select()
