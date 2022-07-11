@@ -31,7 +31,7 @@ impl From<(i64, i64)> for Empty {
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(tag = "event")]
+#[serde(tag = "op", content = "d")]
 pub enum Payload {
     Pong,
     Authenticated,
@@ -60,7 +60,7 @@ pub enum Payload {
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(tag = "event")]
+#[serde(tag = "op", content = "d")]
 pub enum ClientPayload {
     Authenticate { token: String },
     Ping,
