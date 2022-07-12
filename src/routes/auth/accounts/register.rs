@@ -17,9 +17,14 @@ pub struct RegisterAccountOptions {
     pub invite_code: Option<String>,
 }
 
+#[derive(Serialize, OpgModel)]
+pub struct RegisterResponse {
+    pub pending_verification: bool,
+}
+
 pub async fn register(
     ValidatedJson(mut data): ValidatedJson<RegisterAccountOptions>,
-) -> Result<Json<User>> {
+) -> Result<Json<RegisterResponse>> {
     data.email = email::normalize(data.email);
 
     let invite = if *REQUIRE_INVITE_TO_REGISTER && data.invite_code.is_some() {
@@ -66,7 +71,12 @@ pub async fn register(
             .await?;
     }
 
-    Ok(Json(user.save().await?))
+    let user = user.save().await?;
+
+    Ok(RegisterResponse {
+        pending_verification: !user.verified,
+    }
+    .into())
 }
 
 #[cfg(test)]
@@ -77,16 +87,24 @@ mod tests {
     #[test]
     fn execute() {
         run(async {
+            let email = format!("test.{}@example.com", nanoid::nanoid!(6));
             let payload = RegisterAccountOptions {
                 username: "test".to_string(),
-                email: format!("test.{}@example.com", nanoid::nanoid!(6)),
+                email: email.clone(),
                 password: "passw0rd".to_string(),
                 invite_code: None,
             };
 
-            let result = register(ValidatedJson(payload)).await.unwrap();
+            register(ValidatedJson(payload)).await.unwrap();
 
-            result.0.remove().await.unwrap();
-        })
+            let user = User::select()
+                .filter("email = $1")
+                .bind(email::normalize(email))
+                .fetch_one(pool())
+                .await
+                .unwrap();
+
+            user.remove().await.unwrap();
+        });
     }
 }
