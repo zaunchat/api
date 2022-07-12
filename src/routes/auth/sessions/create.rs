@@ -12,9 +12,7 @@ pub struct CreateSessionOptions {
     pub email: String,
 }
 
-pub async fn create(
-    ValidatedJson(data): ValidatedJson<CreateSessionOptions>,
-) -> Result<Json<Session>> {
+pub async fn create(ValidatedJson(data): ValidatedJson<CreateSessionOptions>) -> Result<String> {
     let user = User::select()
         .filter("email = $1")
         .bind(data.email)
@@ -33,9 +31,9 @@ pub async fn create(
                 return Err(Error::MissingAccess);
             }
 
-            let session = Session::new(user.id);
+            let session = Session::new(user.id).save().await?;
 
-            Ok(session.save().await?.into())
+            Ok(session.token)
         }
         _ => Err(Error::UnknownAccount),
     }
@@ -49,18 +47,16 @@ mod tests {
     #[test]
     fn execute() {
         run(async {
-            let user = User::faker();
-            let email = user.email.clone();
-
-            user.save().await.unwrap();
+            let user = User::faker().save().await.unwrap();
 
             let payload = CreateSessionOptions {
-                email,
+                email: user.email.clone(),
                 password: "passw0rd".to_string(),
             };
-            let result = create(ValidatedJson(payload)).await.unwrap();
 
-            result.0.remove().await.unwrap();
+            create(ValidatedJson(payload)).await.unwrap();
+
+            user.remove().await.unwrap();
         })
     }
 }

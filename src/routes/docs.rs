@@ -38,10 +38,10 @@ pub fn document(app: Router) -> Router {
                 }
             },
             ("auth/accounts/register"): {
-                POST: { 200: User, body: accounts::register::RegisterAccountOptions, tags: {auth} }
+                POST: { 200: accounts::register::RegisterResponse, body: accounts::register::RegisterAccountOptions, tags: {auth} }
             },
             ("auth/sessions"): {
-                POST: { 200: Session, body: sessions::create::CreateSessionOptions, tags: {auth} }
+                POST: { 200: String, body: sessions::create::CreateSessionOptions, tags: {auth} }
             },
             ("auth/sessions" / { session_id: u64 }): {
                 DELETE: { 200: None, tags: {auth} },
