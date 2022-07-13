@@ -1,6 +1,6 @@
 use super::pool;
 use ormlite::model::*;
-use sqlx::Postgres;
+use sqlx::{Encode, Postgres, Type};
 
 #[async_trait]
 pub trait Base: Model<Postgres> {
@@ -22,7 +22,7 @@ pub trait Base: Model<Postgres> {
 
     async fn find_one<'a, Arg>(id: Arg) -> Result<Self, ormlite::Error>
     where
-        Arg: 'a + Send + sqlx::Encode<'a, sqlx::Postgres> + sqlx::Type<sqlx::Postgres>,
+        Arg: 'a + Send + Encode<'a, Postgres> + Type<Postgres>,
     {
         Self::get_one(id, pool()).await
     }
