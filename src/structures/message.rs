@@ -2,7 +2,11 @@ use super::*;
 use crate::utils::snowflake;
 use chrono::NaiveDateTime;
 use ormlite::model::*;
+use ormlite::types::Json;
 use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, OpgModel)]
+struct MessageAttachments(Vec<Attachment>);
 
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
@@ -12,6 +16,8 @@ pub struct Message {
     #[opg(string)]
     pub id: i64,
     pub content: Option<String>,
+    #[opg(custom = "MessageAttachments")]
+    pub attachments: Json<Vec<Attachment>>,
     #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
     pub channel_id: i64,
@@ -33,7 +39,7 @@ impl Message {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.content.is_none() /* && self.attachments.len() == 0 */
+        self.content.is_none() && self.attachments.0.is_empty()
     }
 
     #[cfg(test)]
