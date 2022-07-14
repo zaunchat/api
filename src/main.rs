@@ -51,16 +51,11 @@ async fn main() {
 
 pub mod tests {
     use once_cell::sync::Lazy;
-    use tokio::runtime::Runtime;
+    use tokio::runtime::{Builder, Runtime};
 
     pub fn run<F: std::future::Future>(f: F) -> F::Output {
-        static RT: Lazy<Runtime> = Lazy::new(|| {
-            tokio::runtime::Builder::new_multi_thread()
-                .enable_all()
-                .build()
-                .unwrap()
-        });
-
+        static RT: Lazy<Runtime> =
+            Lazy::new(|| Builder::new_multi_thread().enable_all().build().unwrap());
         RT.block_on(f)
     }
 

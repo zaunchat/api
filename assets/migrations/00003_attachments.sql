@@ -1,0 +1,7 @@
+ALTER TABLE attachments
+  DROP COLUMN meta,
+  DROP COLUMN tag,
+  DROP COLUMN name,
+  ADD COLUMN filename VARCHAR(64) NOT NULL DEFAULT 'Unknown',
+  ADD COLUMN height INTEGER,
+  ADD COLUMN width INTEGER;
