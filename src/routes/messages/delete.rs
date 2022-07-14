@@ -16,7 +16,24 @@ pub async fn delete(
         permissions.has(Permissions::MANAGE_MESSAGES)?;
     }
 
-    msg.remove().await?;
+    let attachment_ids: Vec<i64> = msg
+        .attachments
+        .0
+        .clone()
+        .into_iter()
+        .map(|a| a.id)
+        .collect();
+
+    let mut tx = pool().begin().await?;
+
+    sqlx::query("UPDATE attachments SET deleted = TRUE WHERE id = ANY($1)")
+        .bind(attachment_ids)
+        .execute(&mut tx)
+        .await?;
+
+    msg.delete(&mut tx).await?;
+
+    tx.commit().await?;
 
     publish(channel_id, Payload::MessageDelete(id.into())).await;
 

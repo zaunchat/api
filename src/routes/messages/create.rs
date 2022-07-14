@@ -8,7 +8,9 @@ use validator::Validate;
 #[derive(Deserialize, Validate, OpgModel)]
 pub struct CreateMessageOptions {
     #[validate(length(min = 1, max = 2000))]
-    content: String,
+    content: Option<String>,
+    #[validate(length(max = 5))]
+    attachments: Option<Vec<Attachment>>,
 }
 
 pub async fn create(
@@ -23,8 +25,11 @@ pub async fn create(
 
     let mut msg = Message::new(channel_id, user.id);
 
-    // TODO: Add more fields
-    msg.content = data.content.into();
+    msg.content = data.content;
+
+    if let Some(attachments) = data.attachments {
+        msg.attachments = ormlite::types::Json(attachments);
+    }
 
     if msg.is_empty() {
         return Err(Error::EmptyMessage);
