@@ -1,7 +1,7 @@
 use crate::middlewares::ratelimit::RateLimitInfo;
 use axum::{
     extract::rejection::JsonRejection,
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json, Response},
 };
 use quick_error::quick_error;
@@ -85,9 +85,11 @@ impl IntoResponse for Error {
         let status = match self {
             Error::RateLimited { .. } => StatusCode::TOO_MANY_REQUESTS,
             Error::InvalidToken => StatusCode::UNAUTHORIZED,
+            Error::InvalidBody => StatusCode::UNPROCESSABLE_ENTITY,
             _ => StatusCode::BAD_REQUEST,
         };
 
+        let mut headers = HeaderMap::new();
         let mut body = serde_json::json!({ "type": self });
         let msg = self.to_string();
 
@@ -95,6 +97,12 @@ impl IntoResponse for Error {
             body["message"] = serde_json::json!(msg);
         }
 
-        (status, Json(body)).into_response()
+        if let Error::RateLimited(info) = self {
+            headers.insert("X-RateLimit-Remaining", info.remaining.into());
+            headers.insert("X-RateLimit-Limit", info.limit.into());
+            headers.insert("Retry-After", info.retry_after.into());
+        }
+
+        (status, headers, Json(body)).into_response()
     }
 }
