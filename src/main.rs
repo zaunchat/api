@@ -35,7 +35,7 @@ async fn main() {
     let app = routes::mount(Router::new())
         .route("/ws", axum::routing::get(gateway::upgrade))
         .layer(middleware::from_fn(auth::handle))
-        .layer(middleware::from_fn(ratelimit::handle!(3, 1000 * 60)))
+        .layer(middleware::from_fn(ratelimit::handle!(50, 1000 * 60)))
         .layer(cors::handle())
         .fallback((|| async { StatusCode::NOT_FOUND }).into_service());
 
