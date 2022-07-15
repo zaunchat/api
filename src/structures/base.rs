@@ -4,16 +4,15 @@ use sqlx::{Encode, Postgres, Type};
 
 #[async_trait]
 pub trait Base: Model<Postgres> {
-    async fn count(filter: &str) -> u64 {
-        sqlx::query(&format!(
+    async fn count(filter: &str) -> Result<u64, sqlx::Error> {
+        Ok(sqlx::query(&format!(
             "SELECT COUNT(*) FROM {} WHERE {}",
             Self::table_name(),
             filter
         ))
         .execute(pool())
-        .await
-        .unwrap()
-        .rows_affected()
+        .await?
+        .rows_affected())
     }
 
     async fn save(self) -> Result<Self, ormlite::Error> {

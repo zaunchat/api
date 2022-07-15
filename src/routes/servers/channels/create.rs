@@ -22,9 +22,9 @@ pub async fn create(
         .await?
         .has(Permissions::MANAGE_CHANNELS)?;
 
-    let count = Channel::count(&format!("server_id = {}", server_id)).await;
+    let count = Channel::count(&format!("server_id = {}", server_id)).await?;
 
-    if count > *MAX_SERVER_CHANNELS {
+    if count >= *MAX_SERVER_CHANNELS {
         return Err(Error::MaximumChannels);
     }
 

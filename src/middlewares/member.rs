@@ -22,7 +22,7 @@ pub async fn handle<B: std::marker::Send>(
     let Path(ID { server_id, .. }) = req.extract::<Path<ID>>().await.unwrap();
     let user = req.extensions().get::<User>().unwrap();
 
-    let exists = Member::count(&format!("id = {} AND server_id = {}", user.id, server_id)).await;
+    let exists = Member::count(&format!("id = {} AND server_id = {}", user.id, server_id)).await?;
 
     if exists == 0 {
         return Err(Error::UnknownServer);
