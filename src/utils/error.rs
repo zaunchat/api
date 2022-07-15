@@ -10,6 +10,7 @@ use std::fmt::Debug;
 
 quick_error! {
     #[derive(Debug, Serialize, OpgModel)]
+    #[serde(tag = "type", rename_all = "snake_case")]
     pub enum Error {
         RateLimited(info: RateLimitInfo) {
             from(RateLimitInfo)
@@ -90,11 +91,11 @@ impl IntoResponse for Error {
         };
 
         let mut headers = HeaderMap::new();
-        let mut body = serde_json::json!({ "type": self });
+        let mut body = serde_json::json!(self);
         let msg = self.to_string();
 
         if msg.contains(' ') {
-            body["message"] = serde_json::json!(msg);
+            body["message"] = msg.into();
         }
 
         if let Error::RateLimited(info) = self {
