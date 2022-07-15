@@ -27,7 +27,7 @@ type RateLimiter =
     Limiter<String, DefaultKeyedStateStore<String>, DefaultClock, StateInformationMiddleware>;
 
 pub async fn ratelimit<B>(
-    mut req: Request<B>,
+    req: Request<B>,
     next: Next<B>,
     limiter: Arc<RateLimiter>,
 ) -> Result<Response, Error> {
@@ -59,11 +59,17 @@ pub async fn ratelimit<B>(
 
     if info.retry_after > 0 {
         log::info!("IP: {} has executed the rate limit", key);
-        req.extensions_mut().insert(info);
         return Err(Error::RateLimited(info));
     }
 
-    Ok(next.run(req).await)
+    let mut res = next.run(req).await;
+    let headers = res.headers_mut();
+
+    headers.insert("X-RateLimit-Remaining", info.remaining.into());
+    headers.insert("X-RateLimit-Limit", info.limit.into());
+    headers.insert("Retry-After", info.retry_after.into());
+
+    Ok(res)
 }
 
 #[macro_export]
