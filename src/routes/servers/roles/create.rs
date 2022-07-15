@@ -24,9 +24,9 @@ pub async fn create(
         .await?
         .has(Permissions::MANAGE_ROLES)?;
 
-    let count = Role::count(&format!("server_id = {}", server_id)).await;
+    let count = Role::count(&format!("server_id = {}", server_id)).await?;
 
-    if count > *MAX_SERVER_ROLES {
+    if count >= *MAX_SERVER_ROLES {
         return Err(Error::MaximumRoles);
     }
 
