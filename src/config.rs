@@ -7,7 +7,7 @@ fn is_true(mut v: String) -> bool {
 
 macro_rules! get {
     ($key:expr) => {{
-        env::var($key).expect(format!("{} is required", $key).as_str())
+        env::var($key).expect(&format!("{} is required", $key))
     }};
     ($key:expr, $default: expr) => {{
         env::var($key).unwrap_or($default.to_string())
