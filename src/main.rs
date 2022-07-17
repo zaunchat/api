@@ -22,7 +22,10 @@ use std::net::SocketAddr;
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
-    env_logger::builder().format_timestamp(None).init();
+
+    env_logger::Builder::from_env(env_logger::Env::default().filter_or("RUST_LOG", "info"))
+        .format_timestamp(None)
+        .init();
 
     log::info!("Connecting to database...");
     database::postgres::connect().await;
@@ -49,22 +52,30 @@ async fn main() {
         .unwrap();
 }
 
+#[cfg(test)]
 pub mod tests {
+    use super::*;
+    use log::LevelFilter;
     use once_cell::sync::Lazy;
     use tokio::runtime::{Builder, Runtime};
 
+    static RUNTIME: Lazy<Runtime> =
+        Lazy::new(|| Builder::new_multi_thread().enable_all().build().unwrap());
+
     pub fn run<F: std::future::Future>(f: F) -> F::Output {
-        static RT: Lazy<Runtime> =
-            Lazy::new(|| Builder::new_multi_thread().enable_all().build().unwrap());
-        RT.block_on(f)
+        RUNTIME.block_on(f)
     }
 
-    #[cfg(test)]
     #[ctor::ctor]
     fn setup() {
         dotenv::dotenv().ok();
-        env_logger::builder().format_timestamp(None).try_init().ok();
-        run(super::database::postgres::connect());
-        run(super::database::redis::connect());
+
+        env_logger::builder()
+            .filter_level(LevelFilter::Trace)
+            .format_timestamp(None)
+            .init();
+
+        run(database::postgres::connect());
+        run(database::redis::connect());
     }
 }

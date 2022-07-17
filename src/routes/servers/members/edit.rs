@@ -21,8 +21,8 @@ pub async fn edit(
     let p = Permissions::fetch(&user, server_id.into(), None).await?;
 
     if let Some(nickname) = &data.nickname {
-        p.has(Permissions::CHANGE_NICKNAME)?;
-        p.has(Permissions::MANAGE_NICKNAMES)?;
+        p.has(&[Permissions::CHANGE_NICKNAME, Permissions::MANAGE_NICKNAMES])?;
+
         member.nickname = if nickname.is_empty() {
             None
         } else {
@@ -31,7 +31,7 @@ pub async fn edit(
     }
 
     if let Some(ids) = &data.roles {
-        p.has(Permissions::MANAGE_ROLES)?;
+        p.has(&[Permissions::MANAGE_ROLES])?;
 
         let mut roles = Role::select()
             .filter("server_id = $1")

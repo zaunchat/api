@@ -55,7 +55,7 @@ mod tests {
             let value: String = REDIS.get("hello").await.unwrap();
 
             assert_eq!(value, "world");
-        })
+        });
     }
 
     #[test]
@@ -86,6 +86,6 @@ mod tests {
             let value: String = REDIS.get("hello").await.unwrap();
 
             assert_eq!(value, "world");
-        })
+        });
     }
 }

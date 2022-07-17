@@ -7,7 +7,7 @@ pub async fn delete(Extension(user): Extension<User>, Path(id): Path<i64>) -> Re
     let channel = id.channel(user.id.into()).await?;
 
     if channel.owner_id != Some(user.id) {
-        return Err(Error::MissingPermissions);
+        return Err(Error::MissingAccess);
     }
 
     channel.remove().await?;

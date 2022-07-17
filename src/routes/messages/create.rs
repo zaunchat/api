@@ -18,10 +18,9 @@ pub async fn create(
     ValidatedJson(data): ValidatedJson<CreateMessageOptions>,
     Path(channel_id): Path<i64>,
 ) -> Result<Json<Message>> {
-    let permissions = Permissions::fetch(&user, None, channel_id.into()).await?;
-
-    permissions.has(Permissions::VIEW_CHANNEL)?;
-    permissions.has(Permissions::SEND_MESSAGES)?;
+    Permissions::fetch(&user, None, channel_id.into())
+        .await?
+        .has(&[Permissions::VIEW_CHANNEL, Permissions::SEND_MESSAGES])?;
 
     let mut msg = Message::new(channel_id, user.id);
 

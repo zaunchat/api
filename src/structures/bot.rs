@@ -36,13 +36,6 @@ impl Bot {
 
         bot
     }
-
-    #[cfg(test)]
-    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
-        use crate::utils::Ref;
-        self.owner_id.user().await?.remove().await?;
-        Ok(())
-    }
 }
 
 impl Base for Bot {}
@@ -56,8 +49,7 @@ mod tests {
     fn create() {
         run(async {
             let bot = Bot::faker().await.save().await.unwrap();
-            let bot = Bot::find_one(bot.id).await.unwrap();
-            bot.cleanup().await.unwrap();
+            Bot::find_one(bot.id).await.unwrap();
         });
     }
 }

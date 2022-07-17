@@ -8,7 +8,7 @@ pub async fn delete(
 ) -> Result<()> {
     Permissions::fetch(&user, server_id.into(), None)
         .await?
-        .has(Permissions::MANAGE_INVITES)?;
+        .has(&[Permissions::MANAGE_INVITES])?;
 
     id.invite(server_id.into()).await?.remove().await?;
 

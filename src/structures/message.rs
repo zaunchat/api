@@ -55,14 +55,6 @@ impl Message {
 
         message
     }
-
-    #[cfg(test)]
-    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
-        use crate::utils::Ref;
-        self.author_id.user().await?.remove().await?;
-        self.channel_id.channel(None).await?.cleanup().await?;
-        Ok(())
-    }
 }
 
 impl Base for Message {}
@@ -76,8 +68,7 @@ mod tests {
     fn create() {
         run(async {
             let msg = Message::faker().await.save().await.unwrap();
-            let msg = Message::find_one(msg.id).await.unwrap();
-            msg.cleanup().await.unwrap();
+            Message::find_one(msg.id).await.unwrap();
         });
     }
 }

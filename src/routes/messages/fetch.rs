@@ -12,10 +12,9 @@ pub async fn fetch_one(
         return Err(Error::MissingAccess);
     }
 
-    let permissions = Permissions::fetch(&user, None, channel_id.into()).await?;
-
-    permissions.has(Permissions::VIEW_CHANNEL)?;
-    permissions.has(Permissions::READ_MESSAGE_HISTORY)?;
+    Permissions::fetch(&user, None, channel_id.into())
+        .await?
+        .has(&[Permissions::VIEW_CHANNEL, Permissions::READ_MESSAGE_HISTORY])?;
 
     Ok(Json(msg))
 }

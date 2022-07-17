@@ -2,10 +2,12 @@ use crate::extractors::*;
 use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
+use inter_struct::prelude::*;
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, OpgModel)]
+#[derive(Deserialize, Validate, OpgModel, StructMerge)]
+#[struct_merge("crate::structures::channel::Channel")]
 pub struct EditGroupOptions {
     #[validate(length(min = 3, max = 32))]
     name: Option<String>,
@@ -18,13 +20,11 @@ pub async fn edit(
 ) -> Result<Json<Channel>> {
     let mut group = id.channel(user.id.into()).await?;
 
-    let permissions = Permissions::fetch(&user, None, group.id.into()).await?;
+    Permissions::fetch(&user, None, group.id.into())
+        .await?
+        .has(&[Permissions::MANAGE_CHANNELS])?;
 
-    permissions.has(Permissions::MANAGE_CHANNELS)?;
-
-    if let Some(name) = data.name {
-        group.name = name.into();
-    }
+    group.merge(data);
 
     let group = group.update_all_fields(pool()).await?;
 

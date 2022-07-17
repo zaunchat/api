@@ -1,5 +1,8 @@
 use bitflags::bitflags;
-use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{
+    de::{Error, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use sqlx::{
     encode::IsNull,
     error::BoxDynError,
@@ -9,18 +12,12 @@ use sqlx::{
 use std::fmt;
 
 bitflags! {
+    #[derive(Default)]
     pub struct Badges: u64 {
        const STAFF = 1 << 1;
        const DEVELOPER = 1 << 2;
        const SUPPORTER = 1 << 3;
        const TRANSLATOR = 1 << 4;
-       const DEFAULT = 0;
-    }
-}
-
-impl Default for Badges {
-    fn default() -> Self {
-        Badges::DEFAULT
     }
 }
 
@@ -63,33 +60,30 @@ impl<'de> Visitor<'de> for BadgesVisitor {
 
     fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: Error,
     {
         self.visit_u64(v.parse().map_err(E::custom)?)
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: Error,
     {
         self.visit_u64(v.parse().map_err(E::custom)?)
     }
 
     fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: Error,
     {
         self.visit_u64(v as u64)
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: Error,
     {
-        match Badges::from_bits(v) {
-            Some(bits) => Ok(bits),
-            _ => Err(E::custom("Invalid bits")),
-        }
+        Badges::from_bits(v).ok_or_else(|| E::custom("Invalid bits"))
     }
 }
 

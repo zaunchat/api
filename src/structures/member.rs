@@ -35,9 +35,9 @@ impl Member {
         }
     }
 
-    pub async fn fetch_roles(&self) -> Vec<Role> {
+    pub async fn fetch_roles(&self) -> Result<Vec<Role>, ormlite::Error> {
         if self.roles.is_empty() {
-            return vec![];
+            return Ok(vec![]);
         }
 
         Role::select()
@@ -45,7 +45,6 @@ impl Member {
             .bind(self.roles.clone())
             .fetch_all(pool())
             .await
-            .unwrap()
     }
 
     #[cfg(test)]
@@ -58,14 +57,6 @@ impl Member {
         server.save().await.unwrap();
 
         member
-    }
-
-    #[cfg(test)]
-    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
-        use crate::utils::Ref;
-        self.server_id.server(None).await?.remove().await?;
-        self.id.user().await?.remove().await?;
-        Ok(())
     }
 }
 
@@ -81,15 +72,13 @@ mod tests {
         run(async {
             let member = Member::faker().await.save().await.unwrap();
 
-            let member = Member::select()
+            Member::select()
                 .filter("id = $1 AND server_id = $2")
                 .bind(member.id)
                 .bind(member.server_id)
                 .fetch_one(pool())
                 .await
-                .expect("Cannot fetch member after it get saved");
-
-            member.cleanup().await.unwrap();
+                .unwrap();
         })
     }
 
@@ -105,11 +94,9 @@ mod tests {
             member.roles.push(role.id);
 
             let member = member.save().await.unwrap();
-            let roles = member.fetch_roles().await;
+            let roles = member.fetch_roles().await.unwrap();
 
             assert_eq!(roles.len(), 1);
-
-            member.cleanup().await.unwrap();
         });
     }
 }

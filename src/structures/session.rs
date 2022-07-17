@@ -36,13 +36,6 @@ impl Session {
 
         session
     }
-
-    #[cfg(test)]
-    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
-        use crate::utils::Ref;
-        self.user_id.user().await?.remove().await?;
-        Ok(())
-    }
 }
 
 impl Base for Session {}
@@ -56,8 +49,7 @@ mod tests {
     fn create() {
         run(async {
             let session = Session::faker().await.save().await.unwrap();
-            let session = Session::find_one(session.id).await.unwrap();
-            session.cleanup().await.unwrap();
-        })
+            Session::find_one(session.id).await.unwrap();
+        });
     }
 }

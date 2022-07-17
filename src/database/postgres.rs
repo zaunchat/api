@@ -1,12 +1,12 @@
-use crate::config::DATABASE_URI;
+use crate::config::*;
 use once_cell::sync::OnceCell;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
-static DB: OnceCell<Pool<Postgres>> = OnceCell::new();
+static POOL: OnceCell<Pool<Postgres>> = OnceCell::new();
 
 pub async fn connect() {
     let pool = PgPoolOptions::new()
-        .max_connections(100)
+        .max_connections(*DATABASE_POOL_SIZE)
         .connect(&*DATABASE_URI)
         .await
         .expect("Couldn't connect to database");
@@ -18,9 +18,9 @@ pub async fn connect() {
         .await
         .expect("Failed to run the migration");
 
-    DB.set(pool).unwrap();
+    POOL.set(pool).unwrap();
 }
 
 pub fn pool() -> &'static Pool<Postgres> {
-    DB.get().unwrap()
+    POOL.get().unwrap()
 }

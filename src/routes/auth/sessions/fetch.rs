@@ -35,8 +35,6 @@ mod tests {
             assert_eq!(results.0.len(), 1);
 
             fetch_one(Extension(user), Path(session.id)).await.unwrap();
-
-            session.cleanup().await.unwrap();
         })
     }
 }

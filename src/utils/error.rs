@@ -1,3 +1,4 @@
+use super::Permissions;
 use crate::middlewares::ratelimit::RateLimitInfo;
 use axum::{
     extract::rejection::JsonRejection,
@@ -21,7 +22,11 @@ quick_error! {
         AccountVerificationRequired { display("You need to verify your account in order to perform this action") }
         InvalidToken { display("Unauthorized. Provide a valid token and try again") }
         EmailAlreadyInUse { display("This email already in use") }
-        MissingPermissions { display("You lack permissions to perform that action") }
+
+        MissingPermissions(missing: Vec<Permissions>) {
+            display("You lack permissions to perform that action, missing: {:?}", missing)
+        }
+
         EmptyMessage { display("Cannot send an empty message") }
         RequireInviteCode { display("You must have an invite code to perform this action") }
         InviteAlreadyTaken { display("This invite already used") }

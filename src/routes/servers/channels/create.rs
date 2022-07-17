@@ -20,7 +20,7 @@ pub async fn create(
 ) -> Result<Json<Channel>> {
     Permissions::fetch(&user, server_id.into(), None)
         .await?
-        .has(Permissions::MANAGE_CHANNELS)?;
+        .has(&[Permissions::MANAGE_CHANNELS])?;
 
     let count = Channel::count(&format!("server_id = {}", server_id)).await?;
 

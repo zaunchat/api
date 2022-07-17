@@ -1,6 +1,6 @@
 tasks:
   - init: make dev
-    command: cargo test
+    command: make test
 vscode:
   extensions:
     - streetsidesoftware.code-spell-checker
