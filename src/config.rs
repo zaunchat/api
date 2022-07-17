@@ -1,46 +1,53 @@
-use std::env;
-
-fn is_true(mut v: String) -> bool {
-    v = v.to_lowercase();
-    v == "true" || v == "yes"
+macro_rules! config {
+    ($($name:ident $t:tt $($default:expr)?),+) => {
+            lazy_static! {
+                $(
+                 pub static ref $name: $t = std::env::var(stringify!($name))
+                    .unwrap_or_else(|_| {
+                        $( if true { return $default.to_string(); } )?
+                        panic!("{} is required", stringify!($name));
+                    })
+                    .parse::<$t>()
+                    .unwrap();
+                )+
+            }
+    };
 }
 
-macro_rules! get {
-    ($key:expr) => {{
-        env::var($key).expect(&format!("{} is required", $key))
-    }};
-    ($key:expr, $default: expr) => {{
-        env::var($key).unwrap_or($default.to_string())
-    }};
-}
+config! {
+    // Networking
+    PORT u32 8080,
+    TRUST_CLOUDFLARE bool false,
 
-lazy_static! {
-    pub static ref DATABASE_URI: String = get!("DATABASE_URI", "postgres://postgres:postgres@localhost:5432");
-    pub static ref REDIS_URI: String = get!("REDIS_URI", "redis://localhost:6379");
-    pub static ref REDIS_POOL_SIZE: usize = get!("REDIS_POOL_SIZE", "100").parse().unwrap();
-    pub static ref CAPTCHA_ENABLED: bool = is_true(get!("CAPTCHA_ENABLED", "false"));
-    pub static ref CAPTCHA_TOKEN: String = get!("CAPTCHA_TOKEN");
-    pub static ref CAPTCHA_KEY: String = get!("CAPTCHA_KEY");
-    pub static ref PORT: String = get!("PORT", "8080");
-    pub static ref EMAIL_VERIFICATION: bool = is_true(get!("EMAIL_VERIFICATION", "false"));
-    pub static ref REQUIRE_INVITE_TO_REGISTER: bool =
-        is_true(get!("REQUIRE_INVITE_TO_REGISTER", "false"));
-    pub static ref SENDINBLUE_API_KEY: String = get!("SENDINBLUE_API_KEY");
-    pub static ref TRUST_CLOUDFLARE: bool = is_true(get!("TRUST_CLOUDFLARE", "false"));
+    // Database
+    DATABASE_URI String "postgres://postgres:postgres@localhost",
+    REDIS_URI String "redis://localhost:6379",
+    REDIS_POOL_SIZE usize 100,
+    DATABASE_POOL_SIZE u32 100,
+
+    // Captcha
+    CAPTCHA_ENABLED bool false,
+    CAPTCHA_TOKEN String,
+    CAPTCHA_KEY String,
+
+    // Email
+    SENDINBLUE_API_KEY String,
+    EMAIL_VERIFICATION bool false,
+    REQUIRE_INVITE_TO_REGISTER bool false,
 
     // User related
-    pub static ref MAX_FRIENDS: u64 = get!("MAX_FRIENDS", "1000").parse().unwrap();
-    pub static ref MAX_BLOCKED: u64 = get!("MAX_BLOCKED", "1000").parse().unwrap();
-    pub static ref MAX_FRIEND_REQUESTS: u64 = get!("MAX_FRIEND_REQUESTS", "100").parse().unwrap();
+    MAX_FRIENDS u64 1000,
+    MAX_BLOCKED u64 1000,
+    MAX_FRIEND_REQUESTS u64 100,
 
     // Group related
-    pub static ref MAX_GROUPS: u64 = get!("MAX_GROUPS", "100").parse().unwrap();
-    pub static ref MAX_GROUP_MEMBERS: u64 = get!("MAX_GROUP_MEMBERS", "50").parse().unwrap();
+    MAX_GROUPS u64 100,
+    MAX_GROUP_MEMBERS u64 50,
 
     // Server related
-    pub static ref MAX_SERVERS: u64 = get!("MAX_SERVERS", "100").parse().unwrap();
-    pub static ref MAX_SERVER_MEMBERS: u64 = get!("MAX_SERVER_MEMBERS", "10000").parse().unwrap();
-    pub static ref MAX_SERVER_CHANNELS: u64 = get!("MAX_SERVER_CHANNELS", "200").parse().unwrap();
-    pub static ref MAX_SERVER_ROLES: u64 = get!("MAX_SERVER_ROLES", "200").parse().unwrap();
-    pub static ref MAX_SERVER_EMOJIS: u64 = get!("MAX_SERVER_EMOJIS", "150").parse().unwrap();
+    MAX_SERVERS u64 100,
+    MAX_SERVER_MEMBERS u64 10000,
+    MAX_SERVER_CHANNELS u64 100,
+    MAX_SERVER_ROLES u64 100,
+    MAX_SERVER_EMOJIS u64 150
 }

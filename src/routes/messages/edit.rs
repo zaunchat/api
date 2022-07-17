@@ -20,12 +20,12 @@ pub async fn edit(
     let mut msg = id.message().await?;
 
     if msg.author_id != user.id || msg.channel_id != channel_id {
-        return Err(Error::MissingPermissions);
+        return Err(Error::MissingAccess);
     }
 
     Permissions::fetch(&user, None, channel_id.into())
         .await?
-        .has(Permissions::VIEW_CHANNEL)?;
+        .has(&[Permissions::VIEW_CHANNEL])?;
 
     msg.content = data.content.into();
     msg.edited_at = Some(Utc::now().naive_utc());

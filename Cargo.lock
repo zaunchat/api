@@ -36,6 +36,7 @@ dependencies = [
  "fred",
  "futures",
  "governor",
+ "inter-struct",
  "lazy_static",
  "log",
  "nanoid",
@@ -1040,6 +1041,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "inter-struct"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "322eece48523a09060b7572296a3423bb6fc963462cfc8bf5fc6117510e131cf"
+dependencies = [
+ "inter-struct-codegen",
+]
+
+[[package]]
+name = "inter-struct-codegen"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58ce21bc89c44afac3bdf0cb5c363b4b91cef34e14aa612f7a17bc55f42f1ab7"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

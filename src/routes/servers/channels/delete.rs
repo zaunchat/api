@@ -11,7 +11,7 @@ pub async fn delete(
 
     Permissions::fetch(&user, server_id.into(), id.into())
         .await?
-        .has(Permissions::MANAGE_CHANNELS)?;
+        .has(&[Permissions::MANAGE_CHANNELS])?;
 
     channel.remove().await?;
 

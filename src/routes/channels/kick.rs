@@ -9,9 +9,10 @@ pub async fn kick(
 ) -> Result<()> {
     let target = target_id.user().await?;
     let mut group = group_id.channel(user.id.into()).await?;
-    let permissions = Permissions::fetch(&user, None, group.id.into()).await?;
 
-    permissions.has(Permissions::KICK_MEMBERS)?;
+    Permissions::fetch_cached(&user, None, Some(&group))
+        .await?
+        .has(&[Permissions::KICK_MEMBERS])?;
 
     if let Some(recipients) = group.recipients.as_mut() {
         let exists = recipients

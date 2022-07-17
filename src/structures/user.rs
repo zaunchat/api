@@ -132,12 +132,6 @@ impl User {
         user.verified = true;
         user
     }
-
-    #[cfg(test)]
-    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
-        self.remove().await?;
-        Ok(())
-    }
 }
 
 impl Base for User {}
@@ -151,8 +145,7 @@ mod tests {
     fn create() {
         run(async {
             let user = User::faker().save().await.unwrap();
-            let user = User::find_one(user.id).await.unwrap();
-            user.cleanup().await.unwrap();
-        })
+            User::find_one(user.id).await.unwrap();
+        });
     }
 }

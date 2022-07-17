@@ -13,6 +13,10 @@ use futures::{
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
+lazy_static! {
+    static ref DEFAULT_PERMISSION: Permissions = Permissions::all();
+}
+
 pub struct Client {
     pub permissions: Mutex<HashMap<i64, Permissions>>,
     pub user: Mutex<Option<User>>,
@@ -42,15 +46,13 @@ impl Client {
 
             let payload: Payload = serde_json::from_str(&payload.as_string().unwrap()).unwrap();
             let mut permissions = self.permissions.lock().await;
-            let p = permissions
-                .get(&target_id)
-                .unwrap_or(&Permissions::ADMINISTRATOR);
+            let p = permissions.get(&target_id).unwrap_or(&DEFAULT_PERMISSION);
 
             match &payload {
                 Payload::MessageCreate(_)
                 | Payload::MessageUpdate(_)
                 | Payload::MessageDelete(_) => {
-                    if p.has(Permissions::VIEW_CHANNEL).is_err() {
+                    if !p.contains(Permissions::VIEW_CHANNEL) {
                         continue;
                     }
                 }

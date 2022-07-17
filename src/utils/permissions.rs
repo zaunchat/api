@@ -1,7 +1,10 @@
 use crate::structures::*;
 use crate::utils::{Error, Ref, Result};
 use bitflags::bitflags;
-use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{
+    de::{Error as SerdeError, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use sqlx::{
     encode::IsNull,
     error::BoxDynError,
@@ -11,8 +14,8 @@ use sqlx::{
 use std::fmt;
 
 bitflags! {
+    #[derive(Default)]
     pub struct Permissions: u64 {
-          const ADMINISTRATOR = 1 << 0;
           const VIEW_CHANNEL = 1 << 1;
           const SEND_MESSAGES = 1 << 2;
           const READ_MESSAGE_HISTORY = 1 << 3;
@@ -28,19 +31,16 @@ bitflags! {
           const KICK_MEMBERS = 1 << 13;
           const CHANGE_NICKNAME = 1 << 14;
           const INVITE_OTHERS = 1 << 15;
-          const DEFAULT = 0;
     }
 }
 
 lazy_static! {
-    pub static ref DEFAULT_PERMISSION_DM: Permissions = Permissions::DEFAULT
-        | Permissions::VIEW_CHANNEL
+    pub static ref DEFAULT_PERMISSION_DM: Permissions = Permissions::VIEW_CHANNEL
         | Permissions::SEND_MESSAGES
         | Permissions::EMBED_LINKS
         | Permissions::UPLOAD_FILES
         | Permissions::READ_MESSAGE_HISTORY;
-    pub static ref DEFAULT_PERMISSION_EVERYONE: Permissions = Permissions::DEFAULT
-        | Permissions::VIEW_CHANNEL
+    pub static ref DEFAULT_PERMISSION_EVERYONE: Permissions = Permissions::VIEW_CHANNEL
         | Permissions::SEND_MESSAGES
         | Permissions::EMBED_LINKS
         | Permissions::UPLOAD_FILES
@@ -53,13 +53,13 @@ impl Permissions {
         server: Option<&Server>,
         channel: Option<&Channel>,
     ) -> Result<Permissions> {
-        let mut p = Permissions::DEFAULT;
+        let mut p = Permissions::default();
 
         if let Some(server) = server {
-            p.set(Permissions::ADMINISTRATOR, server.owner_id == user.id);
+            p.set(Permissions::all(), server.owner_id == user.id);
             p.insert(server.permissions);
 
-            if p.contains(Permissions::ADMINISTRATOR) {
+            if p.is_all() {
                 return Ok(p);
             }
 
@@ -94,7 +94,7 @@ impl Permissions {
             {
                 // for group owners
                 if channel.owner_id == Some(user.id) {
-                    p.set(Permissions::ADMINISTRATOR, true);
+                    p = Permissions::all();
                     return Ok(p);
                 }
 
@@ -153,9 +153,21 @@ impl Permissions {
         Permissions::fetch_cached(user, server.as_ref(), channel.as_ref()).await
     }
 
-    pub fn has(&self, bits: Permissions) -> Result<()> {
-        if !self.contains(Permissions::ADMINISTRATOR) && !self.contains(bits) {
-            return Err(Error::MissingPermissions);
+    pub fn has(self, bits: &[Permissions]) -> Result<()> {
+        if self.is_all() {
+            return Ok(());
+        }
+
+        let mut missing = vec![];
+
+        for &bit in bits {
+            if !self.contains(bit) {
+                missing.push(bit);
+            }
+        }
+
+        if !missing.is_empty() {
+            return Err(Error::MissingPermissions(missing));
         }
 
         Ok(())
@@ -181,12 +193,6 @@ impl<'r> Decode<'r, Postgres> for Permissions {
     }
 }
 
-impl Default for Permissions {
-    fn default() -> Self {
-        Permissions::DEFAULT
-    }
-}
-
 impl Serialize for Permissions {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -207,33 +213,30 @@ impl<'de> Visitor<'de> for PermissionsVisitor {
 
     fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: SerdeError,
     {
         self.visit_u64(v.parse().map_err(E::custom)?)
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: SerdeError,
     {
         self.visit_u64(v.parse().map_err(E::custom)?)
     }
 
     fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: SerdeError,
     {
         self.visit_u64(v as u64)
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: SerdeError,
     {
-        match Permissions::from_bits(v) {
-            Some(bits) => Ok(bits),
-            _ => Err(E::custom("Invalid bits")),
-        }
+        Permissions::from_bits(v).ok_or_else(|| E::custom("Invalid bits"))
     }
 }
 

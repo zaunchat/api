@@ -3,10 +3,12 @@ use crate::extractors::*;
 use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
+use inter_struct::prelude::*;
 use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, OpgModel)]
+#[derive(Deserialize, Validate, OpgModel, StructMerge)]
+#[struct_merge("crate::structures::role::Role")]
 pub struct CreateRoleOptions {
     #[validate(length(min = 1, max = 32))]
     name: String,
@@ -22,7 +24,7 @@ pub async fn create(
 ) -> Result<Json<Role>> {
     Permissions::fetch(&user, server_id.into(), None)
         .await?
-        .has(Permissions::MANAGE_ROLES)?;
+        .has(&[Permissions::MANAGE_ROLES])?;
 
     let count = Role::count(&format!("server_id = {}", server_id)).await?;
 
@@ -30,11 +32,9 @@ pub async fn create(
         return Err(Error::MaximumRoles);
     }
 
-    let mut role = Role::new(data.name, server_id);
+    let mut role = Role::new(data.name.clone(), server_id);
 
-    role.permissions = data.permissions;
-    role.hoist = data.hoist;
-    role.color = data.color;
+    role.merge(data);
 
     let role = role.save().await?;
 

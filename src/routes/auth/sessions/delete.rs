@@ -46,8 +46,6 @@ mod tests {
             )
             .await
             .unwrap();
-
-            session.cleanup().await.unwrap();
         })
     }
 }

@@ -53,7 +53,7 @@ futures = "0.3"
 ctor = "0.1.22"
 rs-snowflake = "0.6.0"
 chrono = { version = "0.4.19", features = ["serde"] }
-
+inter-struct = "0.2.0"
 
 # Docs
 opg = { git = "https://github.com/abdulrahman1s/opg", rev = "24f72e7cf09da7cd61b71aedaa14383502559612" }

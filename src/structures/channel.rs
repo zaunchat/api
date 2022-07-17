@@ -238,30 +238,6 @@ impl Channel {
             _ => panic!("Unsupported type"),
         }
     }
-
-    #[cfg(test)]
-    pub async fn cleanup(self) -> Result<(), crate::utils::Error> {
-        use crate::utils::Ref;
-
-        if self.is_group() || self.is_dm() {
-            for id in self.recipients.as_ref().unwrap() {
-                id.user().await?.remove().await?;
-            }
-
-            if self.owner_id.is_none() {
-                self.remove().await?;
-            }
-        } else if self.in_server() {
-            self.server_id
-                .unwrap()
-                .server(None)
-                .await?
-                .cleanup()
-                .await?;
-        }
-
-        Ok(())
-    }
 }
 
 impl Base for Channel {}
@@ -279,8 +255,7 @@ mod tests {
                 .save()
                 .await
                 .unwrap();
-            let channel = Channel::find_one(channel.id).await.unwrap();
-            channel.cleanup().await.unwrap();
+            Channel::find_one(channel.id).await.unwrap();
         });
     }
 
@@ -292,8 +267,7 @@ mod tests {
                 .save()
                 .await
                 .unwrap();
-            let channel = Channel::find_one(channel.id).await.unwrap();
-            channel.cleanup().await.unwrap();
+            Channel::find_one(channel.id).await.unwrap();
         });
     }
 
@@ -305,8 +279,7 @@ mod tests {
                 .save()
                 .await
                 .unwrap();
-            let channel = Channel::find_one(channel.id).await.unwrap();
-            channel.cleanup().await.unwrap();
+            Channel::find_one(channel.id).await.unwrap();
         })
     }
 
@@ -318,8 +291,7 @@ mod tests {
                 .save()
                 .await
                 .unwrap();
-            let channel = Channel::find_one(channel.id).await.unwrap();
-            channel.cleanup().await.unwrap();
+            Channel::find_one(channel.id).await.unwrap();
         })
     }
 
@@ -331,8 +303,7 @@ mod tests {
                 .save()
                 .await
                 .unwrap();
-            let channel = Channel::find_one(channel.id).await.unwrap();
-            channel.cleanup().await.unwrap();
+            Channel::find_one(channel.id).await.unwrap();
         })
     }
 }

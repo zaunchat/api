@@ -17,7 +17,7 @@ pub async fn create(
 
     Permissions::fetch(&user, channel.server_id, channel.id.into())
         .await?
-        .has(Permissions::INVITE_OTHERS)?;
+        .has(&[Permissions::INVITE_OTHERS])?;
 
     let invite = Invite::new(user.id, channel.id, channel.server_id);
 
