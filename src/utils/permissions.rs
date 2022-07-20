@@ -281,3 +281,29 @@ impl OpgModel for Permissions {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn all() {
+        assert!(bits![ALL].is_all());
+    }
+
+    #[test]
+    fn default() {
+        assert_eq!(bits![], Permissions::default());
+    }
+
+    #[test]
+    fn one_parameter() {
+        assert!(Permissions::VIEW_CHANNEL.contains(bits![VIEW_CHANNEL]));
+    }
+
+    #[test]
+    fn multiple_parameters() {
+        let p = Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES;
+        assert!(p.contains(bits![VIEW_CHANNEL, SEND_MESSAGES]));
+    }
+}
