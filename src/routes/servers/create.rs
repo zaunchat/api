@@ -38,7 +38,7 @@ pub async fn create(
 
     tx.commit().await?;
 
-    publish(user.id, Payload::ServerCreate(server.clone())).await;
+    Payload::ServerCreate(server.clone()).to(user.id).await;
 
     Ok(Json(server))
 }

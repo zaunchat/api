@@ -52,7 +52,9 @@ pub async fn edit(
 
     let member = member.update_all_fields(pool()).await?;
 
-    publish(server_id, Payload::ServerMemberUpdate(member.clone())).await;
+    Payload::ServerMemberUpdate(member.clone())
+        .to(server_id)
+        .await;
 
     Ok(Json(member))
 }

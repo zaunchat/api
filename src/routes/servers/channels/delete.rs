@@ -15,7 +15,9 @@ pub async fn delete(
 
     channel.remove().await?;
 
-    publish(server_id, Payload::ChannelDelete((id, server_id).into())).await;
+    Payload::ChannelDelete((id, server_id).into())
+        .to(server_id)
+        .await;
 
     Ok(())
 }

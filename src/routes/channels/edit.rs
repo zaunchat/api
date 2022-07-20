@@ -28,7 +28,7 @@ pub async fn edit(
 
     let group = group.update_all_fields(pool()).await?;
 
-    publish(group.id, Payload::ChannelUpdate(group.clone())).await;
+    Payload::ChannelUpdate(group.clone()).to(group.id).await;
 
     Ok(Json(group))
 }

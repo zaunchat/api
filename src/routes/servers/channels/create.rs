@@ -37,7 +37,7 @@ pub async fn create(
 
     let channel = channel.save().await?;
 
-    publish(server_id, Payload::ChannelCreate(channel.clone())).await;
+    Payload::ChannelCreate(channel.clone()).to(server_id).await;
 
     Ok(Json(channel))
 }

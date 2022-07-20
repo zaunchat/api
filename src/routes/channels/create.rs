@@ -18,7 +18,7 @@ pub async fn create(
     let group = Channel::new_group(user.id, data.name).save().await?;
 
     for id in group.recipients.as_ref().unwrap() {
-        publish(*id, Payload::ChannelCreate(group.clone())).await;
+        Payload::ChannelCreate(group.clone()).to(*id).await;
     }
 
     Ok(Json(group))

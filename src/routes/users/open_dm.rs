@@ -22,10 +22,10 @@ pub async fn open_dm(
     let target = id.user().await?;
     let channel = Channel::new_dm(user.id, target.id).save().await?;
 
-    publish(user.id, Payload::ChannelCreate(channel.clone())).await;
+    Payload::ChannelCreate(channel.clone()).to(user.id).await;
 
     if target.id != user.id {
-        publish(target.id, Payload::ChannelCreate(channel.clone())).await;
+        Payload::ChannelCreate(channel.clone()).to(target.id).await;
     }
 
     Ok(channel.into())

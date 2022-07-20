@@ -43,8 +43,8 @@ pub async fn delete(Extension(mut user): Extension<User>, Path(id): Path<i64>) -
         user.relationship = target.relations.0.get(&user.id).copied();
         target.relationship = user.relations.0.get(&target.id).copied();
 
-        publish(user.id, Payload::UserUpdate(target.clone())).await;
-        publish(target.id, Payload::UserUpdate(user)).await;
+        Payload::UserUpdate(target.clone()).to(user.id).await;
+        Payload::UserUpdate(user).to(target.id).await;
     }
 
     Ok(())
