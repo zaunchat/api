@@ -15,7 +15,7 @@ use std::fmt;
 
 bitflags! {
     #[derive(Default)]
-    pub struct Permissions: u64 {
+    pub struct Permissions: i64 {
           const VIEW_CHANNEL = 1 << 1;
           const SEND_MESSAGES = 1 << 2;
           const READ_MESSAGE_HISTORY = 1 << 3;
@@ -34,17 +34,34 @@ bitflags! {
     }
 }
 
+macro_rules! bits {
+    (ALL) => {{ Permissions::all() }};
+    ($flag:ident) => {{ Permissions::$flag }};
+    ($($flag:ident),*) => {{
+        #[allow(unused_mut)]
+        let mut bits = Permissions::default();
+        $( bits.insert(Permissions::$flag); )*
+        bits
+    }};
+}
+
+pub(crate) use bits;
+
 lazy_static! {
-    pub static ref DEFAULT_PERMISSION_DM: Permissions = Permissions::VIEW_CHANNEL
-        | Permissions::SEND_MESSAGES
-        | Permissions::EMBED_LINKS
-        | Permissions::UPLOAD_FILES
-        | Permissions::READ_MESSAGE_HISTORY;
-    pub static ref DEFAULT_PERMISSION_EVERYONE: Permissions = Permissions::VIEW_CHANNEL
-        | Permissions::SEND_MESSAGES
-        | Permissions::EMBED_LINKS
-        | Permissions::UPLOAD_FILES
-        | Permissions::READ_MESSAGE_HISTORY;
+    pub static ref DEFAULT_PERMISSION_DM: Permissions = bits![
+        VIEW_CHANNEL,
+        SEND_MESSAGES,
+        EMBED_LINKS,
+        UPLOAD_FILES,
+        READ_MESSAGE_HISTORY
+    ];
+    pub static ref DEFAULT_PERMISSION_EVERYONE: Permissions = bits![
+        VIEW_CHANNEL,
+        SEND_MESSAGES,
+        EMBED_LINKS,
+        UPLOAD_FILES,
+        READ_MESSAGE_HISTORY
+    ];
 }
 
 impl Permissions {
@@ -53,19 +70,22 @@ impl Permissions {
         server: Option<&Server>,
         channel: Option<&Channel>,
     ) -> Result<Permissions> {
-        let mut p = Permissions::default();
+        let mut p = bits![];
 
         if let Some(server) = server {
-            p.set(Permissions::all(), server.owner_id == user.id);
+            if server.owner_id == user.id {
+                p = bits![ALL];
+            }
+
             p.insert(server.permissions);
 
             if p.is_all() {
                 return Ok(p);
             }
 
-            let member = user.id.member(server.id).await?;
+            let member = server.fetch_member(user.id).await?;
 
-            for role in server.fetch_roles().await {
+            for role in server.fetch_roles().await? {
                 if member.roles.contains(&role.id) {
                     p.insert(role.permissions);
                 }
@@ -73,6 +93,10 @@ impl Permissions {
         }
 
         if let Some(channel) = channel {
+            if p.is_all() {
+                return Ok(p);
+            }
+
             if channel.is_dm() {
                 p.insert(*DEFAULT_PERMISSION_DM);
 
@@ -82,7 +106,7 @@ impl Permissions {
                 if !is_notes() {
                     let status = user.relations.0.get(&recipients[1]).unwrap();
                     if status != &RelationshipStatus::Friend {
-                        p.remove(Permissions::SEND_MESSAGES);
+                        p.remove(bits![SEND_MESSAGES]);
                     }
                 }
             }
@@ -94,7 +118,7 @@ impl Permissions {
             {
                 // for group owners
                 if channel.owner_id == Some(user.id) {
-                    p = Permissions::all();
+                    p = bits![ALL];
                     return Ok(p);
                 }
 
@@ -153,21 +177,13 @@ impl Permissions {
         Permissions::fetch_cached(user, server.as_ref(), channel.as_ref()).await
     }
 
-    pub fn has(self, bits: &[Permissions]) -> Result<()> {
+    pub fn has(self, bits: Permissions) -> Result<()> {
         if self.is_all() {
             return Ok(());
         }
 
-        let mut missing = vec![];
-
-        for &bit in bits {
-            if !self.contains(bit) {
-                missing.push(bit);
-            }
-        }
-
-        if !missing.is_empty() {
-            return Err(Error::MissingPermissions(missing));
+        if !self.contains(bits) {
+            return Err(Error::MissingPermissions(self.difference(bits)));
         }
 
         Ok(())
@@ -182,14 +198,13 @@ impl Type<Postgres> for Permissions {
 
 impl Encode<'_, Postgres> for Permissions {
     fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
-        Encode::<Postgres>::encode(self.bits() as i64, buf)
+        Encode::<Postgres>::encode(self.bits(), buf)
     }
 }
 
 impl<'r> Decode<'r, Postgres> for Permissions {
     fn decode(value: PgValueRef<'r>) -> Result<Self, BoxDynError> {
-        let bits: i64 = Decode::<Postgres>::decode(value)?;
-        Ok(Permissions::from_bits(bits as u64).unwrap())
+        Ok(Permissions::from_bits(Decode::<Postgres>::decode(value)?).unwrap())
     }
 }
 
@@ -215,24 +230,24 @@ impl<'de> Visitor<'de> for PermissionsVisitor {
     where
         E: SerdeError,
     {
-        self.visit_u64(v.parse().map_err(E::custom)?)
+        self.visit_str(&v)
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
         E: SerdeError,
     {
-        self.visit_u64(v.parse().map_err(E::custom)?)
-    }
-
-    fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
-    where
-        E: SerdeError,
-    {
-        self.visit_u64(v as u64)
+        self.visit_i64(v.parse().map_err(E::custom)?)
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: SerdeError,
+    {
+        self.visit_i64(v as i64)
+    }
+
+    fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
     where
         E: SerdeError,
     {

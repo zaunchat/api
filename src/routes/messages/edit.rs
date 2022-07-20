@@ -25,7 +25,7 @@ pub async fn edit(
 
     Permissions::fetch(&user, None, channel_id.into())
         .await?
-        .has(&[Permissions::VIEW_CHANNEL])?;
+        .has(bits![VIEW_CHANNEL])?;
 
     msg.content = data.content.into();
     msg.edited_at = Some(Utc::now().naive_utc());

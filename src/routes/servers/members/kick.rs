@@ -10,7 +10,7 @@ pub async fn kick(
     if user.id != id {
         Permissions::fetch(&user, server_id.into(), None)
             .await?
-            .has(&[Permissions::KICK_MEMBERS])?;
+            .has(bits![KICK_MEMBERS])?;
     }
 
     id.member(server_id).await?.remove().await?;

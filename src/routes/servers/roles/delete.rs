@@ -9,7 +9,7 @@ pub async fn delete(
 ) -> Result<()> {
     Permissions::fetch(&user, server_id.into(), None)
         .await?
-        .has(&[Permissions::MANAGE_ROLES])?;
+        .has(bits![MANAGE_ROLES])?;
 
     id.role(server_id).await?.remove().await?;
 

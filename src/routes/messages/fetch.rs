@@ -14,7 +14,7 @@ pub async fn fetch_one(
 
     Permissions::fetch(&user, None, channel_id.into())
         .await?
-        .has(&[Permissions::VIEW_CHANNEL, Permissions::READ_MESSAGE_HISTORY])?;
+        .has(bits![VIEW_CHANNEL, READ_MESSAGE_HISTORY])?;
 
     Ok(Json(msg))
 }

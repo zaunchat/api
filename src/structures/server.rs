@@ -1,7 +1,5 @@
 use super::*;
-use crate::database::pool;
-use crate::utils::permissions::*;
-use crate::utils::snowflake;
+use crate::utils::{permissions::*, snowflake};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
@@ -42,32 +40,29 @@ impl Server {
             .unwrap()
     }
 
-    pub async fn fetch_member(&self, user_id: i64) -> Option<Member> {
+    pub async fn fetch_member(&self, user_id: i64) -> Result<Member, ormlite::Error> {
         Member::select()
             .filter("id = $1 AND server_id = $2")
             .bind(user_id)
             .bind(self.id)
-            .fetch_optional(pool())
+            .fetch_one(pool())
             .await
-            .unwrap()
     }
 
-    pub async fn fetch_roles(&self) -> Vec<Role> {
+    pub async fn fetch_roles(&self) -> Result<Vec<Role>, ormlite::Error> {
         Role::select()
             .filter("server_id = $1")
             .bind(self.id)
             .fetch_all(pool())
             .await
-            .unwrap()
     }
 
-    pub async fn fetch_channels(&self) -> Vec<Channel> {
+    pub async fn fetch_channels(&self) -> Result<Vec<Channel>, ormlite::Error> {
         Channel::select()
             .filter("server_id = $1")
             .bind(self.id)
             .fetch_all(pool())
             .await
-            .unwrap()
     }
 
     #[cfg(test)]

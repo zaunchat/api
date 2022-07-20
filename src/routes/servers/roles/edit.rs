@@ -23,7 +23,7 @@ pub async fn edit(
 ) -> Result<Json<Role>> {
     Permissions::fetch(&user, server_id.into(), None)
         .await?
-        .has(&[Permissions::MANAGE_ROLES])?;
+        .has(bits![MANAGE_ROLES])?;
 
     let mut role = id.role(server_id).await?;
 

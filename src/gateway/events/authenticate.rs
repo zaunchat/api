@@ -1,4 +1,3 @@
-use crate::database::pool;
 use crate::gateway::{
     client::Client,
     payload::{ClientPayload, Payload},
@@ -38,26 +37,21 @@ pub async fn run(client: &Client, payload: ClientPayload) {
         .unwrap()
         .into_iter()
         .map(|mut u| {
+            subscriptions.push(user.id);
             u.relationship = user.relations.0.get(&u.id).copied();
             u
         })
         .collect();
 
     if !servers.is_empty() {
-        let server_ids: Vec<i64> = servers.iter().map(|s| s.id).collect();
-
-        let mut other_channels = Channel::select()
+        let mut servers_channels = Channel::select()
             .filter("server_id = ANY($1)")
-            .bind(server_ids)
+            .bind(servers.iter().map(|s| s.id).collect::<Vec<i64>>())
             .fetch_all(pool())
             .await
             .unwrap();
 
-        channels.append(&mut other_channels);
-    }
-
-    for user in &users {
-        subscriptions.push(user.id);
+        channels.append(&mut servers_channels);
     }
 
     for server in &servers {

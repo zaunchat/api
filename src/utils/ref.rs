@@ -1,4 +1,3 @@
-use crate::database::pool;
 use crate::structures::*;
 use crate::utils::error::*;
 
@@ -103,11 +102,5 @@ pub trait Ref {
 impl Ref for i64 {
     fn id(&self) -> i64 {
         *self
-    }
-}
-
-impl Ref for u64 {
-    fn id(&self) -> i64 {
-        *self as i64
     }
 }
