@@ -29,7 +29,7 @@ pub async fn edit(
 
     let channel = channel.update_all_fields(pool()).await?;
 
-    publish(server_id, Payload::ChannelUpdate(channel.clone())).await;
+    Payload::ChannelUpdate(channel.clone()).to(server_id).await;
 
     Ok(Json(channel))
 }

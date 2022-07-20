@@ -31,7 +31,7 @@ pub async fn edit(
 
     let role = role.update_all_fields(pool()).await?;
 
-    publish(server_id, Payload::RoleUpdate(role.clone())).await;
+    Payload::RoleUpdate(role.clone()).to(server_id).await;
 
     Ok(Json(role))
 }

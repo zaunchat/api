@@ -13,7 +13,9 @@ pub async fn delete(
 
     id.role(server_id).await?.remove().await?;
 
-    publish(server_id, Payload::RoleDelete((id, server_id).into())).await;
+    Payload::RoleDelete((id, server_id).into())
+        .to(server_id)
+        .await;
 
     Ok(())
 }

@@ -12,7 +12,7 @@ pub async fn delete(Extension(user): Extension<User>, Path(id): Path<i64>) -> Re
 
     server.remove().await?;
 
-    publish(id, Payload::ServerDelete(id.into())).await;
+    Payload::ServerDelete(id.into()).to(id).await;
 
     Ok(())
 }

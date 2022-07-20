@@ -28,7 +28,7 @@ pub async fn edit(
 
     let server = server.update_all_fields(pool()).await?;
 
-    publish(server.id, Payload::ServerUpdate(server.clone())).await;
+    Payload::ServerUpdate(server.clone()).to(server.id).await;
 
     Ok(Json(server))
 }

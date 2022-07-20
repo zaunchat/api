@@ -52,8 +52,8 @@ pub async fn add(Extension(mut user): Extension<User>, Path(id): Path<i64>) -> R
     user.relationship = status.1.into();
     target.relationship = status.0.into();
 
-    publish(user.id, Payload::UserUpdate(target.clone())).await;
-    publish(target.id, Payload::UserUpdate(user)).await;
+    Payload::UserUpdate(target.clone()).to(user.id).await;
+    Payload::UserUpdate(user).to(target.id).await;
 
     Ok(())
 }

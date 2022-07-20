@@ -1,3 +1,4 @@
+use crate::database::redis::publish;
 use crate::structures::*;
 use axum::extract::ws;
 use serde::{Deserialize, Serialize};
@@ -69,5 +70,11 @@ pub enum ClientPayload {
 impl From<Payload> for ws::Message {
     fn from(payload: Payload) -> ws::Message {
         ws::Message::Text(serde_json::to_string(&payload).unwrap())
+    }
+}
+
+impl Payload {
+    pub async fn to(self, id: i64) {
+        publish(id, serde_json::to_string(&self).unwrap()).await;
     }
 }

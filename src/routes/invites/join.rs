@@ -37,13 +37,10 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
                 .update(pool())
                 .await?;
 
-            publish(
-                user.id,
-                Payload::ServerCreate(server_id.server(None).await?),
-            )
-            .await;
-
-            publish(server_id, Payload::ServerMemberJoin(member)).await;
+            Payload::ServerCreate(server_id.server(None).await?)
+                .to(user.id)
+                .await;
+            Payload::ServerMemberJoin(member).to(server_id).await;
 
             Ok(())
         }
@@ -65,8 +62,8 @@ pub async fn join(Extension(user): Extension<User>, Path(code): Path<String>) ->
 
             let group = group.update_all_fields(pool()).await?;
 
-            publish(group.id, Payload::ChannelUpdate(group.clone())).await;
-            publish(user.id, Payload::ChannelCreate(group)).await;
+            Payload::ChannelUpdate(group.clone()).to(group.id).await;
+            Payload::ChannelCreate(group).to(user.id).await;
 
             Ok(())
         }

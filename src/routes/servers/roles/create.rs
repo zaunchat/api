@@ -38,7 +38,7 @@ pub async fn create(
 
     let role = role.save().await?;
 
-    publish(server_id, Payload::RoleCreate(role.clone())).await;
+    Payload::RoleCreate(role.clone()).to(server_id).await;
 
     Ok(Json(role))
 }
