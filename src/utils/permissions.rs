@@ -16,21 +16,21 @@ use std::fmt;
 bitflags! {
     #[derive(Default)]
     pub struct Permissions: i64 {
-          const VIEW_CHANNEL = 1 << 1;
-          const SEND_MESSAGES = 1 << 2;
-          const READ_MESSAGE_HISTORY = 1 << 3;
-          const EMBED_LINKS = 1 << 4;
-          const UPLOAD_FILES = 1 << 5;
-          const MANAGE_SERVER = 1 << 6;
-          const MANAGE_CHANNELS = 1 << 7;
-          const MANAGE_MESSAGES = 1 << 8;
-          const MANAGE_ROLES = 1 << 9;
-          const MANAGE_INVITES = 1 << 10;
-          const MANAGE_NICKNAMES = 1 << 11;
-          const BAN_MEMBERS = 1 << 12;
-          const KICK_MEMBERS = 1 << 13;
-          const CHANGE_NICKNAME = 1 << 14;
-          const INVITE_OTHERS = 1 << 15;
+          const VIEW_CHANNEL = 1 << 0;
+          const SEND_MESSAGES = 1 << 1;
+          const READ_MESSAGE_HISTORY = 1 << 2;
+          const EMBED_LINKS = 1 << 3;
+          const UPLOAD_FILES = 1 << 4;
+          const MANAGE_SERVER = 1 << 5;
+          const MANAGE_CHANNELS = 1 << 6;
+          const MANAGE_MESSAGES = 1 << 7;
+          const MANAGE_ROLES = 1 << 8;
+          const MANAGE_INVITES = 1 << 9;
+          const MANAGE_NICKNAMES = 1 << 10;
+          const BAN_MEMBERS = 1 << 11;
+          const KICK_MEMBERS = 1 << 12;
+          const CHANGE_NICKNAME = 1 << 13;
+          const INVITE_OTHERS = 1 << 14;
     }
 }
 
