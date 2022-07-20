@@ -74,7 +74,7 @@ pub async fn send(user: &User) -> bool {
     }
 }
 
-pub async fn verify(user_id: u64, code: &str) -> bool {
+pub async fn verify(user_id: i64, code: &str) -> bool {
     match REDIS.get::<String, _>(user_id.to_string()).await {
         Ok(token) if code == token => {
             REDIS.del::<u32, _>(user_id.to_string()).await.ok();

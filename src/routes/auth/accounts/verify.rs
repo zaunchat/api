@@ -5,7 +5,7 @@ use crate::utils::*;
 
 #[derive(Deserialize)]
 pub struct VerifyQuery {
-    user_id: u64,
+    user_id: i64,
     code: String,
 }
 

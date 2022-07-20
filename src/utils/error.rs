@@ -23,8 +23,8 @@ quick_error! {
         InvalidToken { display("Unauthorized. Provide a valid token and try again") }
         EmailAlreadyInUse { display("This email already in use") }
 
-        MissingPermissions(missing: Vec<Permissions>) {
-            display("You lack permissions to perform that action, missing: {:?}", missing)
+        MissingPermissions(missing: Permissions) {
+            display("You lack permissions to perform that action, missing: {}", missing.bits())
         }
 
         EmptyMessage { display("Cannot send an empty message") }

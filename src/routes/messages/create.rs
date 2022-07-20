@@ -20,7 +20,7 @@ pub async fn create(
 ) -> Result<Json<Message>> {
     Permissions::fetch(&user, None, channel_id.into())
         .await?
-        .has(&[Permissions::VIEW_CHANNEL, Permissions::SEND_MESSAGES])?;
+        .has(bits![VIEW_CHANNEL, SEND_MESSAGES])?;
 
     let mut msg = Message::new(channel_id, user.id);
 

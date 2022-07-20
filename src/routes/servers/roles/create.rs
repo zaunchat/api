@@ -24,7 +24,7 @@ pub async fn create(
 ) -> Result<Json<Role>> {
     Permissions::fetch(&user, server_id.into(), None)
         .await?
-        .has(&[Permissions::MANAGE_ROLES])?;
+        .has(bits![MANAGE_ROLES])?;
 
     let count = Role::count(&format!("server_id = {}", server_id)).await?;
 

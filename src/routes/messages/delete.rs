@@ -11,9 +11,9 @@ pub async fn delete(
     let p = Permissions::fetch(&user, None, channel_id.into()).await?;
 
     if msg.author_id != user.id {
-        p.has(&[Permissions::MANAGE_MESSAGES])?;
+        p.has(bits![MANAGE_MESSAGES])?;
     } else {
-        p.has(&[Permissions::MANAGE_MESSAGES, Permissions::VIEW_CHANNEL])?;
+        p.has(bits![MANAGE_MESSAGES, VIEW_CHANNEL])?;
     }
 
     let attachment_ids: Vec<i64> = msg

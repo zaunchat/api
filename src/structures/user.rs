@@ -1,5 +1,4 @@
 use super::*;
-use crate::database::pool;
 use crate::utils::{snowflake, Badges};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};

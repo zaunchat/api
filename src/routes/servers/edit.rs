@@ -22,7 +22,7 @@ pub async fn edit(
 
     Permissions::fetch_cached(&user, Some(&server), None)
         .await?
-        .has(&[Permissions::MANAGE_SERVER])?;
+        .has(bits![MANAGE_SERVER])?;
 
     server.merge(data);
 

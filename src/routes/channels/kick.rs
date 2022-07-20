@@ -12,7 +12,7 @@ pub async fn kick(
 
     Permissions::fetch_cached(&user, None, Some(&group))
         .await?
-        .has(&[Permissions::KICK_MEMBERS])?;
+        .has(bits![KICK_MEMBERS])?;
 
     if let Some(recipients) = group.recipients.as_mut() {
         let exists = recipients

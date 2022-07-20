@@ -18,11 +18,12 @@ pub async fn edit(
     Path((server_id, id)): Path<(i64, i64)>,
     ValidatedJson(data): ValidatedJson<EditServerChannelOptions>,
 ) -> Result<Json<Channel>> {
-    Permissions::fetch(&user, server_id.into(), id.into())
-        .await?
-        .has(&[Permissions::MANAGE_CHANNELS])?;
-
     let mut channel = id.channel(None).await?;
+    let server = server_id.server(None).await?;
+
+    Permissions::fetch_cached(&user, Some(&server), Some(&channel))
+        .await?
+        .has(bits![MANAGE_CHANNELS])?;
 
     channel.merge(data);
 
