@@ -95,7 +95,7 @@ impl User {
     }
 
     pub async fn fetch_relations(&self) -> Result<Vec<User>, ormlite::Error> {
-        let ids: Vec<i64> = vec![]; //self.relations.0.keys().copied().collect();
+        let ids: Vec<i64> = self.relations.0.keys().copied().collect();
 
         if ids.is_empty() {
             return Ok(vec![]);
