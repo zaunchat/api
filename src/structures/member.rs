@@ -41,8 +41,9 @@ impl Member {
         }
 
         Role::select()
-            .filter("server_id = ANY($1)")
+            .filter("id = ANY($1) AND server_id = $2")
             .bind(self.roles.clone())
+            .bind(self.server_id)
             .fetch_all(pool())
             .await
     }
