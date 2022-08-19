@@ -56,7 +56,7 @@ chrono = { version = "0.4.19", features = ["serde"] }
 inter-struct = "0.2.0"
 
 # Docs
-opg = { git = "https://github.com/abdulrahman1s/opg", rev = "24f72e7cf09da7cd61b71aedaa14383502559612" }
+opg = { git = "https://github.com/abdulrahman1s/opg", rev = "0a9f7f8c791d522fc9bd25bda8e63cb4f270ecc8" }
 
 
 [patch.crates-io]

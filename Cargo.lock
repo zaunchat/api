@@ -1360,18 +1360,19 @@ dependencies = [
 [[package]]
 name = "opg"
 version = "0.1.1"
-source = "git+https://github.com/abdulrahman1s/opg?rev=24f72e7cf09da7cd61b71aedaa14383502559612#24f72e7cf09da7cd61b71aedaa14383502559612"
+source = "git+https://github.com/abdulrahman1s/opg?rev=0a9f7f8c791d522fc9bd25bda8e63cb4f270ecc8#0a9f7f8c791d522fc9bd25bda8e63cb4f270ecc8"
 dependencies = [
  "either",
  "http",
  "opg_derive",
  "serde",
+ "sqlx",
 ]
 
 [[package]]
 name = "opg_derive"
 version = "0.1.0"
-source = "git+https://github.com/abdulrahman1s/opg?rev=24f72e7cf09da7cd61b71aedaa14383502559612#24f72e7cf09da7cd61b71aedaa14383502559612"
+source = "git+https://github.com/abdulrahman1s/opg?rev=0a9f7f8c791d522fc9bd25bda8e63cb4f270ecc8#0a9f7f8c791d522fc9bd25bda8e63cb4f270ecc8"
 dependencies = [
  "either",
  "proc-macro2",

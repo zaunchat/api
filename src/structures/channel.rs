@@ -40,8 +40,6 @@ pub struct Overwrite {
     pub deny: Permissions,
 }
 
-#[derive(Serialize, OpgModel)]
-pub struct ChannelOverwrites(Option<Vec<Overwrite>>);
 
 #[derive(Serialize, OpgModel)]
 pub struct ChannelRecipients(Option<Vec<String>>);
@@ -65,7 +63,6 @@ pub struct Channel {
     pub recipients: Option<Vec<i64>>,
 
     // Group/Text/Voice/Category
-    #[opg(custom = "ChannelOverwrites")]
     pub overwrites: Option<Json<Vec<Overwrite>>>,
 
     // For server channels
