@@ -16,6 +16,38 @@ pub enum RelationshipStatus {
     BlockedByOther = 4,
 }
 
+#[derive(Debug, Serialize_repr, Deserialize_repr, OpgModel, Clone, PartialEq, Eq)]
+#[repr(u8)]
+pub enum PresenceStatus {
+    Offline = 0,
+    Online = 1,
+    Idle = 2,
+    Dnd = 3,
+    // BirthDay = 4 :D
+}
+
+
+#[derive(Serialize, Deserialize, OpgModel, Debug, Clone)]
+pub struct Presence {
+    pub status: PresenceStatus,
+    pub text: Option<String>
+}
+
+impl Default for Presence {
+    fn default() -> Self {
+        Self {
+            status: PresenceStatus::Offline,
+            text: None
+        }
+    }
+}
+
+impl Presence {
+    pub fn is_online(&self) -> bool {
+        self.status != PresenceStatus::Offline
+    }
+}
+
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, FromRow, Model, Default, Clone, OpgModel)]
 #[ormlite(table = "users")]
@@ -26,6 +58,7 @@ pub struct User {
     pub username: String,
     pub avatar: Option<String>,
     pub badges: Badges,
+    pub presence: Json<Presence>,
     #[serde(skip)]
     pub relations: Json<HashMap<i64, RelationshipStatus>>,
     #[ormlite(skip)]
