@@ -1,10 +1,10 @@
 use crate::config::*;
 use crate::database::redis::*;
 use crate::structures::User;
-use nanoid::nanoid;
 use ormlite::model::*;
 use regex::Regex;
 use serde_json::json;
+use sqlx::types::Uuid;
 
 const THREE_HOURS_IN_SECONDS: i64 = 10800;
 
@@ -17,7 +17,7 @@ lazy_static! {
 #[ormlite(table = "account_invites")]
 pub struct AccountInvite {
     #[ormlite(primary_key)]
-    pub code: String,
+    pub code: Uuid,
     pub used: bool,
     pub taken_by: Option<i64>,
 }
@@ -33,11 +33,11 @@ pub fn normalize(email: String) -> String {
 
 pub async fn send(user: &User) -> bool {
     let mut content = include_str!("../../assets/templates/verify.html").to_string();
-    let code = nanoid!(10);
+    let code = Uuid::new_v4();
 
     content = content
         .replace("%%EMAIL%%", user.email.as_str())
-        .replace("%%CODE%%", code.as_str())
+        .replace("%%CODE%%", &code.to_string())
         .replace("%%USER_ID%%", user.id.to_string().as_str());
 
     let body = json!({
@@ -62,7 +62,7 @@ pub async fn send(user: &User) -> bool {
         REDIS
             .set::<(), _, _>(
                 user.id,
-                code,
+                code.to_string(),
                 Expiration::EX(THREE_HOURS_IN_SECONDS).into(),
                 None,
                 false,
@@ -74,9 +74,9 @@ pub async fn send(user: &User) -> bool {
     }
 }
 
-pub async fn verify(user_id: i64, code: &str) -> bool {
+pub async fn verify(user_id: i64, code: Uuid) -> bool {
     match REDIS.get::<String, _>(user_id.to_string()).await {
-        Ok(token) if code == token => {
+        Ok(token) if code.to_string() == token => {
             REDIS.del::<u32, _>(user_id.to_string()).await.ok();
             true
         }
