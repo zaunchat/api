@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use sqlx::types::Json;
 
-#[derive(Debug, Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, OpgModel, sqlx::Type)]
+#[derive(
+    Debug, Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, Eq, OpgModel, sqlx::Type,
+)]
 #[repr(i32)]
 pub enum ChannelTypes {
     Unknown = 0,
@@ -22,7 +24,7 @@ impl Default for ChannelTypes {
     }
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, OpgModel, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, Eq, OpgModel, Debug)]
 #[repr(i32)]
 pub enum OverwriteTypes {
     Role = 0,
@@ -39,7 +41,6 @@ pub struct Overwrite {
     pub allow: Permissions,
     pub deny: Permissions,
 }
-
 
 #[derive(Serialize, OpgModel)]
 pub struct ChannelRecipients(Option<Vec<String>>);

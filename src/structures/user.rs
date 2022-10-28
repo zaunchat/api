@@ -6,7 +6,9 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use sqlx::types::Json;
 use std::collections::HashMap;
 
-#[derive(Debug, Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, OpgModel, sqlx::Type)]
+#[derive(
+    Debug, Serialize_repr, Deserialize_repr, Clone, Copy, PartialEq, Eq, OpgModel, sqlx::Type,
+)]
 #[repr(i32)]
 pub enum RelationshipStatus {
     Friend = 0,
@@ -23,21 +25,20 @@ pub enum PresenceStatus {
     Online = 1,
     Idle = 2,
     Dnd = 3,
-    // BirthDay = 4 :D
+    // BirthDay = 4 (coming feature)
 }
-
 
 #[derive(Serialize, Deserialize, OpgModel, Debug, Clone)]
 pub struct Presence {
     pub status: PresenceStatus,
-    pub text: Option<String>
+    pub text: Option<String>,
 }
 
 impl Default for Presence {
     fn default() -> Self {
         Self {
             status: PresenceStatus::Offline,
-            text: None
+            text: None,
         }
     }
 }

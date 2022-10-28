@@ -13,7 +13,7 @@ pub async fn connect() {
     let client = &REDIS;
     let policy = ReconnectPolicy::default();
     let _ = client.connect(Some(policy));
-    let _ = client
+    client
         .wait_for_connect()
         .await
         .expect("Failed to connect to redis");
@@ -25,7 +25,7 @@ pub async fn pubsub() -> SubscriberClient {
 
     let policy = ReconnectPolicy::default();
     let _ = client.connect(Some(policy));
-    let _ = client.wait_for_connect().await.unwrap();
+    client.wait_for_connect().await.unwrap();
 
     client
 }

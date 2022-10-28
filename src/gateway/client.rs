@@ -42,7 +42,7 @@ impl Client {
         while let Some((channel, payload)) = self.subscriptions.on_message().next().await {
             let target_id: i64 = channel.parse().unwrap();
             let user = self.user.lock().await;
-            let user = &*user.as_ref().unwrap();
+            let user = user.as_ref().unwrap();
 
             let payload: Payload = serde_json::from_str(&payload.as_string().unwrap()).unwrap();
             let mut permissions = self.permissions.lock().await;
