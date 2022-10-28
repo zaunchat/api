@@ -16,7 +16,7 @@ pub mod routes;
 pub mod structures;
 pub mod utils;
 
-use axum::{handler::Handler, http::StatusCode, middleware, Router, Server};
+use axum::{middleware, Router, Server};
 use std::net::SocketAddr;
 
 #[tokio::main]
@@ -39,8 +39,7 @@ async fn main() {
         .route("/ws", axum::routing::get(gateway::upgrade))
         .layer(middleware::from_fn(auth::handle))
         .layer(middleware::from_fn(ratelimit::handle!(50, 1000 * 60)))
-        .layer(cors::handle())
-        .fallback((|| async { StatusCode::NOT_FOUND }).into_service());
+        .layer(cors::handle());
 
     let address: SocketAddr = format!("0.0.0.0:{}", *config::PORT).parse().unwrap();
 

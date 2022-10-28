@@ -15,8 +15,8 @@ pub struct CreateMessageOptions {
 
 pub async fn create(
     Extension(user): Extension<User>,
-    ValidatedJson(data): ValidatedJson<CreateMessageOptions>,
     Path(channel_id): Path<i64>,
+    ValidatedJson(data): ValidatedJson<CreateMessageOptions>,
 ) -> Result<Json<Message>> {
     Permissions::fetch(&user, None, channel_id.into())
         .await?

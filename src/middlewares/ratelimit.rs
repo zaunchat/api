@@ -9,8 +9,7 @@ use governor::{
     RateLimiter as Limiter,
 };
 use serde::Serialize;
-use std::net::SocketAddr;
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 lazy_static! {
     static ref CLOCK: DefaultClock = DefaultClock::default();
@@ -52,8 +51,8 @@ pub async fn ratelimit<B>(
         },
         Err(negative) => RateLimitInfo {
             limit: negative.quota().burst_size().get(),
-            retry_after: negative.wait_time_from(CLOCK.now()).as_secs(),
             remaining: 0,
+            retry_after: negative.wait_time_from(CLOCK.now()).as_secs(),
         },
     };
 
@@ -86,7 +85,7 @@ macro_rules! handle {
 
         move |req: axum::http::Request<axum::body::Body>,
               next: axum::middleware::Next<axum::body::Body>| {
-            crate::middlewares::ratelimit::ratelimit(req, next, limiter.clone())
+            $crate::middlewares::ratelimit::ratelimit(req, next, limiter.clone())
         }
     }};
 }
