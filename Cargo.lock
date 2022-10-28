@@ -55,6 +55,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tower-http",
+ "uuid",
  "validator",
 ]
 
@@ -121,9 +122,9 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "axum"
-version = "0.5.11"
+version = "0.6.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2cc6e8e8c993cb61a005fab8c1e5093a29199b7253b05a6883999312935c1ff"
+checksum = "d2628a243073c55aef15a1c1fe45c87f21b84f9e89ca9e7b262a180d3d03543d"
 dependencies = [
  "async-trait",
  "axum-core",
@@ -156,9 +157,9 @@ dependencies = [
 
 [[package]]
 name = "axum-core"
-version = "0.2.6"
+version = "0.3.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf4d047478b986f14a13edad31a009e2e05cb241f9805d0d75e4cba4e129ad4d"
+checksum = "473bd0762170028bb6b5068be9e97de2a9f0af3bf2084498d840498f47194d3d"
 dependencies = [
  "async-trait",
  "bytes",
@@ -166,6 +167,8 @@ dependencies = [
  "http",
  "http-body",
  "mime",
+ "tower-layer",
+ "tower-service",
 ]
 
 [[package]]
@@ -1160,9 +1163,9 @@ checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
 name = "matchit"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73cbba799671b762df5a175adf59ce145165747bb891505c43d09aefbbf38beb"
+checksum = "3dfc802da7b1cf80aefffa0c7b2f77247c8b32206cc83c270b61264f5b360a80"
 
 [[package]]
 name = "md-5"
@@ -1382,9 +1385,9 @@ dependencies = [
 
 [[package]]
 name = "ormlite"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "460b8c0944c5f87bfa828f62ff6a37c4e4d3328bca7342888c31e99173350d49"
+checksum = "320cf5f2544eb52c6d9f8ea423d0e5a403d2d33ba71d375e27c3ee3f25353c49"
 dependencies = [
  "ormlite-core",
  "ormlite-macro",
@@ -1394,9 +1397,9 @@ dependencies = [
 
 [[package]]
 name = "ormlite-core"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0db3066e2339464b144019c68d64414b38d86dc2ae72fed19ade3d651c40a334"
+checksum = "81e3ac69368749c987c1766a6ad61e198ca555be30fb2ee4d2e1df49e6978dc2"
 dependencies = [
  "datetime",
  "futures",
@@ -1410,8 +1413,8 @@ dependencies = [
 
 [[package]]
 name = "ormlite-macro"
-version = "0.3.1"
-source = "git+https://github.com/abdulrahman1s/ormlite?rev=9f8ef977d3516c12e2cf7e35e7a484d7f5911c38#9f8ef977d3516c12e2cf7e35e7a484d7f5911c38"
+version = "0.3.2"
+source = "git+https://github.com/abdulrahman1s/ormlite?rev=ff9386d006b5590081f3636ac059364e8f8762d6#ff9386d006b5590081f3636ac059364e8f8762d6"
 dependencies = [
  "derive_builder",
  "ormlite-core",
@@ -2101,6 +2104,7 @@ dependencies = [
  "time 0.3.11",
  "tokio-stream",
  "url",
+ "uuid",
  "webpki-roots",
  "whoami",
 ]
@@ -2350,9 +2354,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-tungstenite"
-version = "0.17.1"
+version = "0.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06cda1232a49558c46f8a504d5b93101d42c0bf7f911f12a105ba48168f821ae"
+checksum = "f714dd15bead90401d77e04243611caec13726c2408afd5b31901dfcdcb3b181"
 dependencies = [
  "futures-util",
  "log",
@@ -2464,9 +2468,9 @@ checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 
 [[package]]
 name = "tungstenite"
-version = "0.17.2"
+version = "0.17.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d96a2dea40e7570482f28eb57afbe42d97551905da6a9400acc5c328d24004f5"
+checksum = "e27992fd6a8c29ee7eef28fc78349aa244134e10ad447ce3b9f0ac0ed0fa4ce0"
 dependencies = [
  "base64",
  "byteorder",
@@ -2549,6 +2553,16 @@ name = "utf-8"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
+
+[[package]]
+name = "uuid"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "feb41e78f93363bb2df8b0e86a2ca30eed7806ea16ea0c790d757cf93f79be83"
+dependencies = [
+ "getrandom",
+ "serde",
+]
 
 [[package]]
 name = "validator"
