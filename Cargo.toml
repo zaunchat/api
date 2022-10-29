@@ -57,7 +57,7 @@ rs-snowflake = "0.6.0"
 chrono = { version = "0.4.19", features = ["serde"] }
 inter-struct = "0.2.0"
 dashmap = "5.4.0"
-rmp = "0.8.11"
+rmp-serde = "1.1.1"
 
 # Docs
 opg = { git = "https://github.com/abdulrahman1s/opg", rev = "0a9f7f8c791d522fc9bd25bda8e63cb4f270ecc8" }
