@@ -6,6 +6,8 @@ use serde_json as JSON;
 use std::sync::Arc;
 
 pub async fn handle_incoming(client: Arc<SocketClient>, conn: Sender, receiver: &mut Receiver) {
+    let mut errors = 0u8;
+
     while let Some(Ok(msg)) = receiver.next().await {
         let payload = match client.config.decode(msg) {
             Some(p) => p,
@@ -15,11 +17,22 @@ pub async fn handle_incoming(client: Arc<SocketClient>, conn: Sender, receiver: 
             }
         };
 
-        match &payload {
+        let res = match &payload {
             ClientPayload::Ping => events::ping::run(client.clone(), conn.clone()).await,
             // ClientPayload::Authenticate
             _ => {
                 log::warn!("Unhandled event");
+                Ok(())
+            }
+        };
+
+        if let Err(err) = res {
+            log::error!("Socket error: {err}");
+
+            errors += 1;
+
+            if errors == 5 {
+                break;
             }
         }
     }

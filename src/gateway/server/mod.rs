@@ -102,7 +102,10 @@ impl WebSocketServer {
                 client
             };
 
-            events::authenticate::run(client.clone(), sender.clone()).await;
+            if let Err(err) = events::authenticate::run(client.clone(), sender.clone()).await {
+                log::error!("Couldn't send authenticate packets: {err}");
+                return;
+            }
 
             let client_ref = Arc::clone(&client);
 

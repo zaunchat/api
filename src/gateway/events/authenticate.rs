@@ -1,21 +1,20 @@
 use crate::gateway::{Payload, Sender, SocketClient};
 use crate::structures::*;
-use crate::utils::Permissions;
+use crate::utils::{Error, Permissions};
 use fred::interfaces::PubsubInterface;
 use std::sync::Arc;
 
-pub async fn run(client: Arc<SocketClient>, conn: Sender) {
-    client.send(&conn, Payload::Authenticated).await.ok();
+pub async fn run(client: Arc<SocketClient>, conn: Sender) -> Result<(), Error> {
+    client.send(&conn, Payload::Authenticated).await?;
 
     let user = client.state.user.lock().await.clone();
     let permissions = &client.state.permissions;
     let mut subscriptions: Vec<i64> = vec![user.id];
-    let mut channels = user.fetch_channels().await.unwrap();
-    let servers = user.fetch_servers().await.unwrap();
+    let mut channels = user.fetch_channels().await?;
+    let servers = user.fetch_servers().await?;
     let users: Vec<User> = user
         .fetch_relations()
-        .await
-        .unwrap()
+        .await?
         .into_iter()
         .map(|mut u| {
             subscriptions.push(user.id);
@@ -29,8 +28,7 @@ pub async fn run(client: Arc<SocketClient>, conn: Sender) {
             .filter("server_id = ANY($1)")
             .bind(servers.iter().map(|s| s.id).collect::<Vec<i64>>())
             .fetch_all(pool())
-            .await
-            .unwrap();
+            .await?;
 
         channels.append(&mut servers_channels);
     }
@@ -39,9 +37,7 @@ pub async fn run(client: Arc<SocketClient>, conn: Sender) {
         subscriptions.push(server.id);
         permissions.insert(
             server.id,
-            Permissions::fetch_cached(&user, server.into(), None)
-                .await
-                .unwrap(),
+            Permissions::fetch_cached(&user, server.into(), None).await?,
         );
     }
 
@@ -55,9 +51,7 @@ pub async fn run(client: Arc<SocketClient>, conn: Sender) {
         subscriptions.push(channel.id);
         permissions.insert(
             channel.id,
-            Permissions::fetch_cached(&user, server, channel.into())
-                .await
-                .unwrap(),
+            Permissions::fetch_cached(&user, server, channel.into()).await?,
         );
     }
 
@@ -75,6 +69,7 @@ pub async fn run(client: Arc<SocketClient>, conn: Sender) {
                 channels,
             },
         )
-        .await
-        .ok();
+        .await?;
+
+    Ok(())
 }

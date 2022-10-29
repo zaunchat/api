@@ -18,6 +18,7 @@ quick_error! {
             display("Executed the rate limit. Please retry after {}s", info.retry_after)
         }
         InvalidBody { display("You have provided a bad json schema") }
+        InternalError { display("Internal server error") }
         MissingHeader { display("Missing header") }
         AccountVerificationRequired { display("You need to verify your account in order to perform this action") }
         InvalidToken { display("Unauthorized. Provide a valid token and try again") }
@@ -77,6 +78,13 @@ impl From<ormlite::Error> for Error {
     fn from(err: ormlite::Error) -> Self {
         log::error!("Database Error: {}", err);
         Self::DatabaseError
+    }
+}
+
+impl From<axum::Error> for Error {
+    fn from(err: axum::Error) -> Self {
+        log::error!("{err}");
+        Self::InternalError
     }
 }
 
