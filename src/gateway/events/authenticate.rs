@@ -1,34 +1,15 @@
-use crate::gateway::{
-    client::Client,
-    payload::{ClientPayload, Payload},
-};
+use crate::gateway::{Payload, Sender, SocketClient};
 use crate::structures::*;
 use crate::utils::Permissions;
 use fred::interfaces::PubsubInterface;
+use std::sync::Arc;
 
-pub async fn run(client: &Client, payload: ClientPayload) {
-    if client.user.lock().await.is_some() {
-        return;
-    }
+pub async fn run(client: Arc<SocketClient>, conn: Sender) {
+    client.send(&conn, Payload::Authenticated).await.ok();
 
-    let user = if let ClientPayload::Authenticate { token } = payload {
-        User::fetch_by_token(token.as_str()).await
-    } else {
-        None
-    };
-
-    if user.is_none() {
-        return;
-    }
-
-    client.send(Payload::Authenticated).await.ok();
-
-    let user = user.unwrap();
-
-    *client.user.lock().await = Some(user.clone());
-
+    let user = client.state.user.lock().await.clone();
+    let permissions = &client.state.permissions;
     let mut subscriptions: Vec<i64> = vec![user.id];
-    let mut permissions = client.permissions.lock().await;
     let mut channels = user.fetch_channels().await.unwrap();
     let servers = user.fetch_servers().await.unwrap();
     let users: Vec<User> = user
@@ -85,12 +66,15 @@ pub async fn run(client: &Client, payload: ClientPayload) {
     }
 
     client
-        .send(Payload::Ready {
-            user,
-            users,
-            servers,
-            channels,
-        })
+        .send(
+            &conn,
+            Payload::Ready {
+                user,
+                users,
+                servers,
+                channels,
+            },
+        )
         .await
         .ok();
 }

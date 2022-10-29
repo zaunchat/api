@@ -1,10 +1,10 @@
 use crate::database::redis::publish;
 use crate::structures::*;
-use axum::extract::ws;
 use serde::{Deserialize, Serialize};
+use serde_json as JSON;
 
 #[serde_as]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum Empty {
     Default {
@@ -31,7 +31,7 @@ impl From<(i64, i64)> for Empty {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(tag = "op", content = "d")]
 pub enum Payload {
     Pong,
@@ -67,14 +67,8 @@ pub enum ClientPayload {
     Ping,
 }
 
-impl From<Payload> for ws::Message {
-    fn from(payload: Payload) -> ws::Message {
-        ws::Message::Text(serde_json::to_string(&payload).unwrap())
-    }
-}
-
 impl Payload {
     pub async fn to(self, id: i64) {
-        publish(id, serde_json::to_string(&self).unwrap()).await;
+        publish(id, JSON::to_string(&self).expect("Cannot stringify json")).await;
     }
 }
