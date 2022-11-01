@@ -30,26 +30,12 @@ impl Role {
     }
 
     #[cfg(test)]
-    pub async fn faker() -> Self {
-        let server = Server::faker().await;
+    pub async fn faker() -> Result<Self, Error> {
+        let server = Server::faker().await?;
         let role = Self::new("Mod".to_string(), server.id);
-        server.save().await.unwrap();
-        role
+        server.save().await?;
+        Ok(role)
     }
 }
 
 impl Base for Role {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create() {
-        run(async {
-            let role = Role::faker().await.save().await.unwrap();
-            Role::find_one(role.id).await.unwrap();
-        })
-    }
-}

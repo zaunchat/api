@@ -89,10 +89,9 @@ impl User {
         User::select()
             .filter("email = $1")
             .bind(email)
-            .fetch_optional(pool())
+            .fetch_one(pool())
             .await
-            .unwrap()
-            .is_some()
+            .is_ok()
     }
 
     pub async fn fetch_sessions(&self) -> Result<Vec<Session>, ormlite::Error> {
@@ -146,9 +145,9 @@ impl User {
         User::select()
             .filter("verified = TRUE AND id = ( SELECT user_id FROM sessions WHERE token = $1 )")
             .bind(token)
-            .fetch_optional(pool())
+            .fetch_one(pool())
             .await
-            .unwrap()
+            .ok()
     }
 
     #[cfg(test)]
@@ -168,17 +167,3 @@ impl User {
 }
 
 impl Base for User {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create() {
-        run(async {
-            let user = User::faker().save().await.unwrap();
-            User::find_one(user.id).await.unwrap();
-        });
-    }
-}

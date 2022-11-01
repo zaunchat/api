@@ -184,124 +184,51 @@ impl Channel {
     }
 
     #[cfg(test)]
-    pub async fn faker(r#type: ChannelTypes) -> Self {
+    pub async fn faker(r#type: ChannelTypes) -> Result<Self, Error> {
+        let channel;
+
         match r#type {
             ChannelTypes::Group => {
                 let user = User::faker();
-                let channel = Self::new_group(user.id, "Fake group".to_string());
+                channel = Self::new_group(user.id, "Fake group".to_string());
 
-                user.save().await.unwrap();
-
-                channel
+                user.save().await?;
             }
 
             ChannelTypes::Direct => {
                 let user = User::faker();
                 let other = User::faker();
-                let channel = Self::new_dm(user.id, other.id);
+                channel = Self::new_dm(user.id, other.id);
 
-                user.save().await.unwrap();
-                other.save().await.unwrap();
-
-                channel
+                user.save().await?;
+                other.save().await?;
             }
 
             ChannelTypes::Text => {
-                let server = Server::faker().await;
-                let channel = Self::new_text("Test".to_string(), server.id);
+                let server = Server::faker().await?;
+                channel = Self::new_text("Test".to_string(), server.id);
 
-                server.save().await.unwrap();
-
-                channel
+                server.save().await?;
             }
 
             ChannelTypes::Voice => {
-                let server = Server::faker().await;
-                let channel = Self::new_voice("Test".to_string(), server.id);
+                let server = Server::faker().await?;
+                channel = Self::new_voice("Test".to_string(), server.id);
 
-                server.save().await.unwrap();
-
-                channel
+                server.save().await?;
             }
 
             ChannelTypes::Category => {
-                let server = Server::faker().await;
-                let channel = Self::new_category("Test".to_string(), server.id);
+                let server = Server::faker().await?;
+                channel = Self::new_category("Test".to_string(), server.id);
 
-                server.save().await.unwrap();
-
-                channel
+                server.save().await?;
             }
-
             _ => panic!("Unsupported type"),
         }
+
+        Ok(channel)
     }
 }
 
 impl Base for Channel {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create_group() {
-        run(async {
-            let channel = Channel::faker(ChannelTypes::Group)
-                .await
-                .save()
-                .await
-                .unwrap();
-            Channel::find_one(channel.id).await.unwrap();
-        });
-    }
-
-    #[test]
-    fn create_dm() {
-        run(async {
-            let channel = Channel::faker(ChannelTypes::Direct)
-                .await
-                .save()
-                .await
-                .unwrap();
-            Channel::find_one(channel.id).await.unwrap();
-        });
-    }
-
-    #[test]
-    fn create_text() {
-        run(async {
-            let channel = Channel::faker(ChannelTypes::Text)
-                .await
-                .save()
-                .await
-                .unwrap();
-            Channel::find_one(channel.id).await.unwrap();
-        })
-    }
-
-    #[test]
-    fn create_voice() {
-        run(async {
-            let channel = Channel::faker(ChannelTypes::Voice)
-                .await
-                .save()
-                .await
-                .unwrap();
-            Channel::find_one(channel.id).await.unwrap();
-        })
-    }
-
-    #[test]
-    fn create_category() {
-        run(async {
-            let channel = Channel::faker(ChannelTypes::Category)
-                .await
-                .save()
-                .await
-                .unwrap();
-            Channel::find_one(channel.id).await.unwrap();
-        })
-    }
-}

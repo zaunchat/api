@@ -43,32 +43,18 @@ impl Message {
     }
 
     #[cfg(test)]
-    pub async fn faker() -> Self {
+    pub async fn faker() -> Result<Self, Error> {
         let user = User::faker();
-        let channel = Channel::faker(ChannelTypes::Group).await;
+        let channel = Channel::faker(ChannelTypes::Group).await?;
         let mut message = Self::new(channel.id, user.id);
 
         message.content = "Hello world!".to_string().into();
 
-        channel.save().await.unwrap();
-        user.save().await.unwrap();
+        channel.save().await?;
+        user.save().await?;
 
-        message
+        Ok(message)
     }
 }
 
 impl Base for Message {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create() {
-        run(async {
-            let msg = Message::faker().await.save().await.unwrap();
-            Message::find_one(msg.id).await.unwrap();
-        });
-    }
-}

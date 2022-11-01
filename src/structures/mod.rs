@@ -11,6 +11,7 @@ pub mod session;
 pub mod user;
 
 pub use crate::database::pool;
+pub use crate::utils::Error;
 pub use attachment::*;
 pub use base::*;
 pub use bot::*;

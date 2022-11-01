@@ -37,32 +37,18 @@ impl Invite {
     }
 
     #[cfg(test)]
-    pub async fn faker() -> Self {
+    pub async fn faker() -> Result<Self, Error> {
         use crate::structures::*;
 
         let user = User::faker();
-        let channel = Channel::faker(ChannelTypes::Group).await;
+        let channel = Channel::faker(ChannelTypes::Group).await?;
         let invite = Self::new(user.id, channel.id, None);
 
-        user.save().await.unwrap();
-        channel.save().await.unwrap();
+        user.save().await?;
+        channel.save().await?;
 
-        invite
+        Ok(invite)
     }
 }
 
 impl Base for Invite {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create() {
-        run(async {
-            let invite = Invite::faker().await.save().await.unwrap();
-            Invite::find_one(invite.id).await.unwrap();
-        });
-    }
-}

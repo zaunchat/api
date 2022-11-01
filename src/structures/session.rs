@@ -28,28 +28,14 @@ impl Session {
     }
 
     #[cfg(test)]
-    pub async fn faker() -> Self {
+    pub async fn faker() -> Result<Self, Error> {
         let user = User::faker();
         let session = Self::new(user.id);
 
-        user.save().await.unwrap();
+        user.save().await?;
 
-        session
+        Ok(session)
     }
 }
 
 impl Base for Session {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create() {
-        run(async {
-            let session = Session::faker().await.save().await.unwrap();
-            Session::find_one(session.id).await.unwrap();
-        });
-    }
-}

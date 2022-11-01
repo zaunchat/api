@@ -28,28 +28,14 @@ impl Bot {
     }
 
     #[cfg(test)]
-    pub async fn faker() -> Self {
+    pub async fn faker() -> Result<Self, Error> {
         let owner = User::faker();
         let bot = Self::new("Ghost Bot".to_string(), owner.id);
 
-        owner.save().await.unwrap();
+        owner.save().await?;
 
-        bot
+        Ok(bot)
     }
 }
 
 impl Base for Bot {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create() {
-        run(async {
-            let bot = Bot::faker().await.save().await.unwrap();
-            Bot::find_one(bot.id).await.unwrap();
-        });
-    }
-}

@@ -1,4 +1,4 @@
-use super::{pool, Base, Role};
+use super::*;
 use chrono::{NaiveDateTime, Utc};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
@@ -49,55 +49,14 @@ impl Member {
     }
 
     #[cfg(test)]
-    pub async fn faker() -> Self {
-        use crate::structures::Server;
-
-        let server = Server::faker().await;
+    pub async fn faker() -> Result<Self, Error> {
+        let server = Server::faker().await?;
         let member = Self::new(server.owner_id, server.id);
 
-        server.save().await.unwrap();
+        server.save().await?;
 
-        member
+        Ok(member)
     }
 }
 
 impl Base for Member {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create() {
-        run(async {
-            let member = Member::faker().await.save().await.unwrap();
-
-            Member::select()
-                .filter("id = $1 AND server_id = $2")
-                .bind(member.id)
-                .bind(member.server_id)
-                .fetch_one(pool())
-                .await
-                .unwrap();
-        })
-    }
-
-    #[test]
-    fn fetch_roles() {
-        run(async {
-            let mut member = Member::faker().await;
-            let role = Role::new("Test".to_string(), member.server_id)
-                .save()
-                .await
-                .unwrap();
-
-            member.roles.push(role.id);
-
-            let member = member.save().await.unwrap();
-            let roles = member.fetch_roles().await.unwrap();
-
-            assert_eq!(roles.len(), 1);
-        });
-    }
-}

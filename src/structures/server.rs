@@ -31,13 +31,12 @@ impl Server {
         }
     }
 
-    pub async fn fetch_members(&self) -> Vec<Member> {
+    pub async fn fetch_members(&self) -> Result<Vec<Member>, ormlite::Error> {
         Member::select()
             .filter("server_id = $1")
             .bind(self.id)
             .fetch_all(pool())
             .await
-            .unwrap()
     }
 
     pub async fn fetch_member(&self, user_id: i64) -> Result<Member, ormlite::Error> {
@@ -66,28 +65,14 @@ impl Server {
     }
 
     #[cfg(test)]
-    pub async fn faker() -> Self {
+    pub async fn faker() -> Result<Self, Error> {
         let owner = User::faker();
         let server = Self::new("Fake Server".to_string(), owner.id);
 
-        owner.save().await.unwrap();
+        owner.save().await?;
 
-        server
+        Ok(server)
     }
 }
 
 impl Base for Server {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create() {
-        run(async {
-            let server = Server::faker().await.save().await.unwrap();
-            Server::find_one(server.id).await.unwrap();
-        });
-    }
-}
