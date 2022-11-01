@@ -1,7 +1,8 @@
 use crate::config::{REDIS_POOL_SIZE, REDIS_URI};
 pub use fred::prelude::*;
-use fred::{clients::SubscriberClient, pool::RedisPool};
+use fred::{bytes_utils::Str, clients::SubscriberClient, pool::RedisPool};
 use once_cell::sync::Lazy;
+use rmp_serde as MsgPack;
 use serde::Serialize;
 
 pub static REDIS: Lazy<RedisPool> = Lazy::new(|| {
@@ -30,10 +31,10 @@ pub async fn pubsub() -> SubscriberClient {
     client
 }
 
-pub async fn publish<K: std::fmt::Display, T: Serialize>(channel: K, data: T) {
-    let data = serde_json::json!(data).to_string();
+pub async fn publish<K: Into<Str>, V: Serialize>(channel: K, data: V) {
+    let payload = MsgPack::encode::to_vec_named(&data).unwrap();
 
-    if let Err(error) = REDIS.publish::<(), _, _>(channel.to_string(), data).await {
+    if let Err(error) = REDIS.publish::<(), _, _>(channel, payload.as_slice()).await {
         log::error!("Publish error: {:?}", error);
     }
 }

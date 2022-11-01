@@ -1,8 +1,8 @@
-use crate::utils::Permissions;
+use crate::utils::{Error, Permissions};
 use crate::{gateway::*, utils::Ref};
 use fred::interfaces::PubsubInterface;
 use futures::StreamExt;
-use serde_json as JSON;
+use rmp_serde as MsgPack;
 use std::sync::Arc;
 
 pub async fn handle_incoming(client: Arc<SocketClient>, conn: Sender, receiver: &mut Receiver) {
@@ -38,12 +38,33 @@ pub async fn handle_incoming(client: Arc<SocketClient>, conn: Sender, receiver: 
     }
 }
 
-pub async fn handle_outgoing(client: Arc<SocketClient>) {
-    while let Some((channel, payload)) = client.subscriptions.on_message().next().await {
-        let target_id: i64 = channel.parse().unwrap();
-        let user = &client.state.user.lock().await;
+pub async fn handle_outgoing(client: Arc<SocketClient>) -> Result<(), Error> {
+    while let Some((target_id, payload)) = client.subscriptions.on_message().next().await {
+        let target_id = match target_id.parse() {
+            Ok(id) => id,
+            _ => {
+                log::warn!("Received non-parsable target id: {target_id:?}");
+                continue;
+            }
+        };
 
-        let payload = JSON::from_str(&payload.as_string().unwrap()).unwrap();
+        let payload = match payload.as_bytes() {
+            Some(buf) => {
+                if let Ok(p) = MsgPack::decode::from_slice(buf) {
+                    p
+                } else {
+                    log::warn!("Received invalid payload value: {payload:?}");
+                    continue;
+                }
+            }
+            _ => {
+                log::warn!("Received non-bytes redis value: {payload:?}");
+                continue;
+            }
+        };
+
+        let user_id = client.state.user_id;
+
         let permissions = &client.state.permissions;
         let p = permissions
             .get(&target_id)
@@ -63,29 +84,35 @@ pub async fn handle_outgoing(client: Arc<SocketClient>) {
 
             Payload::ChannelUpdate(channel) => {
                 let server = if let Some(server_id) = channel.server_id {
-                    Some(server_id.server(None).await.unwrap())
+                    Some(server_id.server(None).await?)
                 } else {
                     None
                 };
 
-                let p = Permissions::fetch_cached(user, server.as_ref(), channel.into())
-                    .await
-                    .unwrap();
+                let p = Permissions::fetch_cached(
+                    &*client.state.user.lock().await,
+                    server.as_ref(),
+                    channel.into(),
+                )
+                .await?;
 
                 permissions.insert(channel.id, p);
             }
 
             Payload::ServerMemberUpdate(member) => {
-                if member.id == user.id {
-                    let p = Permissions::fetch(user, member.server_id.into(), None)
-                        .await
-                        .unwrap();
+                if member.id == user_id {
+                    let p = Permissions::fetch(
+                        &*client.state.user.lock().await,
+                        member.server_id.into(),
+                        None,
+                    )
+                    .await?;
                     permissions.insert(member.server_id, p);
                 }
             }
 
             Payload::ServerMemberLeave(Empty::ServerObject { id, .. }) => {
-                if *id == user.id {
+                if *id == user_id {
                     client
                         .subscriptions
                         .unsubscribe(target_id.to_string())
@@ -120,15 +147,18 @@ pub async fn handle_outgoing(client: Arc<SocketClient>) {
                 if !channel.in_server() {
                     permissions.insert(
                         channel.id,
-                        Permissions::fetch_cached(user, None, channel.into())
-                            .await
-                            .unwrap(),
+                        Permissions::fetch_cached(
+                            &*client.state.user.lock().await,
+                            None,
+                            channel.into(),
+                        )
+                        .await?,
                     );
                 }
             }
             Payload::UserUpdate(u) => {
                 // Newly friend, blocked, request
-                if u.id != target_id && u.id != user.id {
+                if u.id != target_id && u.id != user_id {
                     client.subscriptions.subscribe(u.id.to_string()).await.ok();
                 }
             }
@@ -136,7 +166,9 @@ pub async fn handle_outgoing(client: Arc<SocketClient>) {
         }
 
         if client.broadcast(payload).await.is_err() {
-            break;
+            break; // probably the client disconnected
         }
     }
+
+    Ok(())
 }

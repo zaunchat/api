@@ -94,6 +94,12 @@ impl From<JsonRejection> for Error {
     }
 }
 
+impl From<rmp_serde::encode::Error> for Error {
+    fn from(_: rmp_serde::encode::Error) -> Self {
+        Self::Unknown
+    }
+}
+
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         let status = match self {

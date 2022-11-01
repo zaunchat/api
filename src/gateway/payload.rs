@@ -1,7 +1,6 @@
 use crate::database::redis::publish;
 use crate::structures::*;
 use serde::{Deserialize, Serialize};
-use serde_json as JSON;
 
 #[serde_as]
 #[derive(Serialize, Deserialize, Clone)]
@@ -69,6 +68,6 @@ pub enum ClientPayload {
 
 impl Payload {
     pub async fn to(self, id: i64) {
-        publish(id, JSON::to_string(&self).expect("Cannot stringify json")).await;
+        publish(id.to_string(), self).await;
     }
 }
