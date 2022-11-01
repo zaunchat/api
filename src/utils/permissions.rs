@@ -122,7 +122,7 @@ impl Permissions {
                     return Ok(p);
                 }
 
-                let mut member: Option<Member> = None;
+                let mut member = None;
 
                 if channel.is_group() {
                     p.insert(channel.permissions.unwrap());

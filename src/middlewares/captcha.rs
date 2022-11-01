@@ -2,6 +2,7 @@ use crate::config::*;
 use crate::utils::error::*;
 use axum::{http::Request, middleware::Next, response::Response};
 use serde::Deserialize;
+use serde_json::json;
 
 #[derive(Deserialize)]
 struct CaptchaResponse {
@@ -13,16 +14,17 @@ pub async fn handle<B>(req: Request<B>, next: Next<B>) -> Result<Response, Error
         return Ok(next.run(req).await);
     }
 
-    let key = match req.headers().get("X-Captcha-Key") {
-        Some(k) => match k.to_str() {
-            Ok(k) => k,
-            _ => return Err(Error::MissingHeader),
-        },
+    let key = match req
+        .headers()
+        .get("X-Captcha-Key")
+        .and_then(|v| v.to_str().ok())
+    {
+        Some(k) => k,
         _ => return Err(Error::MissingHeader),
     };
 
     let client = reqwest::Client::new();
-    let body = serde_json::json!({
+    let body = json!({
         "response": key,
         "secret": *CAPTCHA_TOKEN,
         "sitekey": *CAPTCHA_KEY

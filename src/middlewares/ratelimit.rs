@@ -71,7 +71,7 @@ pub async fn ratelimit<B>(
     };
 
     if info.retry_after > 0 {
-        log::info!("IP: {} has executed the rate limit", key);
+        log::info!("IP: {key} has executed the rate limit");
         return Err(Error::RateLimited(info));
     }
 
