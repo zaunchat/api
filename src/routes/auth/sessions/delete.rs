@@ -31,21 +31,22 @@ mod tests {
     use crate::tests::run;
 
     #[test]
-    fn execute() {
+    fn execute() -> Result<(), Error> {
         run(async {
-            let session = Session::faker().await;
-            let session = session.save().await.unwrap();
+            let session = Session::faker().await?;
+            let session = session.save().await?;
             let payload = DeleteSessionOptions {
                 token: session.token.clone(),
             };
 
             delete(
-                Extension(session.user_id.user().await.unwrap()),
+                Extension(session.user_id.user().await?),
                 Path(session.id),
                 ValidatedJson(payload),
             )
-            .await
-            .unwrap();
+            .await?;
+
+            Ok(())
         })
     }
 }

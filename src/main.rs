@@ -42,11 +42,11 @@ async fn main() {
         .layer(middleware::from_fn(ratelimit::handle!(50, 1000 * 60)))
         .layer(cors::handle());
 
-    let address: SocketAddr = format!("0.0.0.0:{}", *config::PORT).parse().unwrap();
+    let addr = SocketAddr::from(([0, 0, 0, 0], *config::PORT));
 
-    log::info!("Listening on: {}", address.port());
+    log::info!("Listening on: {}", addr.port());
 
-    Server::bind(&address)
+    Server::bind(&addr)
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .unwrap();

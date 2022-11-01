@@ -24,17 +24,19 @@ mod tests {
     use crate::tests::run;
 
     #[test]
-    fn execute() {
+    fn execute() -> Result<(), Error> {
         run(async {
-            let session = Session::faker().await;
-            let session = session.save().await.unwrap();
-            let user = session.user_id.user().await.unwrap();
+            let session = Session::faker().await?;
+            let session = session.save().await?;
+            let user = session.user_id.user().await?;
 
-            let results = fetch_many(Extension(user.clone())).await.unwrap();
+            let results = fetch_many(Extension(user.clone())).await?;
 
             assert_eq!(results.0.len(), 1);
 
-            fetch_one(Extension(user), Path(session.id)).await.unwrap();
+            fetch_one(Extension(user), Path(session.id)).await?;
+
+            Ok(())
         })
     }
 }

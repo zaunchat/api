@@ -1,6 +1,11 @@
 use crate::structures::{Base, Member, User};
 use crate::utils::error::*;
-use axum::{extract::Path, http::Request, middleware::Next, response::Response};
+use axum::{
+    extract::{Extension, Path},
+    http::Request,
+    middleware::Next,
+    response::Response,
+};
 
 #[derive(Deserialize)]
 pub struct ID {
@@ -10,11 +15,11 @@ pub struct ID {
 }
 
 pub async fn handle<B: std::marker::Send>(
+    Extension(user): Extension<User>,
     Path(ID { server_id, .. }): Path<ID>,
     req: Request<B>,
     next: Next<B>,
 ) -> Result<Response, Error> {
-    let user = req.extensions().get::<User>().unwrap();
     let exists = Member::count(&format!("id = {} AND server_id = {}", user.id, server_id)).await?;
 
     if exists == 0 {

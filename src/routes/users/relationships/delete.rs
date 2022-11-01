@@ -4,14 +4,13 @@ use crate::structures::*;
 use crate::utils::*;
 
 pub async fn delete(Extension(mut user): Extension<User>, Path(id): Path<i64>) -> Result<()> {
-    let status = user.relations.0.get(&id);
-
-    if status.is_none() {
-        return Err(Error::UnknownUser);
-    }
+    let status = match user.relations.0.get(&id) {
+        Some(s) => s,
+        None => return Err(Error::UnknownUser),
+    };
 
     // He blocked you. you can't remove it by yourself
-    if status.unwrap() != &RelationshipStatus::BlockedByOther {
+    if status != &RelationshipStatus::BlockedByOther {
         let mut target = id.user().await?;
 
         if target.relations.0.get(&user.id).unwrap() == &RelationshipStatus::Blocked {

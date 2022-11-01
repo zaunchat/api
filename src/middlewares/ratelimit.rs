@@ -33,6 +33,7 @@ pub async fn ratelimit<B>(
     let key = if let Some(user) = req.extensions().get::<User>() {
         user.id.to_string()
     } else if *TRUST_CLOUDFLARE {
+        // FIXME: Remove unwrap
         req.headers()
             .get("CF-Connecting-IP")
             .and_then(|header| header.to_str().ok())

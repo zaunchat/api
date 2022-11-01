@@ -1,4 +1,4 @@
-use crate::utils::{Error, Permissions};
+use crate::utils::{bits, Error, Permissions};
 use crate::{gateway::*, utils::Ref};
 use fred::interfaces::PubsubInterface;
 use futures::StreamExt;
@@ -73,7 +73,7 @@ pub async fn handle_outgoing(client: Arc<SocketClient>) -> Result<(), Error> {
 
         match &payload {
             Payload::MessageCreate(_) | Payload::MessageUpdate(_) | Payload::MessageDelete(_) => {
-                if !p.contains(Permissions::VIEW_CHANNEL) {
+                if !p.contains(bits![VIEW_CHANNEL]) {
                     continue;
                 }
             }

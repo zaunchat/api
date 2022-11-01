@@ -25,7 +25,7 @@ pub struct RegisterResponse {
 pub async fn register(
     ValidatedJson(mut data): ValidatedJson<RegisterAccountOptions>,
 ) -> Result<Json<RegisterResponse>> {
-    data.email = email::normalize(data.email);
+    data.email = email::normalize(data.email).expect("Non normalized email");
 
     let invite = if *REQUIRE_INVITE_TO_REGISTER && data.invite_code.is_some() {
         email::AccountInvite::get_one(data.invite_code.as_ref().unwrap(), pool())
@@ -85,7 +85,7 @@ mod tests {
     use crate::tests::run;
 
     #[test]
-    fn execute() {
+    fn execute() -> Result<(), Error> {
         run(async {
             let email = format!("test.{}@example.com", nanoid::nanoid!(6));
             let payload = RegisterAccountOptions {
@@ -95,16 +95,17 @@ mod tests {
                 invite_code: None,
             };
 
-            register(ValidatedJson(payload)).await.unwrap();
+            register(ValidatedJson(payload)).await?;
 
             let user = User::select()
                 .filter("email = $1")
                 .bind(email::normalize(email))
                 .fetch_one(pool())
-                .await
-                .unwrap();
+                .await?;
 
-            user.remove().await.unwrap();
-        });
+            user.remove().await?;
+
+            Ok(())
+        })
     }
 }

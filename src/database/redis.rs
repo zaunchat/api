@@ -6,8 +6,8 @@ use rmp_serde as MsgPack;
 use serde::Serialize;
 
 pub static REDIS: Lazy<RedisPool> = Lazy::new(|| {
-    let config = RedisConfig::from_url((*REDIS_URI).as_str()).unwrap();
-    RedisPool::new(config, *REDIS_POOL_SIZE).unwrap()
+    let config = RedisConfig::from_url(&*REDIS_URI).expect("Invalid redis url");
+    RedisPool::new(config, *REDIS_POOL_SIZE).expect("Failed initialize redis pool")
 });
 
 pub async fn connect() {
@@ -21,7 +21,7 @@ pub async fn connect() {
 }
 
 pub async fn pubsub() -> SubscriberClient {
-    let config = RedisConfig::from_url((*REDIS_URI).as_str()).unwrap();
+    let config = RedisConfig::from_url(&*REDIS_URI).unwrap();
     let client = SubscriberClient::new(config);
 
     let policy = ReconnectPolicy::default();
@@ -32,10 +32,16 @@ pub async fn pubsub() -> SubscriberClient {
 }
 
 pub async fn publish<K: Into<Str>, V: Serialize>(channel: K, data: V) {
-    let payload = MsgPack::encode::to_vec_named(&data).unwrap();
+    let payload = match MsgPack::encode::to_vec_named(&data) {
+        Ok(p) => p,
+        Err(e) => {
+            log::error!("Failed to encode payload: {e:?}");
+            return;
+        }
+    };
 
     if let Err(error) = REDIS.publish::<(), _, _>(channel, payload.as_slice()).await {
-        log::error!("Publish error: {:?}", error);
+        log::error!("Publish error: {error:?}");
     }
 }
 
@@ -46,28 +52,24 @@ mod tests {
     use futures::StreamExt;
 
     #[test]
-    fn simple() {
+    fn simple() -> Result<(), RedisError> {
         run(async {
-            let _: () = REDIS
-                .set("hello", "world", None, None, false)
-                .await
-                .unwrap();
+            REDIS.set("hello", "world", None, None, false).await?;
 
-            let value: String = REDIS.get("hello").await.unwrap();
+            let value: String = REDIS.get("hello").await?;
 
             assert_eq!(value, "world");
-        });
+
+            Ok(())
+        })
     }
 
     #[test]
-    fn subscriber() {
+    fn subscriber() -> Result<(), RedisError> {
         run(async {
             let subscriber = pubsub().await;
 
-            subscriber
-                .subscribe("test")
-                .await
-                .expect("Cannot subscribe to a channel");
+            subscriber.subscribe("test").await?;
 
             let task = tokio::spawn(async move {
                 if let Some((channel, message)) = subscriber.on_message().next().await {
@@ -77,16 +79,15 @@ mod tests {
 
             publish("test", "hi").await;
 
-            task.await.unwrap();
+            task.await?;
 
-            let _: () = REDIS
-                .set("hello", "world", None, None, false)
-                .await
-                .unwrap();
+            REDIS.set("hello", "world", None, None, false).await?;
 
-            let value: String = REDIS.get("hello").await.unwrap();
+            let value: String = REDIS.get("hello").await?;
 
             assert_eq!(value, "world");
-        });
+
+            Ok(())
+        })
     }
 }

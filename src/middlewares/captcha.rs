@@ -13,15 +13,17 @@ pub async fn handle<B>(req: Request<B>, next: Next<B>) -> Result<Response, Error
         return Ok(next.run(req).await);
     }
 
-    let key = req.headers().get("X-Captcha-Key");
-
-    if key.is_none() {
-        return Err(Error::MissingHeader);
-    }
+    let key = match req.headers().get("X-Captcha-Key") {
+        Some(k) => match k.to_str() {
+            Ok(k) => k,
+            _ => return Err(Error::MissingHeader),
+        },
+        _ => return Err(Error::MissingHeader),
+    };
 
     let client = reqwest::Client::new();
     let body = serde_json::json!({
-        "response": key.unwrap().to_str().unwrap(),
+        "response": key,
         "secret": *CAPTCHA_TOKEN,
         "sitekey": *CAPTCHA_KEY
     });

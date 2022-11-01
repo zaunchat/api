@@ -8,7 +8,7 @@ macro_rules! config {
                         panic!("{} is required", stringify!($name));
                     })
                     .parse::<$t>()
-                    .unwrap();
+                    .expect("Failed to parse value");
                 )+
             }
     };
@@ -16,7 +16,7 @@ macro_rules! config {
 
 config! {
     // Networking
-    PORT u32 8080,
+    PORT u16 8080,
     TRUST_CLOUDFLARE bool false,
 
     // Database
