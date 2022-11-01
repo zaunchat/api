@@ -21,6 +21,6 @@ pub fn mount(app: Router) -> Router {
         .nest("/invites", invites::routes())
         .nest("/bots", bots::routes())
         .nest("/channels", channels::routes())
-        .nest("/channels/:channel_id/messages", messages::routes())
+        .nest("/messages/:channel_id", messages::routes())
         .nest("/servers", servers::routes())
 }

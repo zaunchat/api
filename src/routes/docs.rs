@@ -74,11 +74,11 @@ pub fn document(app: Router) -> Router {
             },
 
             // Messages
-            ("channels" / { channel_id: u64 } / "messages"): {
+            ("messages" / { channel_id: u64 }): {
                 POST: { 200: Message, body: messages::create::CreateMessageOptions, tags:{messages} }
             },
 
-            ("channels" / { channel_id: u64 } / "messages" / { message_id: u64 }): {
+            ("messages" / { channel_id: u64 } / { message_id: u64 }): {
                 GET: { 200: Message, tags:{messages} },
                 PATCH: { 200: Message, body: messages::edit::EditMessageOptions, tags:{messages} },
                 DELETE: { 200: None, tags:{messages} }
