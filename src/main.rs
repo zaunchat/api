@@ -40,7 +40,8 @@ async fn main() {
         .route("/ws", get(WebSocketServer::upgrade))
         .layer(middleware::from_fn(auth::handle))
         .layer(middleware::from_fn(ratelimit::handle!(50, 1000 * 60)))
-        .layer(cors::handle());
+        .layer(cors::handle())
+        .layer(compression::handle());
 
     let addr = SocketAddr::from(([0, 0, 0, 0], *config::PORT));
 
