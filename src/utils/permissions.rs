@@ -101,13 +101,17 @@ impl Permissions {
                 p.insert(*DEFAULT_PERMISSION_DM);
 
                 let recipients = channel.recipients.as_ref().unwrap();
-                let is_notes = || recipients[0] == recipients[1];
+                let is_notes = recipients[0] == recipients[1];
 
-                if !is_notes() {
-                    let status = user.relations.0.get(&recipients[1]).unwrap();
-                    if status != &RelationshipStatus::Friend {
-                        p.remove(bits![SEND_MESSAGES]);
-                    }
+                if !is_notes
+                    && user
+                        .relations
+                        .0
+                        .get(&recipients[1])
+                        .map(|s| s != &RelationshipStatus::Friend)
+                        .unwrap_or(false)
+                {
+                    p.remove(bits![SEND_MESSAGES]);
                 }
             }
 

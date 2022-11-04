@@ -26,13 +26,12 @@ pub async fn handle<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, E
         .get(header::AUTHORIZATION)
         .and_then(|header| header.to_str().ok());
 
-    if token.is_none() {
-        return Err(Error::MissingHeader);
-    }
+    let token = match token {
+        Some(s) => s,
+        _ => return Err(Error::MissingHeader),
+    };
 
-    let user = User::fetch_by_token(token.unwrap()).await;
-
-    match user {
+    match User::fetch_by_token(token).await {
         Some(user) => {
             req.extensions_mut().insert(user);
             Ok(next.run(req).await)
