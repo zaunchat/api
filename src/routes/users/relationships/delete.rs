@@ -3,7 +3,7 @@ use crate::gateway::*;
 use crate::structures::*;
 use crate::utils::*;
 
-pub async fn delete(Extension(mut user): Extension<User>, Path(id): Path<i64>) -> Result<()> {
+pub async fn delete(Extension(mut user): Extension<User>, Path(id): Path<Snowflake>) -> Result<()> {
     let status = match user.relations.0.get(&id) {
         Some(s) => s,
         None => return Err(Error::UnknownUser),

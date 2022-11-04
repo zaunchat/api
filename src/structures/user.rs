@@ -1,5 +1,5 @@
 use super::*;
-use crate::utils::{snowflake, Badges};
+use crate::utils::{Badges, Private, Snowflake};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -53,36 +53,47 @@ impl Presence {
 #[derive(Debug, Serialize, Deserialize, FromRow, Model, Default, Clone, OpgModel)]
 #[ormlite(table = "users")]
 pub struct User {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     pub username: String,
     pub avatar: Option<String>,
     pub badges: Badges,
     pub presence: Json<Presence>,
-    #[serde(skip)]
-    pub relations: Json<HashMap<i64, RelationshipStatus>>,
     #[ormlite(skip)]
     #[sqlx(default)]
     pub relationship: Option<RelationshipStatus>,
-    // Private fields
-    #[serde(skip)]
-    pub email: String,
-    #[serde(skip)]
-    pub password: String,
-    #[serde(skip)]
-    pub verified: bool,
+    #[serde(skip_serializing_if = "Private::is_private")]
+    pub relations: Private<Json<HashMap<Snowflake, RelationshipStatus>>>,
+    #[serde(skip_serializing_if = "Private::is_private")]
+    pub email: Private<String>,
+    #[serde(skip_serializing_if = "Private::is_private")]
+    pub password: Private<String>,
+    #[serde(skip_serializing_if = "Private::is_private")]
+    pub verified: Private<bool>,
 }
 
 impl User {
     pub fn new(username: String, email: String, password: String) -> Self {
         Self {
-            id: snowflake::generate(),
+            id: Snowflake::default(),
             username,
-            email,
-            password,
+            email: email.into(),
+            password: password.into(),
             ..Default::default()
         }
+    }
+
+    pub fn show_private_fields(&mut self) {
+        self.verified.set_public();
+        self.password.set_public();
+        self.email.set_public();
+        self.relations.set_public();
+    }
+
+    pub fn hide_private_fields(&mut self) {
+        self.verified.set_private();
+        self.password.set_private();
+        self.email.set_private();
+        self.relations.set_private();
     }
 
     pub async fn email_taken(email: &str) -> bool {
@@ -128,7 +139,7 @@ impl User {
     }
 
     pub async fn fetch_relations(&self) -> Result<Vec<User>, ormlite::Error> {
-        let ids: Vec<i64> = self.relations.0.keys().copied().collect();
+        let ids: Vec<Snowflake> = self.relations.0.keys().copied().collect();
 
         if ids.is_empty() {
             return Ok(vec![]);
@@ -161,7 +172,7 @@ impl User {
 
         let email = format!("ghost.{}@example.com", nanoid::nanoid!(6));
         let mut user = Self::new("Ghost".to_string(), email, hashed_password);
-        user.verified = true;
+        user.verified = true.into();
         user
     }
 }

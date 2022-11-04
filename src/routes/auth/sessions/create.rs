@@ -21,7 +21,7 @@ pub async fn create(ValidatedJson(data): ValidatedJson<CreateSessionOptions>) ->
 
     match user {
         Ok(user) => {
-            if !user.verified {
+            if !*user.verified {
                 return Err(Error::AccountVerificationRequired);
             }
 
@@ -54,7 +54,7 @@ mod tests {
             let user = User::faker().save().await?;
 
             let payload = CreateSessionOptions {
-                email: user.email.clone(),
+                email: (*user.email).clone(),
                 password: "passw0rd".to_string(),
             };
 

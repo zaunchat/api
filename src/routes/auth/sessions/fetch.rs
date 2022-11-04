@@ -4,7 +4,7 @@ use crate::utils::*;
 
 pub async fn fetch_one(
     Extension(user): Extension<User>,
-    Path(id): Path<i64>,
+    Path(id): Path<Snowflake>,
 ) -> Result<Json<Session>> {
     Ok(id.session(user.id).await?.into())
 }

@@ -119,7 +119,7 @@ impl WebSocketServer {
 
             log::debug!(
                 "Socket disconnected (User ID: {} | Connection ID: {})",
-                user_id,
+                *user_id,
                 connection_id
             );
 

@@ -6,7 +6,7 @@ use validator::Validate;
 
 #[derive(Deserialize, Validate, OpgModel)]
 pub struct CreateInviteOptions {
-    channel_id: i64,
+    channel_id: Snowflake,
 }
 
 pub async fn create(

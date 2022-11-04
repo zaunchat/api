@@ -1,5 +1,5 @@
 use super::*;
-use crate::utils::snowflake;
+use crate::utils::Snowflake;
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
@@ -7,20 +7,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Model, FromRow, Serialize, Deserialize, Clone, OpgModel)]
 #[ormlite(table = "bots")]
 pub struct Bot {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     pub username: String,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub owner_id: i64,
+    pub owner_id: Snowflake,
     pub verified: bool,
 }
 
 impl Bot {
-    pub fn new(username: String, owner_id: i64) -> Self {
+    pub fn new(username: String, owner_id: Snowflake) -> Self {
         Self {
-            id: snowflake::generate(),
+            id: Snowflake::default(),
             username,
             owner_id,
             verified: false,

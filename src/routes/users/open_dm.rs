@@ -5,7 +5,7 @@ use crate::utils::*;
 
 pub async fn open_dm(
     Extension(user): Extension<User>,
-    Path(id): Path<i64>,
+    Path(id): Path<Snowflake>,
 ) -> Result<Json<Channel>> {
     let channel = Channel::select()
         .filter("type = $1 AND recipients @> ARRAY[$2, $3]::BIGINT[]")

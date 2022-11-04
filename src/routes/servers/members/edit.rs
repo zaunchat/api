@@ -9,12 +9,12 @@ use validator::Validate;
 pub struct EditMemberOptions {
     #[validate(length(min = 1, max = 32))]
     nickname: Option<String>,
-    roles: Option<Vec<i64>>,
+    roles: Option<Vec<Snowflake>>,
 }
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path((server_id, id)): Path<(i64, i64)>,
+    Path((server_id, id)): Path<(Snowflake, Snowflake)>,
     ValidatedJson(data): ValidatedJson<EditMemberOptions>,
 ) -> Result<Json<Member>> {
     let mut member = id.member(server_id).await?;

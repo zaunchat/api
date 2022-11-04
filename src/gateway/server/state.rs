@@ -1,9 +1,10 @@
 use crate::gateway::SocketClient;
+use crate::utils::Snowflake;
 use dashmap::DashMap;
 use std::sync::Arc;
 
 pub struct WebSocketState {
-    pub clients: DashMap<i64, Arc<SocketClient>>,
+    pub clients: DashMap<Snowflake, Arc<SocketClient>>,
 }
 
 impl Default for WebSocketState {

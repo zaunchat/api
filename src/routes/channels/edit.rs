@@ -15,7 +15,7 @@ pub struct EditGroupOptions {
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path(id): Path<i64>,
+    Path(id): Path<Snowflake>,
     ValidatedJson(data): ValidatedJson<EditGroupOptions>,
 ) -> Result<Json<Channel>> {
     let mut group = id.channel(user.id.into()).await?;

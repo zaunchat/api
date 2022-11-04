@@ -40,7 +40,7 @@ pub async fn handle_incoming(client: Arc<SocketClient>, conn: Sender, receiver: 
 
 pub async fn handle_outgoing(client: Arc<SocketClient>) -> Result<(), Error> {
     while let Some((target_id, payload)) = client.subscriptions.on_message().next().await {
-        let target_id = match target_id.parse() {
+        let target_id = match target_id.clone().try_into() {
             Ok(id) => id,
             _ => {
                 log::warn!("Received non-parsable target id: {target_id:?}");

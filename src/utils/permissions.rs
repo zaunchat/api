@@ -1,5 +1,5 @@
 use crate::structures::*;
-use crate::utils::{Error, Ref, Result};
+use crate::utils::{Error, Ref, Result, Snowflake};
 use bitflags::bitflags;
 use serde::{
     de::{Error as SerdeError, Visitor},
@@ -163,8 +163,8 @@ impl Permissions {
 
     pub async fn fetch(
         user: &User,
-        server_id: Option<i64>,
-        channel_id: Option<i64>,
+        server_id: Option<Snowflake>,
+        channel_id: Option<Snowflake>,
     ) -> Result<Permissions> {
         let server = if let Some(server_id) = server_id {
             Some(server_id.server(user.id.into()).await?)
@@ -202,21 +202,18 @@ impl Type<Postgres> for Permissions {
 
 impl Encode<'_, Postgres> for Permissions {
     fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
-        Encode::<Postgres>::encode(self.bits(), buf)
+        i64::encode(self.bits(), buf)
     }
 }
 
 impl<'r> Decode<'r, Postgres> for Permissions {
     fn decode(value: PgValueRef<'r>) -> Result<Self, BoxDynError> {
-        Ok(Permissions::from_bits(Decode::<Postgres>::decode(value)?).unwrap())
+        Ok(Permissions::from_bits(i64::decode(value)?).unwrap())
     }
 }
 
 impl Serialize for Permissions {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.collect_str(&self.bits())
     }
 }

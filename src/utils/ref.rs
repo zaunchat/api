@@ -1,9 +1,10 @@
 use crate::structures::*;
 use crate::utils::error::*;
+use crate::utils::Snowflake;
 
 #[async_trait]
 pub trait Ref {
-    fn id(&self) -> i64;
+    fn id(&self) -> Snowflake;
 
     async fn user(&self) -> Result<User> {
         User::find_one(self.id())
@@ -11,7 +12,7 @@ pub trait Ref {
             .map_err(|_| Error::UnknownUser)
     }
 
-    async fn channel(&self, recipient: Option<i64>) -> Result<Channel> {
+    async fn channel(&self, recipient: Option<Snowflake>) -> Result<Channel> {
         let channel = if let Some(recipient) = recipient {
             Channel::select()
                 .filter("id = $1 AND recipients @> ARRAY[$2]::BIGINT[]")
@@ -32,7 +33,7 @@ pub trait Ref {
             .map_err(|_| Error::UnknownMessage)
     }
 
-    async fn server(&self, user_id: Option<i64>) -> Result<Server> {
+    async fn server(&self, user_id: Option<Snowflake>) -> Result<Server> {
         let server = if let Some(user_id) = user_id {
             Server::select()
                 .filter("id = ( SELECT server_id FROM members WHERE id = $1 AND server_id = $2 )")
@@ -47,7 +48,7 @@ pub trait Ref {
         server.map_err(|_| Error::UnknownServer)
     }
 
-    async fn role(&self, server_id: i64) -> Result<Role> {
+    async fn role(&self, server_id: Snowflake) -> Result<Role> {
         Role::select()
             .filter("id = $1 AND server_id = $2")
             .bind(self.id())
@@ -57,7 +58,7 @@ pub trait Ref {
             .ok_or(Error::UnknownRole)
     }
 
-    async fn session(&self, user_id: i64) -> Result<Session> {
+    async fn session(&self, user_id: Snowflake) -> Result<Session> {
         Session::select()
             .filter("id = $1 AND user_id = $2")
             .bind(self.id())
@@ -73,7 +74,7 @@ pub trait Ref {
             .map_err(|_| Error::UnknownBot)
     }
 
-    async fn member(&self, server_id: i64) -> Result<Member> {
+    async fn member(&self, server_id: Snowflake) -> Result<Member> {
         Member::select()
             .filter("id = $1 AND server_id = $2")
             .bind(self.id())
@@ -83,7 +84,7 @@ pub trait Ref {
             .ok_or(Error::UnknownMember)
     }
 
-    async fn invite(&self, server_id: Option<i64>) -> Result<Invite> {
+    async fn invite(&self, server_id: Option<Snowflake>) -> Result<Invite> {
         let invite = if let Some(server_id) = server_id {
             Invite::select()
                 .filter("id = $1 AND server_id = $2")
@@ -99,8 +100,8 @@ pub trait Ref {
     }
 }
 
-impl Ref for i64 {
-    fn id(&self) -> i64 {
+impl Ref for Snowflake {
+    fn id(&self) -> Snowflake {
         *self
     }
 }

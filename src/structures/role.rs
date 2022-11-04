@@ -1,5 +1,5 @@
 use super::*;
-use crate::utils::{snowflake, Permissions};
+use crate::utils::{Permissions, Snowflake};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
@@ -7,22 +7,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
 #[ormlite(table = "roles")]
 pub struct Role {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     pub name: String,
     pub permissions: Permissions,
     pub color: i32,
     pub hoist: bool,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub server_id: i64,
+    pub server_id: Snowflake,
 }
 
 impl Role {
-    pub fn new(name: String, server_id: i64) -> Self {
+    pub fn new(name: String, server_id: Snowflake) -> Self {
         Self {
-            id: snowflake::generate(),
+            id: Snowflake::default(),
             name,
             server_id,
             ..Default::default()

@@ -15,7 +15,7 @@ pub struct EditServerChannelOptions {
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path((server_id, id)): Path<(i64, i64)>,
+    Path((server_id, id)): Path<(Snowflake, Snowflake)>,
     ValidatedJson(data): ValidatedJson<EditServerChannelOptions>,
 ) -> Result<Json<Channel>> {
     let mut channel = id.channel(None).await?;

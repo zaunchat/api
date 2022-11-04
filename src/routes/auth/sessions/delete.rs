@@ -11,7 +11,7 @@ pub struct DeleteSessionOptions {
 
 pub async fn delete(
     Extension(user): Extension<User>,
-    Path(id): Path<i64>,
+    Path(id): Path<Snowflake>,
     ValidatedJson(data): ValidatedJson<DeleteSessionOptions>,
 ) -> Result<()> {
     let session = id.session(user.id).await?;

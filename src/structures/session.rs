@@ -1,5 +1,5 @@
 use super::*;
-use crate::utils::snowflake;
+use crate::utils::Snowflake;
 use nanoid::nanoid;
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
@@ -8,20 +8,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
 #[ormlite(table = "sessions")]
 pub struct Session {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     #[serde(skip)]
     pub token: String,
     #[opg(string)]
     #[serde(skip)]
-    pub user_id: i64,
+    pub user_id: Snowflake,
 }
 
 impl Session {
-    pub fn new(user_id: i64) -> Self {
+    pub fn new(user_id: Snowflake) -> Self {
         Self {
-            id: snowflake::generate(),
+            id: Snowflake::default(),
             token: nanoid!(64),
             user_id,
         }

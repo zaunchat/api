@@ -19,14 +19,14 @@ pub struct CreateRoleOptions {
 
 pub async fn create(
     Extension(user): Extension<User>,
-    Path(server_id): Path<i64>,
+    Path(server_id): Path<Snowflake>,
     ValidatedJson(data): ValidatedJson<CreateRoleOptions>,
 ) -> Result<Json<Role>> {
     Permissions::fetch(&user, server_id.into(), None)
         .await?
         .has(bits![MANAGE_ROLES])?;
 
-    let count = Role::count(&format!("server_id = {}", server_id)).await?;
+    let count = Role::count(&format!("server_id = {}", *server_id)).await?;
 
     if count >= *MAX_SERVER_ROLES {
         return Err(Error::MaximumRoles);

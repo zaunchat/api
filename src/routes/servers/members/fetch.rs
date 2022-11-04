@@ -10,12 +10,14 @@ pub struct FetchMembersOptions {
     limit: Option<u64>,
 }
 
-pub async fn fetch_one(Path((server_id, id)): Path<(i64, i64)>) -> Result<Json<Member>> {
+pub async fn fetch_one(
+    Path((server_id, id)): Path<(Snowflake, Snowflake)>,
+) -> Result<Json<Member>> {
     Ok(id.member(server_id).await?.into())
 }
 
 pub async fn fetch_many(
-    Path(server_id): Path<i64>,
+    Path(server_id): Path<Snowflake>,
     Query(query): Query<FetchMembersOptions>,
 ) -> Result<Json<Vec<Member>>> {
     let limit = query.limit.unwrap_or(100) as usize;

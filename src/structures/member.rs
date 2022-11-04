@@ -1,4 +1,5 @@
 use super::*;
+use crate::utils::Snowflake;
 use chrono::{NaiveDateTime, Utc};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
@@ -10,22 +11,17 @@ struct MemberRoles(Vec<String>);
 #[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, OpgModel)]
 #[ormlite(table = "members")]
 pub struct Member {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     pub nickname: Option<String>,
     #[opg(string)]
     pub joined_at: NaiveDateTime,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub server_id: i64,
-    #[serde_as(as = "Vec<serde_with::DisplayFromStr>")]
+    pub server_id: Snowflake,
     #[opg(custom = "MemberRoles")]
-    pub roles: Vec<i64>,
+    pub roles: Vec<Snowflake>,
 }
 
 impl Member {
-    pub fn new(user_id: i64, server_id: i64) -> Self {
+    pub fn new(user_id: Snowflake, server_id: Snowflake) -> Self {
         Self {
             id: user_id,
             nickname: None,

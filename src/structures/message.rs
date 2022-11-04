@@ -1,5 +1,5 @@
 use super::*;
-use crate::utils::snowflake;
+use crate::utils::Snowflake;
 use chrono::NaiveDateTime;
 use ormlite::model::*;
 use ormlite::types::Json;
@@ -12,26 +12,20 @@ struct MessageAttachments(Vec<Attachment>);
 #[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
 #[ormlite(table = "messages")]
 pub struct Message {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     pub content: Option<String>,
     #[opg(custom = "MessageAttachments")]
     pub attachments: Json<Vec<Attachment>>,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub channel_id: i64,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub author_id: i64,
+    pub channel_id: Snowflake,
+    pub author_id: Snowflake,
     #[opg(string, nullable)]
     pub edited_at: Option<NaiveDateTime>,
 }
 
 impl Message {
-    pub fn new(channel_id: i64, author_id: i64) -> Self {
+    pub fn new(channel_id: Snowflake, author_id: Snowflake) -> Self {
         Self {
-            id: snowflake::generate(),
+            id: Snowflake::default(),
             channel_id,
             author_id,
             ..Default::default()

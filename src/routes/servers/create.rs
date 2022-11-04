@@ -16,7 +16,7 @@ pub async fn create(
     Extension(user): Extension<User>,
     ValidatedJson(data): ValidatedJson<CreateServerOptions>,
 ) -> Result<Json<Server>> {
-    let count = Member::count(&format!("id = {}", user.id)).await?;
+    let count = Member::count(&format!("id = {}", *user.id)).await?;
 
     if count >= *MAX_SERVERS {
         return Err(Error::MaximumServers);

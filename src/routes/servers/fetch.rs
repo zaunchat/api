@@ -8,7 +8,7 @@ pub async fn fetch_many(Extension(user): Extension<User>) -> Result<Json<Vec<Ser
 
 pub async fn fetch_one(
     Extension(user): Extension<User>,
-    Path(id): Path<i64>,
+    Path(id): Path<Snowflake>,
 ) -> Result<Json<Server>> {
     Ok(id.server(user.id.into()).await?.into())
 }

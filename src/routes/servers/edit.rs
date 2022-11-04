@@ -15,7 +15,7 @@ pub struct EditServerOptions {
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path(id): Path<i64>,
+    Path(id): Path<Snowflake>,
     ValidatedJson(data): ValidatedJson<EditServerOptions>,
 ) -> Result<Json<Server>> {
     let mut server = id.server(user.id.into()).await?;

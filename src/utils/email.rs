@@ -1,6 +1,7 @@
 use crate::config::*;
 use crate::database::redis::*;
 use crate::structures::User;
+use crate::utils::Snowflake;
 use lazy_regex::regex;
 use ormlite::model::*;
 use serde_json::json;
@@ -14,7 +15,7 @@ pub struct AccountInvite {
     #[ormlite(primary_key)]
     pub code: Uuid,
     pub used: bool,
-    pub taken_by: Option<i64>,
+    pub taken_by: Option<Snowflake>,
 }
 
 pub fn normalize(email: String) -> Option<String> {
@@ -32,7 +33,7 @@ pub async fn send(user: &User) -> bool {
     let code = Uuid::new_v4();
 
     content = content
-        .replace("%%EMAIL%%", &user.email)
+        .replace("%%EMAIL%%", &*user.email)
         .replace("%%CODE%%", &code.to_string())
         .replace("%%USER_ID%%", &user.id.to_string());
 
@@ -56,7 +57,7 @@ pub async fn send(user: &User) -> bool {
     if res.map(|r| r.status().is_success()).unwrap_or(false) {
         REDIS
             .set::<(), _, _>(
-                user.id,
+                *user.id,
                 code.to_string(),
                 Expiration::EX(THREE_HOURS_IN_SECONDS).into(),
                 None,
@@ -69,7 +70,7 @@ pub async fn send(user: &User) -> bool {
     }
 }
 
-pub async fn verify(user_id: i64, code: Uuid) -> bool {
+pub async fn verify(user_id: Snowflake, code: Uuid) -> bool {
     match REDIS.get::<String, _>(user_id.to_string()).await {
         Ok(token) if code.to_string() == token => {
             REDIS.del::<u32, _>(user_id.to_string()).await.ok();

@@ -15,14 +15,14 @@ pub struct CreateServerChannelOptions {
 
 pub async fn create(
     Extension(user): Extension<User>,
-    Path(server_id): Path<i64>,
+    Path(server_id): Path<Snowflake>,
     ValidatedJson(data): ValidatedJson<CreateServerChannelOptions>,
 ) -> Result<Json<Channel>> {
     Permissions::fetch(&user, server_id.into(), None)
         .await?
         .has(bits![MANAGE_CHANNELS])?;
 
-    let count = Channel::count(&format!("server_id = {}", server_id)).await?;
+    let count = Channel::count(&format!("server_id = {}", *server_id)).await?;
 
     if count >= *MAX_SERVER_CHANNELS {
         return Err(Error::MaximumChannels);

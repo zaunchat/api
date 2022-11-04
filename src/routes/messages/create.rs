@@ -15,7 +15,7 @@ pub struct CreateMessageOptions {
 
 pub async fn create(
     Extension(user): Extension<User>,
-    Path(channel_id): Path<i64>,
+    Path(channel_id): Path<Snowflake>,
     ValidatedJson(data): ValidatedJson<CreateMessageOptions>,
 ) -> Result<Json<Message>> {
     Permissions::fetch(&user, None, channel_id.into())

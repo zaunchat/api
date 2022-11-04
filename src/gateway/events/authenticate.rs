@@ -1,6 +1,6 @@
 use crate::gateway::{Payload, Sender, SocketClient};
 use crate::structures::*;
-use crate::utils::{Error, Permissions};
+use crate::utils::{Error, Permissions, Snowflake};
 use fred::interfaces::PubsubInterface;
 use std::sync::Arc;
 
@@ -9,7 +9,7 @@ pub async fn run(client: Arc<SocketClient>, conn: Sender) -> Result<(), Error> {
 
     let user = client.state.user.lock().await.clone();
     let permissions = &client.state.permissions;
-    let mut subscriptions: Vec<i64> = vec![user.id];
+    let mut subscriptions: Vec<Snowflake> = vec![user.id];
     let mut channels = user.fetch_channels().await?;
     let servers = user.fetch_servers().await?;
     let users: Vec<User> = user
@@ -26,7 +26,7 @@ pub async fn run(client: Arc<SocketClient>, conn: Sender) -> Result<(), Error> {
     if !servers.is_empty() {
         let mut servers_channels = Channel::select()
             .filter("server_id = ANY($1)")
-            .bind(servers.iter().map(|s| s.id).collect::<Vec<i64>>())
+            .bind(servers.iter().map(|s| s.id).collect::<Vec<Snowflake>>())
             .fetch_all(pool())
             .await?;
 

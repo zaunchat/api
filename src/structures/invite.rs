@@ -1,5 +1,5 @@
 use super::*;
-use crate::utils::snowflake;
+use crate::utils::Snowflake;
 use nanoid::nanoid;
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
@@ -8,26 +8,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, OpgModel)]
 #[ormlite(table = "invites")]
 pub struct Invite {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     pub code: String,
     pub uses: i32,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub inviter_id: i64,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub channel_id: i64,
-    #[opg(string, nullable)]
-    #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
-    pub server_id: Option<i64>,
+    pub inviter_id: Snowflake,
+    pub channel_id: Snowflake,
+    pub server_id: Option<Snowflake>,
 }
 
 impl Invite {
-    pub fn new(inviter_id: i64, channel_id: i64, server_id: Option<i64>) -> Self {
+    pub fn new(inviter_id: Snowflake, channel_id: Snowflake, server_id: Option<Snowflake>) -> Self {
         Self {
-            id: snowflake::generate(),
+            id: Snowflake::default(),
             code: nanoid!(8),
             inviter_id,
             channel_id,

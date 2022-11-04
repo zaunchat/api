@@ -1,12 +1,13 @@
 use crate::structures::User;
 use crate::utils::Permissions;
+use crate::utils::Snowflake;
 use dashmap::DashMap;
 use tokio::sync::Mutex;
 
 pub struct SocketClientState {
-    pub permissions: DashMap<i64, Permissions>,
+    pub permissions: DashMap<Snowflake, Permissions>,
     pub user: Mutex<User>,
-    pub user_id: i64,
+    pub user_id: Snowflake,
 }
 
 impl SocketClientState {

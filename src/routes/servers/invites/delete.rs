@@ -4,7 +4,7 @@ use crate::utils::*;
 
 pub async fn delete(
     Extension(user): Extension<User>,
-    Path((server_id, id)): Path<(i64, i64)>,
+    Path((server_id, id)): Path<(Snowflake, Snowflake)>,
 ) -> Result<()> {
     Permissions::fetch(&user, server_id.into(), None)
         .await?

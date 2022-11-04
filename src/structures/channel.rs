@@ -1,5 +1,5 @@
 use super::*;
-use crate::utils::{snowflake, Permissions, DEFAULT_PERMISSION_DM};
+use crate::utils::{Permissions, Snowflake, DEFAULT_PERMISSION_DM};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -34,9 +34,7 @@ pub enum OverwriteTypes {
 #[serde_as]
 #[derive(Serialize, Deserialize, Clone, Copy, OpgModel, Debug)]
 pub struct Overwrite {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     pub r#type: OverwriteTypes,
     pub allow: Permissions,
     pub deny: Permissions,
@@ -50,39 +48,30 @@ pub struct ChannelRecipients(Option<Vec<String>>);
 #[derive(Serialize, Deserialize, Model, FromRow, Clone, OpgModel, Debug)]
 #[ormlite(table = "channels")]
 pub struct Channel {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
 
     pub r#type: ChannelTypes,
 
     // Text/Voice/Category/Group
     pub name: Option<String>,
     // DM/Group
-    #[serde_as(as = "Option<Vec<serde_with::DisplayFromStr>>")]
     #[opg(custom = "ChannelRecipients")]
-    pub recipients: Option<Vec<i64>>,
+    pub recipients: Option<Vec<Snowflake>>,
 
     // Group/Text/Voice/Category
     pub overwrites: Option<Json<Vec<Overwrite>>>,
 
     // For server channels
-    #[opg(string, nullable)]
-    #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
     #[serde(default)]
-    pub server_id: Option<i64>,
+    pub server_id: Option<Snowflake>,
 
     // Server channels
-    #[opg(string, nullable)]
-    #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
     #[serde(default)]
-    pub parent_id: Option<i64>,
+    pub parent_id: Option<Snowflake>,
 
     // Group
-    #[opg(string, nullable)]
-    #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
     #[serde(default)]
-    pub owner_id: Option<i64>,
+    pub owner_id: Option<Snowflake>,
 
     // Text
     pub topic: Option<String>,
@@ -94,7 +83,7 @@ pub struct Channel {
 impl Default for Channel {
     fn default() -> Self {
         Self {
-            id: snowflake::generate(),
+            id: Snowflake::default(),
             r#type: ChannelTypes::Unknown,
             name: None,
             recipients: None,
@@ -109,7 +98,7 @@ impl Default for Channel {
 }
 
 impl Channel {
-    pub fn new_dm(user: i64, target: i64) -> Self {
+    pub fn new_dm(user: Snowflake, target: Snowflake) -> Self {
         Self {
             r#type: ChannelTypes::Direct,
             recipients: Some(vec![user, target]),
@@ -117,7 +106,7 @@ impl Channel {
         }
     }
 
-    pub fn new_group(user: i64, name: String) -> Self {
+    pub fn new_group(user: Snowflake, name: String) -> Self {
         Self {
             name: name.into(),
             r#type: ChannelTypes::Group,
@@ -129,7 +118,7 @@ impl Channel {
         }
     }
 
-    pub fn new_text(name: String, server_id: i64) -> Self {
+    pub fn new_text(name: String, server_id: Snowflake) -> Self {
         Self {
             r#type: ChannelTypes::Text,
             overwrites: Some(Json(vec![])),
@@ -139,7 +128,7 @@ impl Channel {
         }
     }
 
-    pub fn new_voice(name: String, server_id: i64) -> Self {
+    pub fn new_voice(name: String, server_id: Snowflake) -> Self {
         Self {
             r#type: ChannelTypes::Voice,
             overwrites: Some(Json(vec![])),
@@ -149,7 +138,7 @@ impl Channel {
         }
     }
 
-    pub fn new_category(name: String, server_id: i64) -> Self {
+    pub fn new_category(name: String, server_id: Snowflake) -> Self {
         Self {
             r#type: ChannelTypes::Category,
             overwrites: Some(Json(vec![])),

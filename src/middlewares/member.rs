@@ -1,5 +1,6 @@
 use crate::structures::{Base, Member, User};
 use crate::utils::error::*;
+use crate::utils::Snowflake;
 use axum::{
     extract::{Extension, Path},
     http::Request,
@@ -9,9 +10,9 @@ use axum::{
 
 #[derive(Deserialize)]
 pub struct ID {
-    server_id: u64,
+    server_id: Snowflake,
     #[allow(dead_code)]
-    id: Option<u64>,
+    id: Option<Snowflake>,
 }
 
 pub async fn handle<B: std::marker::Send>(
@@ -20,7 +21,8 @@ pub async fn handle<B: std::marker::Send>(
     req: Request<B>,
     next: Next<B>,
 ) -> Result<Response, Error> {
-    let exists = Member::count(&format!("id = {} AND server_id = {}", user.id, server_id)).await?;
+    let exists =
+        Member::count(&format!("id = {} AND server_id = {}", *user.id, *server_id)).await?;
 
     if exists == 0 {
         return Err(Error::UnknownServer);

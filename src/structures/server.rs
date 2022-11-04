@@ -1,5 +1,5 @@
 use super::*;
-use crate::utils::{permissions::*, snowflake};
+use crate::utils::{permissions::*, Snowflake};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
@@ -7,23 +7,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
 #[ormlite(table = "servers")]
 pub struct Server {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     pub name: String,
     pub description: Option<String>,
     pub icon: Option<String>,
     pub banner: Option<String>,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub owner_id: i64,
+    pub owner_id: Snowflake,
     pub permissions: Permissions,
 }
 
 impl Server {
-    pub fn new(name: String, owner_id: i64) -> Self {
+    pub fn new(name: String, owner_id: Snowflake) -> Self {
         Self {
-            id: snowflake::generate(),
+            id: Snowflake::default(),
             name,
             owner_id,
             permissions: *DEFAULT_PERMISSION_EVERYONE,
@@ -39,7 +35,7 @@ impl Server {
             .await
     }
 
-    pub async fn fetch_member(&self, user_id: i64) -> Result<Member, ormlite::Error> {
+    pub async fn fetch_member(&self, user_id: Snowflake) -> Result<Member, ormlite::Error> {
         Member::select()
             .filter("id = $1 AND server_id = $2")
             .bind(user_id)
