@@ -57,9 +57,9 @@ pub async fn register(
     let mut user = User::new(data.username, data.email, hashed_password);
 
     if *EMAIL_VERIFICATION && email::send(&user).await {
-        log::debug!("Email have been sent to: {}", user.email);
+        log::debug!("Email have been sent to: {}", *user.email);
     } else {
-        user.verified = true;
+        user.verified = true.into();
     }
 
     if let Some(invite) = invite {
@@ -74,7 +74,7 @@ pub async fn register(
     let user = user.save().await?;
 
     Ok(RegisterResponse {
-        pending_verification: !user.verified,
+        pending_verification: !*user.verified,
     }
     .into())
 }

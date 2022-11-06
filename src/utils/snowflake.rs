@@ -19,7 +19,7 @@ lazy_static! {
 pub struct Snowflake(
     #[serde_as(as = "serde_with::DisplayFromStr")]
     #[opg(string)]
-    pub i64,
+    i64
 );
 
 impl Default for Snowflake {
