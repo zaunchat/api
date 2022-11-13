@@ -5,7 +5,7 @@ dev:
 	cargo run
 
 test:
-	cargo test -r -- -Z unstable-options --report-time
+	cargo test --
 
 setup: 
 	docker run -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
