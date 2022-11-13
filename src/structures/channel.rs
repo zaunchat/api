@@ -40,9 +40,6 @@ pub struct Overwrite {
     pub deny: Permissions,
 }
 
-#[derive(Serialize, OpgModel)]
-pub struct ChannelRecipients(Option<Vec<String>>);
-
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Model, FromRow, Clone, OpgModel, Debug)]
@@ -54,8 +51,8 @@ pub struct Channel {
 
     // Text/Voice/Category/Group
     pub name: Option<String>,
+
     // DM/Group
-    #[opg(custom = "ChannelRecipients")]
     pub recipients: Option<Vec<Snowflake>>,
 
     // Group/Text/Voice/Category

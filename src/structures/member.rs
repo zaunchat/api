@@ -4,19 +4,14 @@ use chrono::{NaiveDateTime, Utc};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, OpgModel)]
-struct MemberRoles(Vec<String>);
-
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, OpgModel)]
 #[ormlite(table = "members")]
 pub struct Member {
     pub id: Snowflake,
     pub nickname: Option<String>,
-    #[opg(string)]
     pub joined_at: NaiveDateTime,
     pub server_id: Snowflake,
-    #[opg(custom = "MemberRoles")]
     pub roles: Vec<Snowflake>,
 }
 

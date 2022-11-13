@@ -5,20 +5,15 @@ use ormlite::model::*;
 use ormlite::types::Json;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, OpgModel)]
-struct MessageAttachments(Vec<Attachment>);
-
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, OpgModel)]
 #[ormlite(table = "messages")]
 pub struct Message {
     pub id: Snowflake,
     pub content: Option<String>,
-    #[opg(custom = "MessageAttachments")]
     pub attachments: Json<Vec<Attachment>>,
     pub channel_id: Snowflake,
     pub author_id: Snowflake,
-    #[opg(string, nullable)]
     pub edited_at: Option<NaiveDateTime>,
 }
 

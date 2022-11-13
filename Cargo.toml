@@ -61,7 +61,7 @@ rmp-serde = "1.1.1"
 lazy-regex = "2.3.0"
 
 # Docs
-opg = { git = "https://github.com/abdulrahman1s/opg", rev = "0a9f7f8c791d522fc9bd25bda8e63cb4f270ecc8" }
+opg = { git = "https://github.com/abdulrahman1s/opg", rev = "0a9f7f8c791d522fc9bd25bda8e63cb4f270ecc8", features = ["chrono"] }
 
 
 [patch.crates-io]
