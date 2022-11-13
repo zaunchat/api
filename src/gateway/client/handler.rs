@@ -9,12 +9,9 @@ pub async fn handle_incoming(client: Arc<SocketClient>, conn: Sender, receiver: 
     let mut errors = 0u8;
 
     while let Some(Ok(msg)) = receiver.next().await {
-        let payload = match client.config.decode(msg) {
-            Some(p) => p,
-            _ => {
-                log::debug!("Socket sent an invalid body");
-                continue;
-            }
+        let Some(payload) = client.config.decode(msg) else {
+            log::debug!("Socket sent an invalid body");
+            continue;
         };
 
         let res = match &payload {
@@ -40,27 +37,14 @@ pub async fn handle_incoming(client: Arc<SocketClient>, conn: Sender, receiver: 
 
 pub async fn handle_outgoing(client: Arc<SocketClient>) -> Result<(), Error> {
     while let Some((target_id, payload)) = client.subscriptions.on_message().next().await {
-        let target_id = match target_id.clone().try_into() {
-            Ok(id) => id,
-            _ => {
-                log::warn!("Received non-parsable target id: {target_id:?}");
-                continue;
-            }
+        let Ok(target_id) =  target_id.clone().try_into() else {
+            log::warn!("Received non-parsable target id: {target_id:?}");
+            continue;
         };
 
-        let payload = match payload.as_bytes() {
-            Some(buf) => {
-                if let Ok(p) = MsgPack::decode::from_slice(buf) {
-                    p
-                } else {
-                    log::warn!("Received invalid payload value: {payload:?}");
-                    continue;
-                }
-            }
-            _ => {
-                log::warn!("Received non-bytes redis value: {payload:?}");
-                continue;
-            }
+        let Some(payload) = payload.as_bytes().and_then(|buf| MsgPack::decode::from_slice(buf).ok()) else {
+            log::warn!("Received non-bytes redis value: {payload:?}");
+            continue;
         };
 
         let user_id = client.state.user_id;

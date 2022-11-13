@@ -14,14 +14,10 @@ pub async fn handle<B>(req: Request<B>, next: Next<B>) -> Result<Response, Error
         return Ok(next.run(req).await);
     }
 
-    let key = match req
+    let Some(key) = req
         .headers()
         .get("X-Captcha-Key")
-        .and_then(|v| v.to_str().ok())
-    {
-        Some(k) => k,
-        _ => return Err(Error::MissingHeader),
-    };
+        .and_then(|v| v.to_str().ok()) else { Err(Error::MissingHeader)? };
 
     let client = reqwest::Client::new();
     let body = json!({

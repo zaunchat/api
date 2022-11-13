@@ -46,12 +46,9 @@ impl WebSocketServer {
                 break; // nope
             }
 
-            let payload = match config.decode(msg) {
-                Some(p) => p,
-                _ => {
-                    log::debug!("Socket sent an invalid body");
-                    continue;
-                }
+            let Some(payload) = config.decode(msg) else {
+                log::debug!("Socket sent an invalid body");
+                continue;
             };
 
             if let ClientPayload::Authenticate { token } = payload {
@@ -72,10 +69,7 @@ impl WebSocketServer {
             let (sender, mut receiver) = stream.split();
             let sender = Sender::new(sender);
 
-            let user = match WS.authenticate(&mut receiver, &config).await {
-                Some(x) => x,
-                _ => return,
-            };
+            let Some(user) = WS.authenticate(&mut receiver, &config).await else { return };
 
             let connection_id = nanoid!(6);
             let user_id = user.id;

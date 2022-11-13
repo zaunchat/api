@@ -33,7 +33,7 @@ pub async fn send(user: &User) -> bool {
     let code = Uuid::new_v4();
 
     content = content
-        .replace("%%EMAIL%%", &*user.email)
+        .replace("%%EMAIL%%", &user.email)
         .replace("%%CODE%%", &code.to_string())
         .replace("%%USER_ID%%", &user.id.to_string());
 

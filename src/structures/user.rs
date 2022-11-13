@@ -87,18 +87,13 @@ impl User {
         }
     }
 
-    pub fn show_private_fields(&mut self) {
-        self.verified.set_public();
-        self.password.set_public();
-        self.email.set_public();
-        self.relations.set_public();
-    }
-
-    pub fn hide_private_fields(&mut self) {
-        self.verified.set_private();
-        self.password.set_private();
-        self.email.set_private();
-        self.relations.set_private();
+    pub fn with_hidden_fields(&self) -> Self {
+        let mut u = self.clone();
+        u.verified.set_public();
+        u.password.set_public();
+        u.email.set_public();
+        u.relations.set_public();
+        u
     }
 
     pub async fn email_taken(email: &str) -> bool {

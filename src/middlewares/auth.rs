@@ -1,3 +1,4 @@
+use crate::database::redis::*;
 use crate::structures::*;
 use crate::utils::error::Error;
 use axum::{
@@ -7,9 +8,30 @@ use axum::{
 };
 use rmp_serde as MessagePack;
 
-use crate::database::redis::*;
-
 const ONE_HOUR_IN_SECONDS: i64 = 3600;
+
+async fn fetch_from_cache(token: &str) -> Option<User> {
+    REDIS
+        .get(token)
+        .await
+        .ok()
+        .and_then(|buf: Vec<u8>| MessagePack::from_slice(&buf).ok())
+}
+
+async fn cache_user(token: &str, user: &User) {
+    let buf = MessagePack::to_vec_named(&user.with_hidden_fields()).unwrap();
+
+    REDIS
+        .set::<(), _, _>(
+            token,
+            buf.as_slice(),
+            Expiration::EX(ONE_HOUR_IN_SECONDS).into(),
+            None,
+            false,
+        )
+        .await
+        .ok();
+}
 
 pub async fn handle<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, Error> {
     let should_ignore = matches!(
@@ -26,52 +48,21 @@ pub async fn handle<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, E
         return Ok(next.run(req).await);
     }
 
-    let token = req
+    let Some(token) = req
         .headers()
         .get(header::AUTHORIZATION)
-        .and_then(|header| header.to_str().ok());
+        .and_then(|header| header.to_str().ok()) else { Err(Error::MissingHeader)? };
 
-    let token = match token {
-        Some(s) => s,
-        _ => return Err(Error::MissingHeader),
-    };
-
-    let user = if let Ok(Ok(user)) = REDIS
-        .get(token)
-        .await
-        .map(|buf: Vec<u8>| MessagePack::from_slice(&buf))
-    {
-        Some(user)
-    } else {
-        match User::fetch_by_token(token).await {
-            Some(mut u) => {
-                u.show_private_fields();
-
-                let buf = MessagePack::to_vec_named(&u).unwrap();
-
-                u.hide_private_fields();
-
-                REDIS
-                    .set::<(), _, _>(
-                        token,
-                        buf.as_slice(),
-                        Expiration::EX(ONE_HOUR_IN_SECONDS).into(),
-                        None,
-                        false,
-                    )
-                    .await
-                    .ok();
-
-                Some(u)
-            }
-            _ => None,
+    let user = match fetch_from_cache(token).await {
+        Some(u) => u,
+        _ => {
+            let Some(u) = User::fetch_by_token(token).await else { Err(Error::InvalidToken)? };
+            cache_user(token, &u).await;
+            u
         }
     };
 
-    if let Some(user) = user {
-        req.extensions_mut().insert(user);
-        return Ok(next.run(req).await);
-    }
+    req.extensions_mut().insert(user);
 
-    Err(Error::InvalidToken)
+    Ok(next.run(req).await)
 }

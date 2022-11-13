@@ -6,7 +6,7 @@ use rmp_serde as MsgPack;
 use serde::Serialize;
 
 pub static REDIS: Lazy<RedisPool> = Lazy::new(|| {
-    let config = RedisConfig::from_url(&*REDIS_URI).expect("Invalid redis url");
+    let config = RedisConfig::from_url(&REDIS_URI).expect("Invalid redis url");
     RedisPool::new(config, *REDIS_POOL_SIZE).expect("Failed initialize redis pool")
 });
 
@@ -21,7 +21,7 @@ pub async fn connect() {
 }
 
 pub async fn pubsub() -> SubscriberClient {
-    let config = RedisConfig::from_url(&*REDIS_URI).unwrap();
+    let config = RedisConfig::from_url(&REDIS_URI).unwrap();
     let client = SubscriberClient::new(config);
 
     let policy = ReconnectPolicy::default();
