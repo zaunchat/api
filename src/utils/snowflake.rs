@@ -67,6 +67,7 @@ impl TryFrom<String> for Snowflake {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::thread::sleep;
 
     #[test]
     fn test_snowflake_generate() {
@@ -76,13 +77,13 @@ mod tests {
 
     #[test]
     fn test_snowflake_created_at() {
-        let start = Utc::now();
-
-        std::thread::sleep(Duration::from_millis(1000));
-
         let id = Snowflake::generate();
 
-        assert!(id.created_at() > start);
-        assert!(id.created_at_timestamp().as_millis() as i64 > start.timestamp_millis());
+        sleep(Duration::from_millis(100));
+
+        let now = Utc::now();
+
+        assert!(id.created_at() < now);
+        assert!((id.created_at_timestamp().as_millis() as i64) < now.timestamp_millis());
     }
 }
