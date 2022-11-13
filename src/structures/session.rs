@@ -5,23 +5,22 @@ use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, OpgModel)]
 #[ormlite(table = "sessions")]
 pub struct Session {
     pub id: Snowflake,
     #[serde(skip)]
     pub token: String,
-    #[opg(string)]
     #[serde(skip)]
-    pub user_id: Snowflake,
+    pub user_id: Option<Snowflake>,
 }
 
 impl Session {
     pub fn new(user_id: Snowflake) -> Self {
         Self {
-            id: Snowflake::default(),
+            id: Snowflake::generate(),
             token: nanoid!(64),
-            user_id,
+            user_id: Some(user_id),
         }
     }
 

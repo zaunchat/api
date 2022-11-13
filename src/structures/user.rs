@@ -50,7 +50,7 @@ impl Presence {
 }
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, FromRow, Model, Default, Clone, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Model, Clone, OpgModel)]
 #[ormlite(table = "users")]
 pub struct User {
     pub id: Snowflake,
@@ -74,11 +74,16 @@ pub struct User {
 impl User {
     pub fn new(username: String, email: String, password: String) -> Self {
         Self {
-            id: Snowflake::default(),
+            id: Snowflake::generate(),
             username,
             email: email.into(),
             password: password.into(),
-            ..Default::default()
+            avatar: None,
+            relationship: None,
+            verified: false.into(),
+            presence: Json(Presence::default()),
+            badges: Badges::default(),
+            relations: Json(HashMap::new()).into(),
         }
     }
 

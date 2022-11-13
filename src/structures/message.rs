@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 struct MessageAttachments(Vec<Attachment>);
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, OpgModel)]
 #[ormlite(table = "messages")]
 pub struct Message {
     pub id: Snowflake,
@@ -25,10 +25,12 @@ pub struct Message {
 impl Message {
     pub fn new(channel_id: Snowflake, author_id: Snowflake) -> Self {
         Self {
-            id: Snowflake::default(),
+            id: Snowflake::generate(),
+            content: None,
             channel_id,
             author_id,
-            ..Default::default()
+            attachments: Json(vec![]),
+            edited_at: None,
         }
     }
 

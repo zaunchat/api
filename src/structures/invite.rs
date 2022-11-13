@@ -19,7 +19,7 @@ pub struct Invite {
 impl Invite {
     pub fn new(inviter_id: Snowflake, channel_id: Snowflake, server_id: Option<Snowflake>) -> Self {
         Self {
-            id: Snowflake::default(),
+            id: Snowflake::generate(),
             code: nanoid!(8),
             inviter_id,
             channel_id,

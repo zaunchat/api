@@ -40,7 +40,7 @@ mod tests {
             };
 
             delete(
-                Extension(session.user_id.user().await?),
+                Extension(session.user_id.unwrap().user().await?),
                 Path(session.id),
                 ValidatedJson(payload),
             )

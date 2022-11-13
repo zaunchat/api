@@ -4,7 +4,7 @@ use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, OpgModel)]
 #[ormlite(table = "roles")]
 pub struct Role {
     pub id: Snowflake,
@@ -18,10 +18,12 @@ pub struct Role {
 impl Role {
     pub fn new(name: String, server_id: Snowflake) -> Self {
         Self {
-            id: Snowflake::default(),
+            id: Snowflake::generate(),
             name,
             server_id,
-            ..Default::default()
+            hoist: false,
+            color: 0,
+            permissions: Permissions::empty(),
         }
     }
 

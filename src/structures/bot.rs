@@ -16,7 +16,7 @@ pub struct Bot {
 impl Bot {
     pub fn new(username: String, owner_id: Snowflake) -> Self {
         Self {
-            id: Snowflake::default(),
+            id: Snowflake::generate(),
             username,
             owner_id,
             verified: false,

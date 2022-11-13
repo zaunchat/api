@@ -28,7 +28,7 @@ mod tests {
         run(async {
             let session = Session::faker().await?;
             let session = session.save().await?;
-            let user = session.user_id.user().await?;
+            let user = session.user_id.unwrap().user().await?;
 
             let results = fetch_many(Extension(user.clone())).await?;
 

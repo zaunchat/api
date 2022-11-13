@@ -4,7 +4,7 @@ use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, OpgModel)]
 #[ormlite(table = "servers")]
 pub struct Server {
     pub id: Snowflake,
@@ -19,11 +19,13 @@ pub struct Server {
 impl Server {
     pub fn new(name: String, owner_id: Snowflake) -> Self {
         Self {
-            id: Snowflake::default(),
+            id: Snowflake::generate(),
             name,
             owner_id,
             permissions: *DEFAULT_PERMISSION_EVERYONE,
-            ..Default::default()
+            banner: None,
+            icon: None,
+            description: None,
         }
     }
 

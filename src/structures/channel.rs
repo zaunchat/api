@@ -83,7 +83,7 @@ pub struct Channel {
 impl Default for Channel {
     fn default() -> Self {
         Self {
-            id: Snowflake::default(),
+            id: Snowflake::generate(),
             r#type: ChannelTypes::Unknown,
             name: None,
             recipients: None,
