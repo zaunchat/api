@@ -1,3 +1,4 @@
+use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::{PgHasArrayType, PgTypeInfo};
@@ -22,9 +23,18 @@ pub struct Snowflake(
     i64,
 );
 
-impl Default for Snowflake {
-    fn default() -> Self {
+impl Snowflake {
+    pub fn generate() -> Self {
         Self(GENERATOR.lock().unwrap().generate())
+    }
+
+    pub fn created_at_timestamp(&self) -> Duration {
+        Duration::from_millis((self.0 >> 22) as u64)
+            + ITCHAT_EPOCH.duration_since(UNIX_EPOCH).unwrap()
+    }
+
+    pub fn created_at(&self) -> DateTime<Utc> {
+        Utc.timestamp(self.created_at_timestamp().as_secs() as i64, 0)
     }
 }
 
@@ -51,5 +61,28 @@ impl TryFrom<String> for Snowflake {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         Ok(Snowflake(value.parse()?))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_snowflake_generate() {
+        let id = Snowflake::generate();
+        assert!(id.is_positive());
+    }
+
+    #[test]
+    fn test_snowflake_created_at() {
+        let start = Utc::now();
+
+        std::thread::sleep(Duration::from_millis(1000));
+
+        let id = Snowflake::generate();
+
+        assert!(id.created_at() > start);
+        assert!(id.created_at_timestamp().as_millis() as i64 > start.timestamp_millis());
     }
 }
