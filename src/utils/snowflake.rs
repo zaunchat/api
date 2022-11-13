@@ -17,9 +17,9 @@ lazy_static! {
 #[serde(transparent)]
 #[sqlx(transparent)]
 #[serde_as]
+#[opg(string)]
 pub struct Snowflake(
     #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
     i64,
 );
 
