@@ -139,7 +139,7 @@ impl User {
     }
 
     pub async fn fetch_relations(&self) -> Result<Vec<User>, ormlite::Error> {
-        let ids: Vec<Snowflake> = self.relations.0.keys().copied().collect();
+        let ids = self.relations.0.keys().copied().collect::<Vec<_>>();
 
         if ids.is_empty() {
             return Ok(vec![]);

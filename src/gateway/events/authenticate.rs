@@ -12,7 +12,7 @@ pub async fn run(client: Arc<SocketClient>, conn: Sender) -> Result<(), Error> {
     let mut subscriptions: Vec<Snowflake> = vec![user.id];
     let mut channels = user.fetch_channels().await?;
     let servers = user.fetch_servers().await?;
-    let users: Vec<User> = user
+    let users = user
         .fetch_relations()
         .await?
         .into_iter()
@@ -21,12 +21,12 @@ pub async fn run(client: Arc<SocketClient>, conn: Sender) -> Result<(), Error> {
             u.relationship = user.relations.0.get(&u.id).copied();
             u
         })
-        .collect();
+        .collect::<Vec<_>>();
 
     if !servers.is_empty() {
         let mut servers_channels = Channel::select()
             .filter("server_id = ANY($1)")
-            .bind(servers.iter().map(|s| s.id).collect::<Vec<Snowflake>>())
+            .bind(servers.iter().map(|s| s.id).collect::<Vec<_>>())
             .fetch_all(pool())
             .await?;
 

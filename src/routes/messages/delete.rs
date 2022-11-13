@@ -16,13 +16,13 @@ pub async fn delete(
         p.has(bits![MANAGE_MESSAGES, VIEW_CHANNEL])?;
     }
 
-    let attachment_ids: Vec<Snowflake> = msg
+    let attachment_ids = msg
         .attachments
         .0
         .clone()
         .into_iter()
         .map(|a| a.id)
-        .collect();
+        .collect::<Vec<_>>();
 
     let mut tx = pool().begin().await?;
 
