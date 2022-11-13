@@ -26,7 +26,7 @@ impl Snowflake {
     }
 
     pub fn created_at_timestamp(&self) -> Duration {
-        Duration::from_millis((self.0 >> 22) as u64)
+        Duration::from_millis((**self >> 22) as u64)
             + ITCHAT_EPOCH.duration_since(UNIX_EPOCH).unwrap()
     }
 
