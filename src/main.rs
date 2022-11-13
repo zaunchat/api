@@ -72,7 +72,8 @@ pub mod tests {
         dotenv::dotenv().ok();
 
         env_logger::builder()
-            .filter_level(LevelFilter::Trace)
+            .filter_level(LevelFilter::Debug)
+            .parse_filters("fred=off")
             .format_timestamp(None)
             .init();
 
