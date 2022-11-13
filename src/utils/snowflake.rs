@@ -18,10 +18,7 @@ lazy_static! {
 #[sqlx(transparent)]
 #[serde_as]
 #[opg(string)]
-pub struct Snowflake(
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    i64,
-);
+pub struct Snowflake(#[serde_as(as = "serde_with::DisplayFromStr")] i64);
 
 impl Snowflake {
     pub fn generate() -> Self {
