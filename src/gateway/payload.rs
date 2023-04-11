@@ -8,18 +8,11 @@ use serde::{Deserialize, Serialize};
 #[serde(untagged)]
 pub enum Empty {
     Default { id: Snowflake },
-    ServerObject { id: Snowflake, server_id: Snowflake },
 }
 
 impl From<Snowflake> for Empty {
     fn from(id: Snowflake) -> Empty {
         Empty::Default { id }
-    }
-}
-
-impl From<(Snowflake, Snowflake)> for Empty {
-    fn from((id, server_id): (Snowflake, Snowflake)) -> Empty {
-        Empty::ServerObject { id, server_id }
     }
 }
 
