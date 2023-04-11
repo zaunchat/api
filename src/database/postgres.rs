@@ -7,7 +7,7 @@ static POOL: OnceCell<Pool<Postgres>> = OnceCell::new();
 pub async fn connect() {
     let pool = PgPoolOptions::new()
         .max_connections(*DATABASE_POOL_SIZE)
-        .connect(&*DATABASE_URI)
+        .connect(&DATABASE_URI)
         .await
         .expect("Couldn't connect to database");
 

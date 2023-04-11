@@ -29,7 +29,7 @@ impl Type<Postgres> for Badges {
 
 impl Encode<'_, Postgres> for Badges {
     fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
-        Encode::<Postgres>::encode(self.bits() as i64, buf)
+        Encode::<Postgres>::encode(self.bits(), buf)
     }
 }
 

@@ -21,13 +21,17 @@ pub async fn create(ValidatedJson(data): ValidatedJson<CreateSessionOptions>) ->
 
     match user {
         Ok(user) => {
-            if !user.verified {
+            if !*user.verified {
                 return Err(Error::AccountVerificationRequired);
             }
 
-            if argon2::verify_encoded(user.password.as_str(), data.password.to_string().as_bytes())
-                .is_err()
-            {
+            let valid_password =
+                match argon2::verify_encoded(&user.password, data.password.as_bytes()) {
+                    Ok(x) => x,
+                    _ => false,
+                };
+
+            if !valid_password {
                 return Err(Error::MissingAccess);
             }
 
@@ -45,18 +49,20 @@ mod tests {
     use crate::tests::run;
 
     #[test]
-    fn execute() {
+    fn execute() -> Result<(), Error> {
         run(async {
-            let user = User::faker().save().await.unwrap();
+            let user = User::faker().save().await?;
 
             let payload = CreateSessionOptions {
-                email: user.email.clone(),
+                email: (*user.email).clone(),
                 password: "passw0rd".to_string(),
             };
 
-            create(ValidatedJson(payload)).await.unwrap();
+            create(ValidatedJson(payload)).await?;
 
-            user.remove().await.unwrap();
+            user.remove().await?;
+
+            Ok(())
         })
     }
 }

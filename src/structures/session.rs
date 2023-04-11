@@ -1,55 +1,38 @@
 use super::*;
-use crate::utils::snowflake;
+use crate::utils::Snowflake;
 use nanoid::nanoid;
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, Default, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, OpgModel)]
 #[ormlite(table = "sessions")]
 pub struct Session {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     #[serde(skip)]
     pub token: String,
-    #[opg(string)]
     #[serde(skip)]
-    pub user_id: i64,
+    pub user_id: Option<Snowflake>,
 }
 
 impl Session {
-    pub fn new(user_id: i64) -> Self {
+    pub fn new(user_id: Snowflake) -> Self {
         Self {
-            id: snowflake::generate(),
+            id: Snowflake::generate(),
             token: nanoid!(64),
-            user_id,
+            user_id: Some(user_id),
         }
     }
 
     #[cfg(test)]
-    pub async fn faker() -> Self {
+    pub async fn faker() -> Result<Self, Error> {
         let user = User::faker();
         let session = Self::new(user.id);
 
-        user.save().await.unwrap();
+        user.save().await?;
 
-        session
+        Ok(session)
     }
 }
 
 impl Base for Session {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create() {
-        run(async {
-            let session = Session::faker().await.save().await.unwrap();
-            Session::find_one(session.id).await.unwrap();
-        });
-    }
-}

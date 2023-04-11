@@ -16,7 +16,8 @@ pub mod routes;
 pub mod structures;
 pub mod utils;
 
-use axum::{middleware, Router, Server};
+use axum::{middleware, routing::get, Router, Server};
+use gateway::WebSocketServer;
 use std::net::SocketAddr;
 
 #[tokio::main]
@@ -36,16 +37,17 @@ async fn main() {
     use middlewares::*;
 
     let app = routes::mount(Router::new())
-        .route("/ws", axum::routing::get(gateway::upgrade))
+        .route("/ws", get(WebSocketServer::upgrade))
         .layer(middleware::from_fn(auth::handle))
         .layer(middleware::from_fn(ratelimit::handle!(50, 1000 * 60)))
-        .layer(cors::handle());
+        .layer(cors::handle())
+        .layer(compression::handle());
 
-    let address: SocketAddr = format!("0.0.0.0:{}", *config::PORT).parse().unwrap();
+    let addr = SocketAddr::from(([0, 0, 0, 0], *config::PORT));
 
-    log::info!("Listening on: {}", address.port());
+    log::info!("Listening on: {}", addr.port());
 
-    Server::bind(&address)
+    Server::bind(&addr)
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .unwrap();
@@ -70,7 +72,8 @@ pub mod tests {
         dotenv::dotenv().ok();
 
         env_logger::builder()
-            .filter_level(LevelFilter::Trace)
+            .filter_level(LevelFilter::Debug)
+            .parse_filters("fred=off")
             .format_timestamp(None)
             .init();
 

@@ -25,7 +25,7 @@ pub struct RegisterResponse {
 pub async fn register(
     ValidatedJson(mut data): ValidatedJson<RegisterAccountOptions>,
 ) -> Result<Json<RegisterResponse>> {
-    data.email = email::normalize(data.email);
+    data.email = email::normalize(data.email).expect("Non normalized email");
 
     let invite = if *REQUIRE_INVITE_TO_REGISTER && data.invite_code.is_some() {
         email::AccountInvite::get_one(data.invite_code.as_ref().unwrap(), pool())
@@ -57,9 +57,9 @@ pub async fn register(
     let mut user = User::new(data.username, data.email, hashed_password);
 
     if *EMAIL_VERIFICATION && email::send(&user).await {
-        log::debug!("Email have been sent to: {}", user.email);
+        log::debug!("Email have been sent to: {}", *user.email);
     } else {
-        user.verified = true;
+        user.verified = true.into();
     }
 
     if let Some(invite) = invite {
@@ -74,7 +74,7 @@ pub async fn register(
     let user = user.save().await?;
 
     Ok(RegisterResponse {
-        pending_verification: !user.verified,
+        pending_verification: !*user.verified,
     }
     .into())
 }
@@ -85,7 +85,7 @@ mod tests {
     use crate::tests::run;
 
     #[test]
-    fn execute() {
+    fn execute() -> Result<(), Error> {
         run(async {
             let email = format!("test.{}@example.com", nanoid::nanoid!(6));
             let payload = RegisterAccountOptions {
@@ -95,16 +95,17 @@ mod tests {
                 invite_code: None,
             };
 
-            register(ValidatedJson(payload)).await.unwrap();
+            register(ValidatedJson(payload)).await?;
 
             let user = User::select()
                 .filter("email = $1")
                 .bind(email::normalize(email))
                 .fetch_one(pool())
-                .await
-                .unwrap();
+                .await?;
 
-            user.remove().await.unwrap();
-        });
+            user.remove().await?;
+
+            Ok(())
+        })
     }
 }

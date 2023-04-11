@@ -1,37 +1,22 @@
 use crate::database::redis::publish;
 use crate::structures::*;
-use axum::extract::ws;
+use crate::utils::Snowflake;
 use serde::{Deserialize, Serialize};
 
 #[serde_as]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum Empty {
-    Default {
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        id: i64,
-    },
-    ServerObject {
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        id: i64,
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        server_id: i64,
-    },
+    Default { id: Snowflake },
 }
 
-impl From<i64> for Empty {
-    fn from(id: i64) -> Empty {
+impl From<Snowflake> for Empty {
+    fn from(id: Snowflake) -> Empty {
         Empty::Default { id }
     }
 }
 
-impl From<(i64, i64)> for Empty {
-    fn from((id, server_id): (i64, i64)) -> Empty {
-        Empty::ServerObject { id, server_id }
-    }
-}
-
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(tag = "op", content = "d")]
 pub enum Payload {
     Pong,
@@ -39,7 +24,6 @@ pub enum Payload {
     Ready {
         user: User,
         users: Vec<User>,
-        servers: Vec<Server>,
         channels: Vec<Channel>,
     },
     ChannelCreate(Channel),
@@ -48,15 +32,6 @@ pub enum Payload {
     MessageCreate(Message),
     MessageDelete(Empty),
     MessageUpdate(Message),
-    RoleCreate(Role),
-    RoleDelete(Empty),
-    RoleUpdate(Role),
-    ServerCreate(Server),
-    ServerDelete(Empty),
-    ServerMemberJoin(Member),
-    ServerMemberLeave(Empty),
-    ServerMemberUpdate(Member),
-    ServerUpdate(Server),
     UserUpdate(User),
 }
 
@@ -67,14 +42,8 @@ pub enum ClientPayload {
     Ping,
 }
 
-impl From<Payload> for ws::Message {
-    fn from(payload: Payload) -> ws::Message {
-        ws::Message::Text(serde_json::to_string(&payload).unwrap())
-    }
-}
-
 impl Payload {
-    pub async fn to(self, id: i64) {
-        publish(id, serde_json::to_string(&self).unwrap()).await;
+    pub async fn to(self, id: Snowflake) {
+        publish(id.to_string(), self).await;
     }
 }

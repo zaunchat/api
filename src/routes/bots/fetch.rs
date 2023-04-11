@@ -2,7 +2,7 @@ use crate::extractors::*;
 use crate::structures::*;
 use crate::utils::*;
 
-pub async fn fetch_one(Path(id): Path<i64>) -> Result<Json<Bot>> {
+pub async fn fetch_one(Path(id): Path<Snowflake>) -> Result<Json<Bot>> {
     Ok(id.bot().await?.into())
 }
 

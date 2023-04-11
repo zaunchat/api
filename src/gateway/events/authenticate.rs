@@ -1,82 +1,31 @@
-use crate::gateway::{
-    client::Client,
-    payload::{ClientPayload, Payload},
-};
-use crate::structures::*;
-use crate::utils::Permissions;
+use crate::gateway::{Payload, Sender, SocketClient};
+use crate::utils::{Error, Permissions, Snowflake};
 use fred::interfaces::PubsubInterface;
+use std::sync::Arc;
 
-pub async fn run(client: &Client, payload: ClientPayload) {
-    if client.user.lock().await.is_some() {
-        return;
-    }
+pub async fn run(client: Arc<SocketClient>, conn: Sender) -> Result<(), Error> {
+    client.send(&conn, Payload::Authenticated).await?;
 
-    let user = if let ClientPayload::Authenticate { token } = payload {
-        User::fetch_by_token(token.as_str()).await
-    } else {
-        None
-    };
-
-    if user.is_none() {
-        return;
-    }
-
-    client.send(Payload::Authenticated).await.ok();
-
-    let user = user.unwrap();
-
-    *client.user.lock().await = Some(user.clone());
-
-    let mut subscriptions: Vec<i64> = vec![user.id];
-    let mut permissions = client.permissions.lock().await;
-    let mut channels = user.fetch_channels().await.unwrap();
-    let servers = user.fetch_servers().await.unwrap();
-    let users: Vec<User> = user
+    let user = client.state.user.lock().await.clone();
+    let permissions = &client.state.permissions;
+    let mut subscriptions: Vec<Snowflake> = vec![user.id];
+    let channels = user.fetch_channels().await?;
+    let users = user
         .fetch_relations()
-        .await
-        .unwrap()
+        .await?
         .into_iter()
         .map(|mut u| {
             subscriptions.push(user.id);
             u.relationship = user.relations.0.get(&u.id).copied();
             u
         })
-        .collect();
-
-    if !servers.is_empty() {
-        let mut servers_channels = Channel::select()
-            .filter("server_id = ANY($1)")
-            .bind(servers.iter().map(|s| s.id).collect::<Vec<i64>>())
-            .fetch_all(pool())
-            .await
-            .unwrap();
-
-        channels.append(&mut servers_channels);
-    }
-
-    for server in &servers {
-        subscriptions.push(server.id);
-        permissions.insert(
-            server.id,
-            Permissions::fetch_cached(&user, server.into(), None)
-                .await
-                .unwrap(),
-        );
-    }
+        .collect::<Vec<_>>();
 
     for channel in &channels {
-        let server = if let Some(server_id) = channel.server_id {
-            servers.iter().find(|s| s.id == server_id)
-        } else {
-            None
-        };
-
         subscriptions.push(channel.id);
         permissions.insert(
             channel.id,
-            Permissions::fetch_cached(&user, server, channel.into())
-                .await
-                .unwrap(),
+            Permissions::fetch_cached(&user, channel.into()).await?,
         );
     }
 
@@ -85,12 +34,15 @@ pub async fn run(client: &Client, payload: ClientPayload) {
     }
 
     client
-        .send(Payload::Ready {
-            user,
-            users,
-            servers,
-            channels,
-        })
-        .await
-        .ok();
+        .send(
+            &conn,
+            Payload::Ready {
+                user,
+                users,
+                channels,
+            },
+        )
+        .await?;
+
+    Ok(())
 }

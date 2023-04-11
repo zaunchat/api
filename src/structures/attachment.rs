@@ -1,4 +1,5 @@
 use super::Base;
+use crate::utils::Snowflake;
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
@@ -6,9 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Model, FromRow, Serialize, Deserialize, Debug, OpgModel, Clone)]
 #[ormlite(table = "attachments")]
 pub struct Attachment {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     pub filename: String,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub width: Option<i32>,

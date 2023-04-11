@@ -22,7 +22,7 @@ ormlite = { version = "0.3.2", features = ["postgres", "runtime-tokio-rustls"] }
 fred = { version = "5.1.0", features = ["subscriber-client", "serde-json"] }
 
 # HTTP
-axum = { version = "0.6.0-rc.2", features = ["ws", "headers"] }
+axum = { version = "0.6.0-rc.4", features = ["ws", "headers"] }
 reqwest = { version = "0.11", features = ["json"] }
 
 # Serde
@@ -38,7 +38,7 @@ env_logger = "0.9.0"
 
 
 # Security
-tower-http = { version = "0.3.0", features = ["cors"] }
+tower-http = { version = "0.3.0", features = ["cors", "compression-full"] }
 rust-argon2 = "1.0.0"
 governor = "0.4.2"
 validator = { version = "0.15", features = ["derive"] }
@@ -56,9 +56,12 @@ ctor = "0.1.22"
 rs-snowflake = "0.6.0"
 chrono = { version = "0.4.19", features = ["serde"] }
 inter-struct = "0.2.0"
+dashmap = "5.4.0"
+rmp-serde = "1.1.1"
+lazy-regex = "2.3.0"
 
 # Docs
-opg = { git = "https://github.com/abdulrahman1s/opg", rev = "0a9f7f8c791d522fc9bd25bda8e63cb4f270ecc8" }
+opg = { git = "https://github.com/abdulrahman1s/opg", rev = "0a9f7f8c791d522fc9bd25bda8e63cb4f270ecc8", features = ["chrono"] }
 
 
 [patch.crates-io]

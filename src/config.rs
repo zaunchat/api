@@ -8,7 +8,7 @@ macro_rules! config {
                         panic!("{} is required", stringify!($name));
                     })
                     .parse::<$t>()
-                    .unwrap();
+                    .expect("Failed to parse value");
                 )+
             }
     };
@@ -16,7 +16,7 @@ macro_rules! config {
 
 config! {
     // Networking
-    PORT u32 8080,
+    PORT u16 8080,
     TRUST_CLOUDFLARE bool false,
 
     // Database
@@ -42,12 +42,5 @@ config! {
 
     // Group related
     MAX_GROUPS u64 100,
-    MAX_GROUP_MEMBERS u64 50,
-
-    // Server related
-    MAX_SERVERS u64 100,
-    MAX_SERVER_MEMBERS u64 10000,
-    MAX_SERVER_CHANNELS u64 100,
-    MAX_SERVER_ROLES u64 100,
-    MAX_SERVER_EMOJIS u64 150
+    MAX_GROUP_MEMBERS u64 50
 }

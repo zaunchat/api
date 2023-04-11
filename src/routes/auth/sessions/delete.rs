@@ -11,7 +11,7 @@ pub struct DeleteSessionOptions {
 
 pub async fn delete(
     Extension(user): Extension<User>,
-    Path(id): Path<i64>,
+    Path(id): Path<Snowflake>,
     ValidatedJson(data): ValidatedJson<DeleteSessionOptions>,
 ) -> Result<()> {
     let session = id.session(user.id).await?;
@@ -31,21 +31,22 @@ mod tests {
     use crate::tests::run;
 
     #[test]
-    fn execute() {
+    fn execute() -> Result<(), Error> {
         run(async {
-            let session = Session::faker().await;
-            let session = session.save().await.unwrap();
+            let session = Session::faker().await?;
+            let session = session.save().await?;
             let payload = DeleteSessionOptions {
                 token: session.token.clone(),
             };
 
             delete(
-                Extension(session.user_id.user().await.unwrap()),
+                Extension(session.user_id.unwrap().user().await?),
                 Path(session.id),
                 ValidatedJson(payload),
             )
-            .await
-            .unwrap();
+            .await?;
+
+            Ok(())
         })
     }
 }

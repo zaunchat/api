@@ -9,8 +9,10 @@ use governor::{
     RateLimiter as Limiter,
 };
 use serde::Serialize;
-use std::{net::SocketAddr, sync::Arc};
-
+use std::{
+    net::{IpAddr, SocketAddr},
+    sync::Arc,
+};
 lazy_static! {
     static ref CLOCK: DefaultClock = DefaultClock::default();
 }
@@ -32,15 +34,27 @@ pub async fn ratelimit<B>(
 ) -> Result<Response, Error> {
     let key = if let Some(user) = req.extensions().get::<User>() {
         user.id.to_string()
-    } else if *TRUST_CLOUDFLARE {
-        req.headers()
-            .get("CF-Connecting-IP")
-            .and_then(|header| header.to_str().ok())
-            .unwrap()
-            .to_string()
     } else {
-        let addr = req.extensions().get::<ConnectInfo<SocketAddr>>();
-        addr.map_or("No IP".to_string(), |i| i.0.ip().to_string())
+        let header = |name| {
+            req.headers()
+                .get(name)
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.split(',').find_map(|s| s.trim().parse::<IpAddr>().ok()))
+        };
+
+        let ip = if *TRUST_CLOUDFLARE && header("CF-Connecting-IP").is_some() {
+            header("CF-Connecting-IP")
+        } else {
+            header("x-forwarded-for")
+                .or_else(|| header("x-real-ip"))
+                .or_else(|| {
+                    req.extensions()
+                        .get::<ConnectInfo<SocketAddr>>()
+                        .map(|ConnectInfo(addr)| addr.ip())
+                })
+        };
+
+        ip.expect("Cannot extract IP").to_string()
     };
 
     let info = match limiter.check_key(&key) {
@@ -57,7 +71,7 @@ pub async fn ratelimit<B>(
     };
 
     if info.retry_after > 0 {
-        log::info!("IP: {} has executed the rate limit", key);
+        log::info!("IP: {key} has executed the rate limit");
         return Err(Error::RateLimited(info));
     }
 

@@ -18,64 +18,18 @@ CREATE TABLE IF NOT EXISTS sessions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS servers (
-    id BIGINT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    description VARCHAR(1000),
-    icon VARCHAR(64),
-    banner VARCHAR(64),
-    owner_id BIGINT NOT NULL,
-    permissions BIGINT NOT NULL,
-    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
-);
 
 CREATE TABLE IF NOT EXISTS channels (
     id BIGINT PRIMARY KEY,
     type INTEGER NOT NULL,
     name VARCHAR(50),
-    topic VARCHAR(1000),
     permissions BIGINT,
-    overwrites JSONB,
     recipients BIGINT[],
-    parent_id BIGINT,
     owner_id BIGINT,
-    server_id BIGINT,
-    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES channels(id) ON DELETE SET NULL
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS members (
-    id BIGINT NOT NULL,
-    joined_at TIMESTAMP NOT NULL,
-    nickname VARCHAR(32),
-    server_id BIGINT NOT NULL,
-    roles BIGINT[] NOT NULL,
-    FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
-    FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
-);
 
-CREATE TABLE IF NOT EXISTS invites (
-    id BIGINT PRIMARY KEY,
-    code VARCHAR(8) NOT NULL UNIQUE,
-    uses INTEGER DEFAULT 0,
-    inviter_id BIGINT NOT NULL,
-    channel_id BIGINT NOT NULL,
-    server_id BIGINT,
-    FOREIGN KEY (inviter_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
-    FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS roles (
-    id BIGINT PRIMARY KEY,
-    name VARCHAR(32) NOT NULL,
-    permissions BIGINT NOT NULL,
-    hoist BOOLEAN NOT NULL,
-    color INTEGER DEFAULT 0,
-    server_id BIGINT NOT NULL,
-    FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
-);
 
 CREATE TABLE IF NOT EXISTS messages (
     id BIGINT PRIMARY KEY,

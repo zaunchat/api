@@ -8,7 +8,7 @@ pub async fn fetch_me(Extension(user): Extension<User>) -> Json<User> {
 
 pub async fn fetch_one(
     Extension(user): Extension<User>,
-    Path(id): Path<i64>,
+    Path(id): Path<Snowflake>,
 ) -> Result<Json<User>> {
     if user.id == id {
         return Ok(user.into());

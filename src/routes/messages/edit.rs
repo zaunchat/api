@@ -14,7 +14,7 @@ pub struct EditMessageOptions {
 
 pub async fn edit(
     Extension(user): Extension<User>,
-    Path((channel_id, id)): Path<(i64, i64)>,
+    Path((channel_id, id)): Path<(Snowflake, Snowflake)>,
     ValidatedJson(data): ValidatedJson<EditMessageOptions>,
 ) -> Result<Json<Message>> {
     let mut msg = id.message().await?;
@@ -23,7 +23,7 @@ pub async fn edit(
         return Err(Error::MissingAccess);
     }
 
-    Permissions::fetch(&user, None, channel_id.into())
+    Permissions::fetch(&user, channel_id.into())
         .await?
         .has(bits![VIEW_CHANNEL])?;
 

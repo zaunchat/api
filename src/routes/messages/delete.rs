@@ -5,10 +5,10 @@ use crate::utils::*;
 
 pub async fn delete(
     Extension(user): Extension<User>,
-    Path((channel_id, id)): Path<(i64, i64)>,
+    Path((channel_id, id)): Path<(Snowflake, Snowflake)>,
 ) -> Result<()> {
     let msg = id.message().await?;
-    let p = Permissions::fetch(&user, None, channel_id.into()).await?;
+    let p = Permissions::fetch(&user, channel_id.into()).await?;
 
     if msg.author_id != user.id {
         p.has(bits![MANAGE_MESSAGES])?;
@@ -16,13 +16,13 @@ pub async fn delete(
         p.has(bits![MANAGE_MESSAGES, VIEW_CHANNEL])?;
     }
 
-    let attachment_ids: Vec<i64> = msg
+    let attachment_ids = msg
         .attachments
         .0
         .clone()
         .into_iter()
         .map(|a| a.id)
-        .collect();
+        .collect::<Vec<_>>();
 
     let mut tx = pool().begin().await?;
 

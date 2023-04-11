@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct VerifyQuery {
-    user_id: i64,
+    user_id: Snowflake,
     code: Uuid,
 }
 
@@ -17,7 +17,10 @@ pub async fn verify(Query(opts): Query<VerifyQuery>) -> Result<()> {
 
     if email::verify(opts.user_id, opts.code).await {
         let user = opts.user_id.user().await?;
-        user.update_partial().verified(true).update(pool()).await?;
+        user.update_partial()
+            .verified(true.into())
+            .update(pool())
+            .await?;
         Ok(())
     } else {
         Err(Error::UnknownAccount)

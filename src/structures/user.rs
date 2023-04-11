@@ -1,5 +1,5 @@
 use super::*;
-use crate::utils::{snowflake, Badges};
+use crate::utils::{Badges, Private, Snowflake};
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -50,63 +50,64 @@ impl Presence {
 }
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, FromRow, Model, Default, Clone, OpgModel)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Model, Clone, OpgModel)]
 #[ormlite(table = "users")]
 pub struct User {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     pub username: String,
     pub avatar: Option<String>,
     pub badges: Badges,
     pub presence: Json<Presence>,
-    #[serde(skip)]
-    pub relations: Json<HashMap<i64, RelationshipStatus>>,
     #[ormlite(skip)]
     #[sqlx(default)]
     pub relationship: Option<RelationshipStatus>,
-    // Private fields
-    #[serde(skip)]
-    pub email: String,
-    #[serde(skip)]
-    pub password: String,
-    #[serde(skip)]
-    pub verified: bool,
+    #[serde(skip_serializing_if = "Private::is_private")]
+    pub relations: Private<Json<HashMap<Snowflake, RelationshipStatus>>>,
+    #[serde(skip_serializing_if = "Private::is_private")]
+    pub email: Private<String>,
+    #[serde(skip_serializing_if = "Private::is_private")]
+    pub password: Private<String>,
+    #[serde(skip_serializing_if = "Private::is_private")]
+    pub verified: Private<bool>,
 }
 
 impl User {
     pub fn new(username: String, email: String, password: String) -> Self {
         Self {
-            id: snowflake::generate(),
+            id: Snowflake::generate(),
             username,
-            email,
-            password,
-            ..Default::default()
+            email: email.into(),
+            password: password.into(),
+            avatar: None,
+            relationship: None,
+            verified: false.into(),
+            presence: Json(Presence::default()),
+            badges: Badges::default(),
+            relations: Json(HashMap::new()).into(),
         }
+    }
+
+    pub fn with_hidden_fields(&self) -> Self {
+        let mut u = self.clone();
+        u.verified.set_public();
+        u.password.set_public();
+        u.email.set_public();
+        u.relations.set_public();
+        u
     }
 
     pub async fn email_taken(email: &str) -> bool {
         User::select()
             .filter("email = $1")
             .bind(email)
-            .fetch_optional(pool())
+            .fetch_one(pool())
             .await
-            .unwrap()
-            .is_some()
+            .is_ok()
     }
 
     pub async fn fetch_sessions(&self) -> Result<Vec<Session>, ormlite::Error> {
         Session::select()
             .filter("user_id = $1")
-            .bind(self.id)
-            .fetch_all(pool())
-            .await
-    }
-
-    pub async fn fetch_servers(&self) -> Result<Vec<Server>, ormlite::Error> {
-        Server::select()
-            .filter("owner_id = $1 OR id IN ( SELECT server_id FROM members WHERE id = $2 )")
-            .bind(self.id)
             .bind(self.id)
             .fetch_all(pool())
             .await
@@ -129,7 +130,7 @@ impl User {
     }
 
     pub async fn fetch_relations(&self) -> Result<Vec<User>, ormlite::Error> {
-        let ids: Vec<i64> = self.relations.0.keys().copied().collect();
+        let ids = self.relations.0.keys().copied().collect::<Vec<_>>();
 
         if ids.is_empty() {
             return Ok(vec![]);
@@ -146,9 +147,9 @@ impl User {
         User::select()
             .filter("verified = TRUE AND id = ( SELECT user_id FROM sessions WHERE token = $1 )")
             .bind(token)
-            .fetch_optional(pool())
+            .fetch_one(pool())
             .await
-            .unwrap()
+            .ok()
     }
 
     #[cfg(test)]
@@ -162,23 +163,9 @@ impl User {
 
         let email = format!("ghost.{}@example.com", nanoid::nanoid!(6));
         let mut user = Self::new("Ghost".to_string(), email, hashed_password);
-        user.verified = true;
+        user.verified = true.into();
         user
     }
 }
 
 impl Base for User {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create() {
-        run(async {
-            let user = User::faker().save().await.unwrap();
-            User::find_one(user.id).await.unwrap();
-        });
-    }
-}

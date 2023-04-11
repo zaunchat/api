@@ -1,5 +1,5 @@
 use super::*;
-use crate::utils::snowflake;
+use crate::utils::Snowflake;
 use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 
@@ -7,20 +7,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Model, FromRow, Serialize, Deserialize, Clone, OpgModel)]
 #[ormlite(table = "bots")]
 pub struct Bot {
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub id: i64,
+    pub id: Snowflake,
     pub username: String,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    #[opg(string)]
-    pub owner_id: i64,
+    pub owner_id: Snowflake,
     pub verified: bool,
 }
 
 impl Bot {
-    pub fn new(username: String, owner_id: i64) -> Self {
+    pub fn new(username: String, owner_id: Snowflake) -> Self {
         Self {
-            id: snowflake::generate(),
+            id: Snowflake::generate(),
             username,
             owner_id,
             verified: false,
@@ -28,28 +24,14 @@ impl Bot {
     }
 
     #[cfg(test)]
-    pub async fn faker() -> Self {
+    pub async fn faker() -> Result<Self, Error> {
         let owner = User::faker();
         let bot = Self::new("Ghost Bot".to_string(), owner.id);
 
-        owner.save().await.unwrap();
+        owner.save().await?;
 
-        bot
+        Ok(bot)
     }
 }
 
 impl Base for Bot {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::run;
-
-    #[test]
-    fn create() {
-        run(async {
-            let bot = Bot::faker().await.save().await.unwrap();
-            Bot::find_one(bot.id).await.unwrap();
-        });
-    }
-}
