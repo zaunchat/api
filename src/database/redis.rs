@@ -25,7 +25,7 @@ pub async fn pubsub() -> SubscriberClient {
     let client = SubscriberClient::new(config);
 
     let policy = ReconnectPolicy::default();
-    let _ = client.connect(Some(policy));
+    client.connect(Some(policy));
     client.wait_for_connect().await.unwrap();
 
     client

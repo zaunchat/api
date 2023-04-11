@@ -2,9 +2,7 @@ mod auth;
 mod bots;
 mod channels;
 mod docs;
-mod invites;
 mod messages;
-mod servers;
 mod users;
 
 async fn root() -> &'static str {
@@ -18,9 +16,7 @@ pub fn mount(app: Router) -> Router {
         .route("/", get(root))
         .nest("/auth", auth::routes())
         .nest("/users", users::routes())
-        .nest("/invites", invites::routes())
         .nest("/bots", bots::routes())
         .nest("/channels", channels::routes())
         .nest("/messages/:channel_id", messages::routes())
-        .nest("/servers", servers::routes())
 }

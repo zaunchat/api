@@ -23,7 +23,7 @@ pub async fn edit(
         return Err(Error::MissingAccess);
     }
 
-    Permissions::fetch(&user, None, channel_id.into())
+    Permissions::fetch(&user, channel_id.into())
         .await?
         .has(bits![VIEW_CHANNEL])?;
 

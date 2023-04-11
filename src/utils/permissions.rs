@@ -65,32 +65,8 @@ lazy_static! {
 }
 
 impl Permissions {
-    pub async fn fetch_cached(
-        user: &User,
-        server: Option<&Server>,
-        channel: Option<&Channel>,
-    ) -> Result<Permissions> {
+    pub async fn fetch_cached(user: &User, channel: Option<&Channel>) -> Result<Permissions> {
         let mut p = bits![];
-
-        if let Some(server) = server {
-            if server.owner_id == user.id {
-                p = bits![ALL];
-            }
-
-            p.insert(server.permissions);
-
-            if p.is_all() {
-                return Ok(p);
-            }
-
-            let member = server.fetch_member(user.id).await?;
-
-            for role in server.fetch_roles().await? {
-                if member.roles.contains(&role.id) {
-                    p.insert(role.permissions);
-                }
-            }
-        }
 
         if let Some(channel) = channel {
             if p.is_all() {
@@ -115,70 +91,28 @@ impl Permissions {
                 }
             }
 
-            if channel.is_group()
-                || channel.is_text()
-                || channel.is_voice()
-                || channel.is_category()
-            {
+            if channel.is_group() {
                 // for group owners
                 if channel.owner_id == Some(user.id) {
                     p = bits![ALL];
                     return Ok(p);
                 }
 
-                let mut member = None;
-
-                if channel.is_group() {
-                    p.insert(channel.permissions.unwrap());
-                } else {
-                    member = Some(user.id.member(channel.server_id.unwrap()).await?);
-                }
-
-                let mut overwrites = channel.overwrites.as_ref().unwrap().0.clone();
-
-                if let Some(parent_id) = channel.parent_id {
-                    if let Ok(category) = parent_id.channel(None).await {
-                        overwrites.append(category.overwrites.unwrap().0.as_mut());
-                    }
-                }
-
-                for overwrite in overwrites {
-                    if overwrite.r#type == OverwriteTypes::Member && overwrite.id == user.id {
-                        p.insert(overwrite.allow);
-                        p.remove(overwrite.deny);
-                    }
-
-                    if overwrite.r#type == OverwriteTypes::Role
-                        && member.as_ref().unwrap().roles.contains(&overwrite.id)
-                    {
-                        p.insert(overwrite.allow);
-                        p.remove(overwrite.deny);
-                    }
-                }
+                p.insert(channel.permissions.unwrap());
             }
         }
 
         Ok(p)
     }
 
-    pub async fn fetch(
-        user: &User,
-        server_id: Option<Snowflake>,
-        channel_id: Option<Snowflake>,
-    ) -> Result<Permissions> {
-        let server = if let Some(server_id) = server_id {
-            Some(server_id.server(user.id.into()).await?)
-        } else {
-            None
-        };
-
+    pub async fn fetch(user: &User, channel_id: Option<Snowflake>) -> Result<Permissions> {
         let channel = if let Some(channel_id) = channel_id {
             Some(channel_id.channel(None).await?)
         } else {
             None
         };
 
-        Permissions::fetch_cached(user, server.as_ref(), channel.as_ref()).await
+        Permissions::fetch_cached(user, channel.as_ref()).await
     }
 
     pub fn has(self, bits: Permissions) -> Result<()> {

@@ -113,15 +113,6 @@ impl User {
             .await
     }
 
-    pub async fn fetch_servers(&self) -> Result<Vec<Server>, ormlite::Error> {
-        Server::select()
-            .filter("owner_id = $1 OR id IN ( SELECT server_id FROM members WHERE id = $2 )")
-            .bind(self.id)
-            .bind(self.id)
-            .fetch_all(pool())
-            .await
-    }
-
     pub async fn fetch_bots(&self) -> Result<Vec<Bot>, ormlite::Error> {
         Bot::select()
             .filter("owner_id = $1")

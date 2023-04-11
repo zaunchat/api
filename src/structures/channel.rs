@@ -13,9 +13,6 @@ pub enum ChannelTypes {
     Unknown = 0,
     Direct = 1,
     Group = 2,
-    Category = 3,
-    Text = 4,
-    Voice = 5,
 }
 
 impl Default for ChannelTypes {
@@ -115,105 +112,12 @@ impl Channel {
         }
     }
 
-    pub fn new_text(name: String, server_id: Snowflake) -> Self {
-        Self {
-            r#type: ChannelTypes::Text,
-            overwrites: Some(Json(vec![])),
-            name: name.into(),
-            server_id: server_id.into(),
-            ..Default::default()
-        }
-    }
-
-    pub fn new_voice(name: String, server_id: Snowflake) -> Self {
-        Self {
-            r#type: ChannelTypes::Voice,
-            overwrites: Some(Json(vec![])),
-            name: name.into(),
-            server_id: server_id.into(),
-            ..Default::default()
-        }
-    }
-
-    pub fn new_category(name: String, server_id: Snowflake) -> Self {
-        Self {
-            r#type: ChannelTypes::Category,
-            overwrites: Some(Json(vec![])),
-            name: name.into(),
-            server_id: server_id.into(),
-            ..Default::default()
-        }
-    }
-
     pub fn is_group(&self) -> bool {
         self.r#type == ChannelTypes::Group
     }
 
-    pub fn is_text(&self) -> bool {
-        self.r#type == ChannelTypes::Text
-    }
-
     pub fn is_dm(&self) -> bool {
         self.r#type == ChannelTypes::Direct
-    }
-
-    pub fn is_category(&self) -> bool {
-        self.r#type == ChannelTypes::Category
-    }
-
-    pub fn is_voice(&self) -> bool {
-        self.r#type == ChannelTypes::Voice
-    }
-
-    pub fn in_server(&self) -> bool {
-        self.server_id.is_some()
-    }
-
-    #[cfg(test)]
-    pub async fn faker(r#type: ChannelTypes) -> Result<Self, Error> {
-        let channel;
-
-        match r#type {
-            ChannelTypes::Group => {
-                let user = User::faker();
-                channel = Self::new_group(user.id, "Fake group".to_string());
-
-                user.save().await?;
-            }
-
-            ChannelTypes::Direct => {
-                let user = User::faker();
-                let other = User::faker();
-                channel = Self::new_dm(user.id, other.id);
-
-                user.save().await?;
-                other.save().await?;
-            }
-
-            ChannelTypes::Text => {
-                let server = Server::faker().await?;
-                channel = Self::new_text("Test".to_string(), server.id);
-
-                server.save().await?;
-            }
-
-            ChannelTypes::Voice => {
-                let server = Server::faker().await?;
-                channel = Self::new_voice("Test".to_string(), server.id);
-
-                server.save().await?;
-            }
-
-            ChannelTypes::Category => {
-                let server = Server::faker().await?;
-                channel = Self::new_category("Test".to_string(), server.id);
-
-                server.save().await?;
-            }
-            _ => panic!("Unsupported type"),
-        }
-
-        Ok(channel)
     }
 }
 

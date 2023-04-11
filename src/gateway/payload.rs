@@ -31,7 +31,6 @@ pub enum Payload {
     Ready {
         user: User,
         users: Vec<User>,
-        servers: Vec<Server>,
         channels: Vec<Channel>,
     },
     ChannelCreate(Channel),
@@ -40,15 +39,6 @@ pub enum Payload {
     MessageCreate(Message),
     MessageDelete(Empty),
     MessageUpdate(Message),
-    RoleCreate(Role),
-    RoleDelete(Empty),
-    RoleUpdate(Role),
-    ServerCreate(Server),
-    ServerDelete(Empty),
-    ServerMemberJoin(Member),
-    ServerMemberLeave(Empty),
-    ServerMemberUpdate(Member),
-    ServerUpdate(Server),
     UserUpdate(User),
 }
 

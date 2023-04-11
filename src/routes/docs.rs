@@ -1,5 +1,5 @@
 use super::auth::{accounts, sessions};
-use super::{channels, invites, messages, servers};
+use super::{channels, messages};
 use crate::structures::*;
 use axum::{extract::Json, routing::get, Router};
 
@@ -93,74 +93,7 @@ pub fn document(app: Router) -> Router {
             ("bots" / { bot_id: u64 }): {
                 GET: { 200: Bot, tags:{bots} },
                 DELETE: { 200: None, tags:{bots} }
-            },
-
-            // Invites
-            ("invites"): {
-                POST: { 200: Invite, body: invites::create::CreateInviteOptions, tags:{invites} }
-            },
-            ("invites" / { code: String }): {
-                GET: { 200: Invite, tags:{invites} },
-                POST: { 200: Invite, tags:{invites} }
-            },
-
-
-            // Servers
-            ("servers"): {
-                POST: { 200: Server, body: servers::create::CreateServerOptions, tags:{servers} },
-                GET: { 200: Vec<Server>, tags:{servers} }
-            },
-
-            ("servers" / { server_id: u64 }): {
-                GET: { 200: Server, tags:{servers} },
-                DELETE: { 200: None, tags:{servers} },
-                PATCH: { 200: Server, body: servers::edit::EditServerOptions, tags:{servers} }
-            },
-
-            // Members
-            ("servers" / { server_id: u64 } / "members"): {
-                GET: { 200: Vec<Member>, tags:{members} },
-                DELETE: { 200: Member, tags:{members} }
-            },
-
-            ("servers" / { server_id: u64 } / "members" / { user_id: u64 }): {
-                GET: { 200: Member, tags:{members} },
-                PATCH: { 200: Member, body: servers::members::edit::EditMemberOptions, tags:{members} }
-            },
-
-            // Roles
-            ("servers" / { server_id: u64 } / "roles"): {
-                POST: { 200: Role, body: servers::roles::create::CreateRoleOptions, tags:{roles} },
-                GET: { 200: Vec<Role>, tags:{roles} }
-            },
-
-            ("servers" / { server_id: u64 } / "roles" / { role_id: u64 }): {
-                GET: { 200: Role, tags:{roles} },
-                DELETE: { 200: None, tags:{roles} },
-                PATCH: { 200: Role, tags:{roles} }
-            },
-
-            // Server Invites
-            ("servers" / { server_id: u64 } / "invites"): {
-                GET: { 200: Vec<Invite>, tags:{invites} }
-            },
-
-            ("servers" / { server_id: u64 } / "invites" / { invite_id: u64 }): {
-                GET: { 200: Invite, tags:{invites} },
-                DELETE: { 200: None, tags:{invites} }
-            },
-
-            // Server Channels
-            ("servers" / { server_id: u64 } / "channels"): {
-                GET: { 200: Vec<Channel>, tags:{channels} },
-                POST: { 200: Channel, body: servers::channels::create::CreateServerChannelOptions, tags:{channels} }
-            },
-
-            ("servers" / { server_id: u64 } / "channels" / { channel_id: u64 }): {
-                GET: { 200: Channel, tags:{channels} },
-                DELETE: { 200: None, tags:{channels} },
-                PATCH: { 200: Channel, body: servers::channels::edit::EditServerChannelOptions, tags:{channels} }
-            },
+            }
         }
     };
 

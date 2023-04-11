@@ -10,7 +10,7 @@ pub async fn kick(
     let target = target_id.user().await?;
     let mut group = group_id.channel(user.id.into()).await?;
 
-    Permissions::fetch_cached(&user, None, Some(&group))
+    Permissions::fetch_cached(&user, Some(&group))
         .await?
         .has(bits![KICK_MEMBERS])?;
 

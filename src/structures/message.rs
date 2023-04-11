@@ -32,20 +32,6 @@ impl Message {
     pub fn is_empty(&self) -> bool {
         self.content.is_none() && self.attachments.0.is_empty()
     }
-
-    #[cfg(test)]
-    pub async fn faker() -> Result<Self, Error> {
-        let user = User::faker();
-        let channel = Channel::faker(ChannelTypes::Group).await?;
-        let mut message = Self::new(channel.id, user.id);
-
-        message.content = "Hello world!".to_string().into();
-
-        channel.save().await?;
-        user.save().await?;
-
-        Ok(message)
-    }
 }
 
 impl Base for Message {}

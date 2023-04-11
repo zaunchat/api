@@ -33,31 +33,6 @@ pub trait Ref {
             .map_err(|_| Error::UnknownMessage)
     }
 
-    async fn server(&self, user_id: Option<Snowflake>) -> Result<Server> {
-        let server = if let Some(user_id) = user_id {
-            Server::select()
-                .filter("id = ( SELECT server_id FROM members WHERE id = $1 AND server_id = $2 )")
-                .bind(user_id)
-                .bind(self.id())
-                .fetch_one(pool())
-                .await
-        } else {
-            Server::find_one(self.id()).await
-        };
-
-        server.map_err(|_| Error::UnknownServer)
-    }
-
-    async fn role(&self, server_id: Snowflake) -> Result<Role> {
-        Role::select()
-            .filter("id = $1 AND server_id = $2")
-            .bind(self.id())
-            .bind(server_id)
-            .fetch_optional(pool())
-            .await?
-            .ok_or(Error::UnknownRole)
-    }
-
     async fn session(&self, user_id: Snowflake) -> Result<Session> {
         Session::select()
             .filter("id = $1 AND user_id = $2")
@@ -72,31 +47,6 @@ pub trait Ref {
         Bot::find_one(self.id())
             .await
             .map_err(|_| Error::UnknownBot)
-    }
-
-    async fn member(&self, server_id: Snowflake) -> Result<Member> {
-        Member::select()
-            .filter("id = $1 AND server_id = $2")
-            .bind(self.id())
-            .bind(server_id)
-            .fetch_optional(pool())
-            .await?
-            .ok_or(Error::UnknownMember)
-    }
-
-    async fn invite(&self, server_id: Option<Snowflake>) -> Result<Invite> {
-        let invite = if let Some(server_id) = server_id {
-            Invite::select()
-                .filter("id = $1 AND server_id = $2")
-                .bind(self.id())
-                .bind(server_id)
-                .fetch_one(pool())
-                .await
-        } else {
-            Invite::find_one(self.id()).await
-        };
-
-        invite.map_err(|_| Error::UnknownInvite)
     }
 }
 

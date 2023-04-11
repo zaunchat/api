@@ -1,5 +1,5 @@
+use crate::gateway::*;
 use crate::utils::{bits, Error, Permissions};
-use crate::{gateway::*, utils::Ref};
 use fred::interfaces::PubsubInterface;
 use futures::StreamExt;
 use rmp_serde as MsgPack;
@@ -67,58 +67,10 @@ pub async fn handle_outgoing(client: Arc<SocketClient>) -> Result<(), Error> {
             }
 
             Payload::ChannelUpdate(channel) => {
-                let server = if let Some(server_id) = channel.server_id {
-                    Some(server_id.server(None).await?)
-                } else {
-                    None
-                };
-
-                let p = Permissions::fetch_cached(
-                    &*client.state.user.lock().await,
-                    server.as_ref(),
-                    channel.into(),
-                )
-                .await?;
+                let p = Permissions::fetch_cached(&*client.state.user.lock().await, channel.into())
+                    .await?;
 
                 permissions.insert(channel.id, p);
-            }
-
-            Payload::ServerMemberUpdate(member) => {
-                if member.id == user_id {
-                    let p = Permissions::fetch(
-                        &*client.state.user.lock().await,
-                        member.server_id.into(),
-                        None,
-                    )
-                    .await?;
-                    permissions.insert(member.server_id, p);
-                }
-            }
-
-            Payload::ServerMemberLeave(Empty::ServerObject { id, .. }) => {
-                if *id == user_id {
-                    client
-                        .subscriptions
-                        .unsubscribe(target_id.to_string())
-                        .await
-                        .ok();
-                }
-            }
-
-            Payload::ServerDelete(_) => {
-                client
-                    .subscriptions
-                    .unsubscribe(target_id.to_string())
-                    .await
-                    .ok();
-            }
-
-            Payload::ServerCreate(server) => {
-                client
-                    .subscriptions
-                    .subscribe(server.id.to_string())
-                    .await
-                    .ok();
             }
 
             Payload::ChannelCreate(channel) => {
@@ -127,18 +79,6 @@ pub async fn handle_outgoing(client: Arc<SocketClient>) -> Result<(), Error> {
                     .subscribe(channel.id.to_string())
                     .await
                     .ok();
-
-                if !channel.in_server() {
-                    permissions.insert(
-                        channel.id,
-                        Permissions::fetch_cached(
-                            &*client.state.user.lock().await,
-                            None,
-                            channel.into(),
-                        )
-                        .await?,
-                    );
-                }
             }
             Payload::UserUpdate(u) => {
                 // Newly friend, blocked, request

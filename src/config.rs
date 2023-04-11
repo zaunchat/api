@@ -42,12 +42,5 @@ config! {
 
     // Group related
     MAX_GROUPS u64 100,
-    MAX_GROUP_MEMBERS u64 50,
-
-    // Server related
-    MAX_SERVERS u64 100,
-    MAX_SERVER_MEMBERS u64 10000,
-    MAX_SERVER_CHANNELS u64 100,
-    MAX_SERVER_ROLES u64 100,
-    MAX_SERVER_EMOJIS u64 150
+    MAX_GROUP_MEMBERS u64 50
 }

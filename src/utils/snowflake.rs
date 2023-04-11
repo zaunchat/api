@@ -8,9 +8,9 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 lazy_static! {
     // Fri, 01 Jan 2021 00:00:00 GMT
-    static ref ITCHAT_EPOCH: SystemTime = UNIX_EPOCH + Duration::from_millis(1609459200000);
+    static ref EPOCH: SystemTime = UNIX_EPOCH + Duration::from_millis(1609459200000);
 
-    static ref GENERATOR: Mutex<SnowflakeIdGenerator> = Mutex::new(SnowflakeIdGenerator::with_epoch(0, 0, *ITCHAT_EPOCH));
+    static ref GENERATOR: Mutex<SnowflakeIdGenerator> = Mutex::new(SnowflakeIdGenerator::with_epoch(0, 0, *EPOCH));
 }
 
 #[derive(Type, Serialize, Deserialize, opg::OpgModel, Clone, Copy, PartialEq, Eq, Debug, Hash)]
@@ -26,8 +26,7 @@ impl Snowflake {
     }
 
     pub fn created_at_timestamp(&self) -> Duration {
-        Duration::from_millis((**self >> 22) as u64)
-            + ITCHAT_EPOCH.duration_since(UNIX_EPOCH).unwrap()
+        Duration::from_millis((**self >> 22) as u64) + EPOCH.duration_since(UNIX_EPOCH).unwrap()
     }
 
     pub fn created_at(&self) -> DateTime<Utc> {

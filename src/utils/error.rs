@@ -47,14 +47,11 @@ quick_error! {
         UnknownInvite
         UnknownUser
         UnknownMessage
-        UnknownServer
         UnknownSession
-        UnknownRole
         UnknownMember
         Unknown { display("Unknown error has occurred") }
 
         MaximumFriends { display("Maximum number of friends reached") }
-        MaximumServers { display("Maximum number of servers reached")  }
         MaximumGroups { display("Maximum number of groups reached")  }
         MaximumRoles { display("Maximum number of server roles reached")  }
         MaximumChannels { display("Maximum number of channels reached") }

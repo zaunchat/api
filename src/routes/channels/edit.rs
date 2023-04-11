@@ -20,7 +20,7 @@ pub async fn edit(
 ) -> Result<Json<Channel>> {
     let mut group = id.channel(user.id.into()).await?;
 
-    Permissions::fetch_cached(&user, None, Some(&group))
+    Permissions::fetch_cached(&user, Some(&group))
         .await?
         .has(bits![MANAGE_CHANNELS])?;
 

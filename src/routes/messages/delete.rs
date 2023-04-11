@@ -8,7 +8,7 @@ pub async fn delete(
     Path((channel_id, id)): Path<(Snowflake, Snowflake)>,
 ) -> Result<()> {
     let msg = id.message().await?;
-    let p = Permissions::fetch(&user, None, channel_id.into()).await?;
+    let p = Permissions::fetch(&user, channel_id.into()).await?;
 
     if msg.author_id != user.id {
         p.has(bits![MANAGE_MESSAGES])?;
