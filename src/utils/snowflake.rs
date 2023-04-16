@@ -13,12 +13,11 @@ lazy_static! {
     static ref GENERATOR: Mutex<SnowflakeIdGenerator> = Mutex::new(SnowflakeIdGenerator::with_epoch(0, 0, *EPOCH));
 }
 
-#[derive(Type, Serialize, Deserialize, opg::OpgModel, Clone, Copy, PartialEq, Eq, Debug, Hash)]
-#[serde(transparent)]
-#[sqlx(transparent)]
 #[serde_as]
+#[derive(Type, Serialize, Deserialize, opg::OpgModel, Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[sqlx(transparent)]
 #[opg(string)]
-pub struct Snowflake(#[serde_as(as = "serde_with::DisplayFromStr")] i64);
+pub struct Snowflake(#[serde_as(as = "serde_with::DisplayFromStr")] pub i64);
 
 impl Snowflake {
     pub fn generate() -> Self {
