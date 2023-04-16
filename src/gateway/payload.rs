@@ -4,7 +4,7 @@ use crate::utils::Snowflake;
 use serde::{Deserialize, Serialize};
 
 #[serde_as]
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum Empty {
     Default { id: Snowflake },
@@ -16,7 +16,7 @@ impl From<Snowflake> for Empty {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "op", content = "d")]
 pub enum Payload {
     Pong,

@@ -30,8 +30,14 @@ impl SocketClient {
     pub async fn broadcast(&self, payload: Payload) -> Result<(), axum::Error> {
         let payload = self.config.encode(payload);
 
+        log::debug!("Payload encoded: {payload:?}");
+
+        log::debug!("Connections found: {}", self.connections.len());
+
         for conn in &self.connections {
+            log::debug!("Sending payload bytes...");
             conn.value().send(payload.clone()).await?;
+            log::debug!("Sent payload to connection node");
         }
 
         Ok(())

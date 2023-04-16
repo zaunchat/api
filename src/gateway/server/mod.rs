@@ -81,6 +81,10 @@ pub async fn upgrade(
 
             let client = Arc::new(SocketClient::new(user, config, subscriber));
 
+            client
+                .connections
+                .insert(connection_id.clone(), sender.clone());
+
             STATE.clients.insert(user_id, client.clone());
 
             let client_ref = client.clone();

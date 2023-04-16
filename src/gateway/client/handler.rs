@@ -47,6 +47,8 @@ pub async fn handle_outgoing(client: Arc<SocketClient>) -> Result<(), Error> {
             continue;
         };
 
+        log::debug!("Processing payload: {payload:?}");
+
         let user_id = client.state.user_id;
 
         let permissions = &client.state.permissions;
@@ -89,7 +91,8 @@ pub async fn handle_outgoing(client: Arc<SocketClient>) -> Result<(), Error> {
             _ => {}
         }
 
-        if client.broadcast(payload).await.is_err() {
+        if let Err(err) = client.broadcast(payload).await {
+            log::warn!("Couldn't send payload: {err:?}");
             break; // probably the client disconnected
         }
     }
