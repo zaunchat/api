@@ -1,4 +1,4 @@
-FROM rust:1.61-slim AS builder
+FROM rust:1-slim AS builder
 USER 0:0
 WORKDIR /home/rust/src
 
