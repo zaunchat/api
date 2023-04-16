@@ -36,8 +36,7 @@ pub async fn authenticate(receiver: &mut Receiver, config: &SocketClientConfig) 
 
         if let ClientPayload::Authenticate { token } = payload {
             log::debug!("Provided token: {token}");
-            let user = User::fetch_by_token(&token).await.unwrap();
-            return Some(user);
+            return User::fetch_by_token(&token).await.ok()
         }
 
         retries += 1;
