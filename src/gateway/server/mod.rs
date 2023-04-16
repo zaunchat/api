@@ -16,112 +16,109 @@ use state::WebSocketState;
 use std::sync::Arc;
 
 lazy_static! {
-    pub static ref WS: WebSocketServer = WebSocketServer::new();
+    pub static ref STATE: WebSocketState = WebSocketState::new();
 }
 
-pub struct WebSocketServer {
-    pub state: WebSocketState,
-}
+pub async fn authenticate(receiver: &mut Receiver, config: &SocketClientConfig) -> Option<User> {
+    log::debug!("authenticate() called");
+    let mut retries = 0;
 
-impl Default for WebSocketServer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl WebSocketServer {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub async fn authenticate(
-        &self,
-        receiver: &mut Receiver,
-        config: &SocketClientConfig,
-    ) -> Option<User> {
-        let mut retries = 0;
-
-        while let Some(Ok(msg)) = receiver.next().await {
-            if retries == 3 {
-                break; // nope
-            }
-
-            let Some(payload) = config.decode(msg) else {
-                log::debug!("Socket sent an invalid body");
-                continue;
-            };
-
-            if let ClientPayload::Authenticate { token } = payload {
-                return User::fetch_by_token(&token).await;
-            }
-
-            retries += 1;
+    while let Some(Ok(msg)) = receiver.next().await {
+        log::debug!("{retries} Try authenticate...");
+        if retries == 3 {
+            break; // nope
         }
 
-        None
+        let Some(payload) = config.decode(msg) else {
+            log::debug!("Socket sent an invalid body");
+            continue;
+        };
+
+        if let ClientPayload::Authenticate { token } = payload {
+            log::debug!("Provided token: {token}");
+            let user = User::fetch_by_token(&token).await.unwrap();
+            return Some(user);
+        }
+
+        retries += 1;
     }
 
-    pub async fn upgrade(
-        socket: WebSocketUpgrade,
-        Query(config): Query<SocketClientConfig>,
-    ) -> impl IntoResponse {
-        socket.on_upgrade(|stream| async move {
-            let (sender, mut receiver) = stream.split();
-            let sender = Sender::new(sender);
+    None
+}
 
-            let Some(user) = WS.authenticate(&mut receiver, &config).await else { return };
+pub async fn upgrade(
+    socket: WebSocketUpgrade,
+    Query(config): Query<SocketClientConfig>,
+) -> impl IntoResponse {
+    socket.on_upgrade(|stream| async move {
+        log::info!("New socket connection");
+        let (sender, mut receiver) = stream.split();
+        log::debug!("Connection splitted");
 
-            let connection_id = nanoid!(6);
-            let user_id = user.id;
+        let sender = Sender::new(sender);
 
-            let client = if let Some(client) = WS.state.clients.get(&user_id) {
-                client
-                    .connections
-                    .insert(connection_id.clone(), sender.clone());
-                Arc::clone(&client)
-            } else {
-                let subscriber = pubsub().await;
+        log::debug!("New sender");
 
-                // Resubscribe on reconnect
-                subscriber.manage_subscriptions();
+        let Some(user) = authenticate(&mut receiver, &config).await else {
+            log::debug!("Invalid user");
+            return
+        };
 
-                let client = Arc::new(SocketClient::new(user, config, subscriber));
+        log::debug!("User authenticated: {}", user.username);
 
-                WS.state.clients.insert(user_id, client.clone());
+        let connection_id = nanoid!(6);
+        let user_id = user.id;
 
-                let client_ref = client.clone();
+        let client = if let Some(client) = STATE.clients.get(&user_id) {
+            client
+                .connections
+                .insert(connection_id.clone(), sender.clone());
+            Arc::clone(&client)
+        } else {
+            let subscriber = pubsub().await;
 
-                tokio::spawn(async { handle_outgoing(client_ref).await });
+            // Resubscribe on reconnect
+            subscriber.manage_subscriptions();
 
-                client
-            };
+            let client = Arc::new(SocketClient::new(user, config, subscriber));
 
-            if let Err(err) = events::authenticate::run(client.clone(), sender.clone()).await {
-                log::error!("Couldn't send authenticate packets: {err}");
-                return;
-            }
+            STATE.clients.insert(user_id, client.clone());
 
-            let client_ref = Arc::clone(&client);
+            let client_ref = client.clone();
 
-            let sender_ref = sender.clone();
-            let receiver_task = tokio::spawn(async move {
-                handle_incoming(client_ref, sender_ref, &mut receiver).await
-            });
+            log::debug!("Spawn handle_outgoing");
+            tokio::spawn(async { handle_outgoing(client_ref).await });
 
-            // Await client disconnection
-            receiver_task.await.ok();
+            client
+        };
 
-            log::debug!(
-                "Socket disconnected (User ID: {} | Connection ID: {})",
-                *user_id,
-                connection_id
+        if let Err(err) = events::authenticate::run(client.clone(), sender.clone()).await {
+            log::error!("Couldn't send authenticate packets: {err}");
+            return;
+        }
+
+        let client_ref = Arc::clone(&client);
+
+        let sender_ref = sender.clone();
+        log::debug!("Spawn handle_incoming");
+        let receiver_task =
+            tokio::spawn(
+                async move { handle_incoming(client_ref, sender_ref, &mut receiver).await },
             );
 
-            client.connections.remove(&connection_id);
+        // Await client disconnection
+        receiver_task.await.ok();
 
-            if client.connections.is_empty() {
-                WS.state.clients.remove(&user_id);
-            }
-        })
-    }
+        log::debug!(
+            "Socket disconnected (User ID: {} | Connection ID: {})",
+            *user_id,
+            connection_id
+        );
+
+        client.connections.remove(&connection_id);
+
+        if client.connections.is_empty() {
+            STATE.clients.remove(&user_id);
+        }
+    })
 }

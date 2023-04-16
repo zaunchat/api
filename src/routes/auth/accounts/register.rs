@@ -95,7 +95,7 @@ mod tests {
                 invite_code: None,
             };
 
-            register(ValidatedJson(payload)).await?;
+            let _ = register(ValidatedJson(payload)).await?;
 
             let user = User::select()
                 .filter("email = $1")

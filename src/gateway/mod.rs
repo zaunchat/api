@@ -9,4 +9,4 @@ use futures::stream::SplitStream;
 pub type Receiver = SplitStream<WebSocket>;
 pub use client::{config::*, connection::Sender, SocketClient};
 pub use payload::*;
-pub use server::WebSocketServer;
+pub use server::upgrade;

@@ -17,7 +17,6 @@ pub mod structures;
 pub mod utils;
 
 use axum::{middleware, routing::get, Router, Server};
-use gateway::WebSocketServer;
 use std::net::SocketAddr;
 
 #[tokio::main]
@@ -37,7 +36,7 @@ async fn main() {
     use middlewares::*;
 
     let app = routes::mount(Router::new())
-        .route("/ws", get(WebSocketServer::upgrade))
+        .route("/ws", get(gateway::upgrade))
         .layer(middleware::from_fn(auth::handle))
         .layer(middleware::from_fn(ratelimit::handle!(50, 1000 * 60)))
         .layer(cors::handle())

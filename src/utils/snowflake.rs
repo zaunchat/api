@@ -30,7 +30,8 @@ impl Snowflake {
     }
 
     pub fn created_at(&self) -> DateTime<Utc> {
-        Utc.timestamp(self.created_at_timestamp().as_secs() as i64, 0)
+        Utc.timestamp_opt(self.created_at_timestamp().as_secs() as i64, 0)
+            .unwrap()
     }
 }
 

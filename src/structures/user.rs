@@ -143,13 +143,12 @@ impl User {
             .await
     }
 
-    pub async fn fetch_by_token(token: &str) -> Option<User> {
+    pub async fn fetch_by_token(token: &str) -> ormlite::Result<User> {
         User::select()
             .filter("verified = TRUE AND id = ( SELECT user_id FROM sessions WHERE token = $1 )")
             .bind(token)
             .fetch_one(pool())
             .await
-            .ok()
     }
 
     #[cfg(test)]

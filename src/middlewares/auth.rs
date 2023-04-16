@@ -56,7 +56,7 @@ pub async fn handle<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, E
     let user = match fetch_from_cache(token).await {
         Some(u) => u,
         _ => {
-            let Some(u) = User::fetch_by_token(token).await else { Err(Error::InvalidToken)? };
+            let Ok(u) = User::fetch_by_token(token).await else { Err(Error::InvalidToken)? };
             cache_user(token, &u).await;
             u
         }
