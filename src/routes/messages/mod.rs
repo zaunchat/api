@@ -9,6 +9,7 @@ pub fn routes() -> axum::Router {
 
     Router::new()
         .route("/", post(create::create))
+        .route("/", get(fetch::fetch_many))
         .route(
             "/:message_id",
             get(fetch::fetch_one)

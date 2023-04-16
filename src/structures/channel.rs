@@ -83,6 +83,16 @@ impl Channel {
     pub fn is_dm(&self) -> bool {
         self.r#type == ChannelTypes::Direct
     }
+
+    pub async fn fetch_messages(&self, limit: usize) -> Vec<Message> {
+        Message::select()
+            .filter("channel_id = $1")
+            .bind(self.id)
+            .limit(limit)
+            .fetch_all(pool())
+            .await
+            .unwrap_or_default()
+    }
 }
 
 impl Base for Channel {}

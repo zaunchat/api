@@ -75,7 +75,10 @@ pub fn document(app: Router) -> Router {
 
             // Messages
             ("messages" / { channel_id: u64 }): {
-                POST: { 200: Message, body: messages::create::CreateMessageOptions, tags:{messages} }
+                POST: { 200: Message, body: messages::create::CreateMessageOptions, tags:{messages} },
+                GET: { 200: Vec<Message>, tags:{messages}, parameters: {
+                    (query limit: Option<usize>): {},
+                } }
             },
 
             ("messages" / { channel_id: u64 } / { message_id: u64 }): {
