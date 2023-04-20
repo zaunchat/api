@@ -24,7 +24,7 @@ impl Message {
             channel_id,
             author_id,
             attachments: Json(vec![]),
-            edited_at: None,
+            edited_at: None
         }
     }
 
@@ -53,7 +53,7 @@ impl Base<'_, Snowflake> for Message {
         values.add(self.edited_at);
 
         (
-            vec!["id", "content", "attachments", "channel_id", "edited_at"],
+            vec!["id", "content", "attachments", "channel_id", "author_id", "edited_at"],
             values,
         )
     }
