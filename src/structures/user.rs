@@ -110,8 +110,13 @@ impl User {
         Channel::find("recipients @> ARRAY[$1]::BIGINT[]", vec![self.id]).await
     }
 
-    pub async fn fetch_relations(&self) -> Result<Vec<User>, sqlx::Error> {
-        let ids = self.relations.0.keys().copied().collect::<Vec<_>>();
+    pub async fn fetch_relations(
+        &self,
+        additional_ids: &mut Vec<Snowflake>,
+    ) -> Result<Vec<User>, sqlx::Error> {
+        let mut ids = self.relations.0.keys().copied().collect::<Vec<_>>();
+
+        ids.append(additional_ids);
 
         if ids.is_empty() {
             return Ok(vec![]);

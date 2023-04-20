@@ -10,8 +10,13 @@ pub async fn run(client: Arc<SocketClient>, conn: Sender) -> Result<(), Error> {
     let permissions = &client.state.permissions;
     let mut subscriptions: Vec<Snowflake> = vec![user.id];
     let channels = user.fetch_channels().await?;
+    let mut additional_ids = channels
+        .iter()
+        .flat_map(|c| c.recipients.clone().unwrap_or_default().to_vec())
+        .collect::<Vec<Snowflake>>();
+
     let users = user
-        .fetch_relations()
+        .fetch_relations(&mut additional_ids)
         .await?
         .into_iter()
         .map(|mut u| {
