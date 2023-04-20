@@ -10,12 +10,7 @@ pub async fn fetch_one(
 }
 
 pub async fn fetch_many(Extension(user): Extension<User>) -> Result<Json<Vec<Session>>> {
-    Ok(Session::select()
-        .filter("user_id = $1")
-        .bind(user.id)
-        .fetch_all(pool())
-        .await?
-        .into())
+    Ok(Session::find("user_id = $1", vec![user.id]).await?.into())
 }
 
 #[cfg(test)]
@@ -27,7 +22,7 @@ mod tests {
     fn execute() -> Result<(), Error> {
         run(async {
             let session = Session::faker().await?;
-            let session = session.save().await?;
+            session.insert().await?;
             let user = session.user_id.unwrap().user().await?;
 
             let results = fetch_many(Extension(user.clone())).await?;

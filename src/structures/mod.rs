@@ -13,6 +13,5 @@ pub use base::*;
 pub use bot::*;
 pub use channel::*;
 pub use message::*;
-pub use ormlite::model::*;
 pub use session::*;
 pub use user::*;

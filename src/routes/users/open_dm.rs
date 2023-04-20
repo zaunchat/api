@@ -7,12 +7,11 @@ pub async fn open_dm(
     Extension(user): Extension<User>,
     Path(id): Path<Snowflake>,
 ) -> Result<Json<Channel>> {
-    let channel = Channel::select()
-        .filter("type = $1 AND recipients @> ARRAY[$2, $3]::BIGINT[]")
-        .bind(ChannelTypes::Direct)
-        .bind(user.id)
-        .bind(id)
-        .fetch_one(pool())
+    let channel = SqlQuery::new("type = $1 AND recipients @> ARRAY[$2, $3]::BIGINT[]")
+        .push(ChannelTypes::Direct)
+        .push(user.id)
+        .push(id)
+        .find_one::<Channel>()
         .await;
 
     if let Ok(channel) = channel {
@@ -20,7 +19,9 @@ pub async fn open_dm(
     }
 
     let target = id.user().await?;
-    let channel = Channel::new_dm(user.id, target.id).save().await?;
+    let channel = Channel::new_dm(user.id, target.id);
+
+    channel.insert().await?;
 
     Payload::ChannelCreate(channel.clone()).to(user.id).await;
 

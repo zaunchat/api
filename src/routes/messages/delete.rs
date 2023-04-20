@@ -31,8 +31,7 @@ pub async fn delete(
         .execute(&mut tx)
         .await?;
 
-    msg.delete(&mut tx).await?;
-
+    msg.delete_tx(&mut tx).await?;
     tx.commit().await?;
 
     Payload::MessageDelete(id.into()).to(channel_id).await;

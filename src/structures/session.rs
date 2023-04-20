@@ -1,12 +1,11 @@
 use super::*;
 use crate::utils::Snowflake;
 use nanoid::nanoid;
-use ormlite::model::*;
 use serde::{Deserialize, Serialize};
+use sqlx::{postgres::PgArguments, Arguments, FromRow};
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Model, FromRow, Clone, OpgModel)]
-#[ormlite(table = "sessions")]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone, OpgModel)]
 pub struct Session {
     pub id: Snowflake,
     #[serde(skip)]
@@ -29,10 +28,28 @@ impl Session {
         let user = User::faker();
         let session = Self::new(user.id);
 
-        user.save().await?;
+        user.insert().await?;
 
         Ok(session)
     }
 }
 
-impl Base for Session {}
+impl Base<'_, Snowflake> for Session {
+    fn id(&self) -> Snowflake {
+        self.id
+    }
+
+    fn table_name() -> &'static str {
+        "sessions"
+    }
+
+    fn fields(&self) -> (Vec<&str>, PgArguments) {
+        let mut values = PgArguments::default();
+
+        values.add(self.id);
+        values.add(&self.token);
+        values.add(self.user_id);
+
+        (vec!["id", "token", "user_id"], values)
+    }
+}

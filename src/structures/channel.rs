@@ -1,6 +1,7 @@
 use super::*;
 use crate::utils::{Permissions, Snowflake, DEFAULT_PERMISSION_DM};
-use ormlite::model::*;
+use sqlx::{postgres::PgArguments, Arguments, FromRow};
+
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
@@ -22,8 +23,7 @@ impl Default for ChannelTypes {
 
 #[serde_as]
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Model, FromRow, Clone, OpgModel, Debug)]
-#[ormlite(table = "channels")]
+#[derive(Serialize, Deserialize, FromRow, Clone, OpgModel, Debug)]
 pub struct Channel {
     pub id: Snowflake,
 
@@ -85,14 +85,41 @@ impl Channel {
     }
 
     pub async fn fetch_messages(&self, limit: usize) -> Vec<Message> {
-        Message::select()
-            .filter("channel_id = $1")
-            .bind(self.id)
-            .limit(limit)
-            .fetch_all(pool())
+        Message::find_and_limit("channel_id = $!", vec![self.id], limit)
             .await
             .unwrap_or_default()
     }
 }
 
-impl Base for Channel {}
+impl Base<'_, Snowflake> for Channel {
+    fn id(&self) -> Snowflake {
+        self.id
+    }
+
+    fn table_name() -> &'static str {
+        "channels"
+    }
+
+    fn fields(&self) -> (Vec<&str>, PgArguments) {
+        let mut values = PgArguments::default();
+
+        values.add(self.id);
+        values.add(self.r#type);
+        values.add(&self.name);
+        values.add(&self.recipients);
+        values.add(self.owner_id);
+        values.add(self.permissions);
+
+        (
+            vec![
+                "id",
+                "type",
+                "name",
+                "recipients",
+                "owner_id",
+                "permissions",
+            ],
+            values,
+        )
+    }
+}

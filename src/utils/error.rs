@@ -71,13 +71,6 @@ impl From<sqlx::Error> for Error {
     }
 }
 
-impl From<ormlite::Error> for Error {
-    fn from(err: ormlite::Error) -> Self {
-        log::error!("Database Error: {}", err);
-        Self::DatabaseError
-    }
-}
-
 impl From<axum::Error> for Error {
     fn from(err: axum::Error) -> Self {
         log::error!("{err}");

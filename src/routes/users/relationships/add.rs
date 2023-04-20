@@ -35,17 +35,8 @@ pub async fn add(Extension(mut user): Extension<User>, Path(id): Path<Snowflake>
 
     let mut tx = pool().begin().await?;
 
-    let mut user = user
-        .update_partial()
-        .relations(user.relations.clone())
-        .update(&mut tx)
-        .await?;
-
-    let mut target = target
-        .update_partial()
-        .relations(target.relations.clone())
-        .update(&mut tx)
-        .await?;
+    user.update_tx(&mut tx).await?;
+    target.update_tx(&mut tx).await?;
 
     tx.commit().await?;
 

@@ -1,9 +1,9 @@
 use super::*;
 use crate::utils::{Badges, Private, Snowflake};
-use ormlite::model::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use sqlx::types::Json;
+use sqlx::{postgres::PgArguments, Arguments, FromRow};
 use std::collections::HashMap;
 
 #[derive(
@@ -50,15 +50,13 @@ impl Presence {
 }
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, FromRow, Model, Clone, OpgModel)]
-#[ormlite(table = "users")]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone, OpgModel)]
 pub struct User {
     pub id: Snowflake,
     pub username: String,
     pub avatar: Option<String>,
     pub badges: Badges,
     pub presence: Json<Presence>,
-    #[ormlite(skip)]
     #[sqlx(default)]
     pub relationship: Option<RelationshipStatus>,
     #[serde(skip_serializing_if = "Private::is_private")]
@@ -97,58 +95,37 @@ impl User {
     }
 
     pub async fn email_taken(email: &str) -> bool {
-        User::select()
-            .filter("email = $1")
-            .bind(email)
-            .fetch_one(pool())
-            .await
-            .is_ok()
+        User::find_one("email = $1", vec![email]).await.is_ok()
     }
 
-    pub async fn fetch_sessions(&self) -> Result<Vec<Session>, ormlite::Error> {
-        Session::select()
-            .filter("user_id = $1")
-            .bind(self.id)
-            .fetch_all(pool())
-            .await
+    pub async fn fetch_sessions(&self) -> Result<Vec<Session>, sqlx::Error> {
+        Session::find("user_id = $1", vec![self.id]).await
     }
 
-    pub async fn fetch_bots(&self) -> Result<Vec<Bot>, ormlite::Error> {
-        Bot::select()
-            .filter("owner_id = $1")
-            .bind(self.id)
-            .fetch_all(pool())
-            .await
+    pub async fn fetch_bots(&self) -> Result<Vec<Bot>, sqlx::Error> {
+        Bot::find("owner_id = $1", vec![self.id]).await
     }
 
-    pub async fn fetch_channels(&self) -> Result<Vec<Channel>, ormlite::Error> {
-        Channel::select()
-            .filter("recipients @> ARRAY[$1]::BIGINT[]")
-            .bind(self.id)
-            .fetch_all(pool())
-            .await
+    pub async fn fetch_channels(&self) -> Result<Vec<Channel>, sqlx::Error> {
+        Channel::find("recipients @> ARRAY[$1]::BIGINT[]", vec![self.id]).await
     }
 
-    pub async fn fetch_relations(&self) -> Result<Vec<User>, ormlite::Error> {
+    pub async fn fetch_relations(&self) -> Result<Vec<User>, sqlx::Error> {
         let ids = self.relations.0.keys().copied().collect::<Vec<_>>();
 
         if ids.is_empty() {
             return Ok(vec![]);
         }
 
-        User::select()
-            .filter("id = ANY($1)")
-            .bind(ids)
-            .fetch_all(pool())
-            .await
+        User::find("id = ANY($1)", vec![ids]).await
     }
 
-    pub async fn fetch_by_token(token: &str) -> ormlite::Result<User> {
-        User::select()
-            .filter("verified = TRUE AND id = ( SELECT user_id FROM sessions WHERE token = $1 )")
-            .bind(token)
-            .fetch_one(pool())
-            .await
+    pub async fn fetch_by_token(token: &str) -> sqlx::Result<User> {
+        User::find_one(
+            "verified = TRUE AND id = ( SELECT user_id FROM sessions WHERE token = $1 )",
+            vec![token],
+        )
+        .await
     }
 
     #[cfg(test)]
@@ -167,4 +144,41 @@ impl User {
     }
 }
 
-impl Base for User {}
+impl Base<'_, Snowflake> for User {
+    fn id(&self) -> Snowflake {
+        self.id
+    }
+
+    fn table_name() -> &'static str {
+        "users"
+    }
+
+    fn fields(&self) -> (Vec<&str>, PgArguments) {
+        let mut values = PgArguments::default();
+
+        values.add(self.id);
+        values.add(&self.username);
+        values.add(&self.avatar);
+        values.add(&self.badges);
+        values.add(&self.presence);
+        values.add(&self.relations);
+        values.add(&self.email);
+        values.add(&self.password);
+        values.add(&self.verified);
+
+        (
+            vec![
+                "id",
+                "username",
+                "avatar",
+                "badges",
+                "presence",
+                "relations",
+                "email",
+                "password",
+                "verified",
+            ],
+            values,
+        )
+    }
+}

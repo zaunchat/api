@@ -10,7 +10,7 @@ pub async fn delete(Extension(user): Extension<User>, Path(id): Path<Snowflake>)
         return Err(Error::MissingAccess);
     }
 
-    channel.remove().await?;
+    channel.delete().await?;
 
     Payload::ChannelDelete(id.into()).to(id).await;
 

@@ -20,7 +20,7 @@ pub async fn delete(
         return Err(Error::InvalidToken);
     }
 
-    session.remove().await?;
+    session.delete().await?;
 
     Ok(())
 }
@@ -34,7 +34,7 @@ mod tests {
     fn execute() -> Result<(), Error> {
         run(async {
             let session = Session::faker().await?;
-            let session = session.save().await?;
+            session.insert().await?;
             let payload = DeleteSessionOptions {
                 token: session.token.clone(),
             };

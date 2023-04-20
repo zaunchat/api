@@ -13,11 +13,7 @@ pub struct CreateSessionOptions {
 }
 
 pub async fn create(ValidatedJson(data): ValidatedJson<CreateSessionOptions>) -> Result<String> {
-    let user = User::select()
-        .filter("email = $1")
-        .bind(data.email)
-        .fetch_one(pool())
-        .await;
+    let user = User::find_one("email = $1", vec![data.email]).await;
 
     match user {
         Ok(user) => {
@@ -35,7 +31,9 @@ pub async fn create(ValidatedJson(data): ValidatedJson<CreateSessionOptions>) ->
                 return Err(Error::MissingAccess);
             }
 
-            let session = Session::new(user.id).save().await?;
+            let session = Session::new(user.id);
+
+            session.insert().await?;
 
             Ok(session.token)
         }
@@ -51,7 +49,9 @@ mod tests {
     #[test]
     fn execute() -> Result<(), Error> {
         run(async {
-            let user = User::faker().save().await?;
+            let user = User::faker();
+
+            user.insert().await?;
 
             let payload = CreateSessionOptions {
                 email: (*user.email).clone(),
@@ -60,7 +60,7 @@ mod tests {
 
             create(ValidatedJson(payload)).await?;
 
-            user.remove().await?;
+            user.delete().await?;
 
             Ok(())
         })

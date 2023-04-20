@@ -29,8 +29,7 @@ pub async fn edit(
 
     msg.content = data.content.into();
     msg.edited_at = Some(Utc::now().naive_utc());
-
-    let msg = msg.update_all_fields(pool()).await?;
+    msg.update().await?;
 
     Payload::MessageUpdate(msg.clone()).to(channel_id).await;
 

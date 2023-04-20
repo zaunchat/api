@@ -16,11 +16,10 @@ pub async fn verify(Query(opts): Query<VerifyQuery>) -> Result<()> {
     }
 
     if email::verify(opts.user_id, opts.code).await {
-        let user = opts.user_id.user().await?;
-        user.update_partial()
-            .verified(true.into())
-            .update(pool())
-            .await?;
+        let mut user = opts.user_id.user().await?;
+
+        user.verified = true.into();
+        user.update().await?;
         Ok(())
     } else {
         Err(Error::UnknownAccount)

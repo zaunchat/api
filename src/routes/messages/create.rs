@@ -27,14 +27,14 @@ pub async fn create(
     msg.content = data.content;
 
     if let Some(attachments) = data.attachments {
-        msg.attachments = ormlite::types::Json(attachments);
+        msg.attachments = sqlx::types::Json(attachments);
     }
 
     if msg.is_empty() {
         return Err(Error::EmptyMessage);
     }
 
-    let msg = msg.save().await?;
+    msg.insert().await?;
 
     Payload::MessageCreate(msg.clone()).to(channel_id).await;
 

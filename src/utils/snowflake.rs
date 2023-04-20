@@ -34,6 +34,12 @@ impl Snowflake {
     }
 }
 
+impl ToString for Snowflake {
+    fn to_string(&self) -> String {
+        self.0.to_string()
+    }
+}
+
 impl std::ops::Deref for Snowflake {
     type Target = i64;
 

@@ -25,8 +25,7 @@ pub async fn edit(
         .has(bits![MANAGE_CHANNELS])?;
 
     group.merge(data);
-
-    let group = group.update_all_fields(pool()).await?;
+    group.update().await?;
 
     Payload::ChannelUpdate(group.clone()).to(group.id).await;
 

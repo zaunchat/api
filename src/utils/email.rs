@@ -1,21 +1,44 @@
 use crate::config::*;
 use crate::database::redis::*;
-use crate::structures::User;
+use crate::structures::{Base, User};
 use crate::utils::Snowflake;
 use lazy_regex::regex;
-use ormlite::model::*;
+
 use serde_json::json;
 use sqlx::types::Uuid;
+use sqlx::{postgres::PgArguments, Arguments, FromRow};
 
 const THREE_HOURS_IN_SECONDS: i64 = 10800;
 
-#[derive(Model, FromRow)]
-#[ormlite(table = "account_invites")]
+#[derive(FromRow)]
 pub struct AccountInvite {
-    #[ormlite(primary_key)]
     pub code: Uuid,
     pub used: bool,
     pub taken_by: Option<Snowflake>,
+}
+
+impl Base<'_, Uuid> for AccountInvite {
+    fn id(&self) -> Uuid {
+        self.code
+    }
+
+    fn primary_key() -> &'static str {
+        "code"
+    }
+
+    fn fields(&self) -> (Vec<&str>, PgArguments) {
+        let mut values = PgArguments::default();
+
+        values.add(self.code);
+        values.add(self.used);
+        values.add(self.taken_by);
+
+        (vec!["code", "used", "taken_by"], values)
+    }
+
+    fn table_name() -> &'static str {
+        "account_invites"
+    }
 }
 
 pub fn normalize(email: String) -> Option<String> {

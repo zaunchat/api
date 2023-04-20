@@ -9,7 +9,7 @@ pub async fn delete(Extension(user): Extension<User>, Path(id): Path<Snowflake>)
         return Err(Error::MissingAccess);
     }
 
-    bot.remove().await?;
+    bot.delete().await?;
 
     Ok(())
 }

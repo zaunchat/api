@@ -4,6 +4,7 @@ use crate::structures::*;
 use crate::utils::*;
 use argon2::Config;
 use serde::Deserialize;
+use sqlx::types::Uuid;
 use validator::Validate;
 
 #[derive(Deserialize, Validate, OpgModel)]
@@ -14,7 +15,8 @@ pub struct RegisterAccountOptions {
     pub password: String,
     #[validate(email)]
     pub email: String,
-    pub invite_code: Option<String>,
+    #[opg(string)]
+    pub invite_code: Option<Uuid>,
 }
 
 #[derive(Serialize, OpgModel)]
@@ -28,7 +30,7 @@ pub async fn register(
     data.email = email::normalize(data.email).expect("Non normalized email");
 
     let invite = if *REQUIRE_INVITE_TO_REGISTER && data.invite_code.is_some() {
-        email::AccountInvite::get_one(data.invite_code.as_ref().unwrap(), pool())
+        email::AccountInvite::find_by_id(data.invite_code.unwrap())
             .await
             .ok()
     } else {
@@ -62,16 +64,14 @@ pub async fn register(
         user.verified = true.into();
     }
 
-    if let Some(invite) = invite {
-        invite
-            .update_partial()
-            .taken_by(Some(user.id))
-            .used(true)
-            .update(pool())
-            .await?;
+    if let Some(mut invite) = invite {
+        invite.used = true;
+        invite.taken_by = Some(user.id);
+
+        invite.update().await?;
     }
 
-    let user = user.save().await?;
+    user.insert().await?;
 
     Ok(RegisterResponse {
         pending_verification: !*user.verified,
@@ -97,13 +97,9 @@ mod tests {
 
             let _ = register(ValidatedJson(payload)).await?;
 
-            let user = User::select()
-                .filter("email = $1")
-                .bind(email::normalize(email))
-                .fetch_one(pool())
-                .await?;
+            let user = User::find_one("email = $1", vec![email::normalize(email)]).await?;
 
-            user.remove().await?;
+            user.delete().await?;
 
             Ok(())
         })

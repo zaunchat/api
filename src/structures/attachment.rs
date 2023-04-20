@@ -1,11 +1,10 @@
 use super::Base;
 use crate::utils::Snowflake;
-use ormlite::model::*;
 use serde::{Deserialize, Serialize};
+use sqlx::{postgres::PgArguments, Arguments, FromRow};
 
 #[serde_as]
-#[derive(Model, FromRow, Serialize, Deserialize, Debug, OpgModel, Clone)]
-#[ormlite(table = "attachments")]
+#[derive(FromRow, Serialize, Deserialize, Debug, OpgModel, Clone)]
 pub struct Attachment {
     pub id: Snowflake,
     pub filename: String,
@@ -19,4 +18,37 @@ pub struct Attachment {
     pub deleted: bool,
 }
 
-impl Base for Attachment {}
+impl Base<'_, Snowflake> for Attachment {
+    fn id(&self) -> Snowflake {
+        self.id
+    }
+
+    fn table_name() -> &'static str {
+        "attachments"
+    }
+
+    fn fields(&self) -> (Vec<&str>, PgArguments) {
+        let mut values = PgArguments::default();
+
+        values.add(self.id);
+        values.add(&self.filename);
+        values.add(self.width);
+        values.add(self.height);
+        values.add(&self.content_type);
+        values.add(self.size);
+        values.add(self.deleted);
+
+        (
+            vec![
+                "id",
+                "filename",
+                "width",
+                "height",
+                "content_type",
+                "size",
+                "deleted",
+            ],
+            values,
+        )
+    }
+}
