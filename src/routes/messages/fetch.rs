@@ -35,7 +35,7 @@ pub async fn fetch_many(
         .await?
         .has(bits![VIEW_CHANNEL, READ_MESSAGE_HISTORY])?;
 
-    let messages = channel.fetch_messages(opt.limit.unwrap_or(100)).await;
+    let messages = channel.fetch_messages(opt.limit.unwrap_or(100)).await?;
 
     Ok(Json(messages))
 }

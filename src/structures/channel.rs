@@ -84,10 +84,8 @@ impl Channel {
         self.r#type == ChannelTypes::Direct
     }
 
-    pub async fn fetch_messages(&self, limit: usize) -> Vec<Message> {
-        Message::find_and_limit("channel_id = $!", vec![self.id], limit)
-            .await
-            .unwrap_or_default()
+    pub async fn fetch_messages(&self, limit: usize) -> Result<Vec<Message>, sqlx::Error> {
+        Message::find_and_limit("channel_id = $1", vec![self.id], limit).await
     }
 }
 
